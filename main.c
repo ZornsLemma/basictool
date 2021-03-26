@@ -18,9 +18,14 @@ uint8_t abe_roms[2][ROM_SIZE];
 #define BASIC_PAGE (0x18) // Just the high byte
 #define BASIC_HIMEM (0x6)
 
+const uint16_t page = 0xe00;
+const uint16_t himem = 0x8000;
+
 int vdu_variables[257];
 
 const char *osrdch_queue = 0;
+
+const char *output_filename = 0;
 
 void check(bool b, const char *s) {
     if (!b) {
@@ -33,9 +38,15 @@ void check_alloc(void *p) {
     check(p != 0, "Unable to allocate memory");
 }
 
+void finished(void);
+
 void mpu_write_u16(uint16_t address, uint16_t data) {
     mpu_memory[address    ] = data & 0xff;
     mpu_memory[address + 1] = (data >> 8) & 0xff;
+}
+
+uint16_t mpu_read_u16(uint16_t address) {
+    return (mpu_memory[address + 1] << 8) | mpu_memory[address];
 }
 
 void mpu_clear_carry(M6502 *mpu) {
@@ -86,10 +97,10 @@ int callback_osrdch(M6502 *mpu, uint16_t address, uint8_t data) {
         ++osrdch_queue;
         mpu_clear_carry(mpu);
         return callback_return_via_rts(mpu);
+    } else {
+        finished(); // not expected to return
+        abort();
     }
-    fprintf(stderr, "OSRDCH call with no keypress in queue\n");
-    mpu_dump();
-    exit(1);
 }
 
 // TODO: Output should ultimately be gated via a -v option, perhaps with some
@@ -310,8 +321,6 @@ void init(void) {
 void load_basic(const char *filename) {
     FILE *file = fopen(filename, "rb");
     check(file != 0, "Can't open input");
-    const uint16_t page = 0xe00;
-    const uint16_t himem = 0x8000;
     size_t length = fread(&mpu_memory[page], 1, himem - page, file);
     check(!ferror(file), "Error reading input");
     check(feof(file), "Input is too large");
@@ -330,6 +339,16 @@ void load_basic(const char *filename) {
     fclose(file);
     }
 #endif
+}
+
+void save_basic(const char *filename) {
+    FILE *file = fopen(filename, "wb");
+    check(file != 0, "Can't open output");
+    uint16_t top = mpu_read_u16(BASIC_TOP);
+    size_t length = top - page;
+    size_t bytes_written = fwrite(&mpu_memory[page], 1, length, file);
+    check(bytes_written == length, "Error writing output");
+    fclose(file);
 }
 
 void make_service_call(void) {
@@ -368,11 +387,17 @@ void make_service_call(void) {
     M6502_run(mpu, callback_poll); // never returns
 }
 
+void finished(void) {
+    save_basic(output_filename);
+    exit(0);
+}
+
 int main(int argc, char *argv[]) {
     // TODO: Super-crude!
-    check(argc == 2, "No filename given!");
+    check(argc == 3, "No filename given!");
     init();
     load_basic(argv[1]);
+    output_filename = argv[2];
     // TODO: The different options should be exposed via command line switches
     osrdch_queue = 
         "P" // Pack
