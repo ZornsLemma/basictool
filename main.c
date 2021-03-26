@@ -110,7 +110,8 @@ void callback_poll(M6502 *mpu) {
 
 void set_abort_callback(uint16_t address) {
     M6502_setCallback(mpu, read,  address, callback_abort_read);
-    M6502_setCallback(mpu, write, address, callback_abort_write);
+    // TODO: Get rid of write callback permanently?
+    //M6502_setCallback(mpu, write, address, callback_abort_write);
 }
 
 void load_rom(const char *filename, uint8_t *data) {
@@ -139,7 +140,7 @@ void init(void) {
                 // Supported as far as necessary, don't install a handler.
                 break;
             default:
-                if ((address >= 0x70) && (address <= 0x9f)) {
+                if ((address >= 0x70) && (address <= 0xaf)) {
                     // Supported as far as necessary, don't install a handler.
                 } else {
                     set_abort_callback(address);
