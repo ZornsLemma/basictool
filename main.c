@@ -153,6 +153,8 @@ int callback_osbyte(M6502 *mpu, uint16_t address, uint8_t data) {
             return callback_return_via_rts(mpu); // treat as no-op
         case 0x84: // read HIMEM
             return callback_osbyte_return_u16(mpu, 0x8000); // TODO: MAGIC CONST
+        case 0x86: // read text cursor position
+            return callback_osbyte_return_u16(mpu, 0); // TODO: MAGIC CONST, HACK
         case 0xa0:
             return callback_osbyte_read_vdu_variable(mpu);
         default:
