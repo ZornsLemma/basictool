@@ -12,6 +12,8 @@ M6502 *mpu;
 #define ROM_SIZE (16 * 1024)
 uint8_t abe_roms[2][ROM_SIZE];
 
+#define BASIC_TOP (0x12)
+
 int vdu_variables[257];
 
 const char *osrdch_queue = 0;
@@ -196,6 +198,8 @@ void init(void) {
     // since BASIC isn't actually running on the emulated machine.
     for (uint16_t address = 0; address < 0x100; ++address) {
         switch (address) {
+            case BASIC_TOP:
+            case BASIC_TOP + 1:
             case 0xa8:
             case 0xa9:
             case 0xf2:
@@ -255,10 +259,13 @@ void load_basic(const char *filename) {
     check(file != 0, "Can't open input");
     const uint16_t page = 0xe00;
     const uint16_t himem = 0x8000;
-    (void) fread(&mpu_memory[page], himem - page, 1, file);
+    size_t length = fread(&mpu_memory[page], himem - page, 1, file);
     check(!ferror(file), "Error reading input");
     check(feof(file), "Input is too large");
     fclose(file);
+    uint16_t top = page + length;
+    mpu_memory[BASIC_TOP    ] = top & 0xff;
+    mpu_memory[BASIC_TOP + 1] = (top >> 8) & 0xff;
     // TODO: Will need to set up some zp pointers to PAGE/TOP/whatever
 }
 
