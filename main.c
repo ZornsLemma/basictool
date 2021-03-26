@@ -12,7 +12,10 @@ M6502 *mpu;
 #define ROM_SIZE (16 * 1024)
 uint8_t abe_roms[2][ROM_SIZE];
 
+#define BASIC_LOMEM (0x0)
+#define BASIC_HEAP (0x2)
 #define BASIC_TOP (0x12)
+#define BASIC_PAGE (0x18) // Just the high byte
 
 int vdu_variables[257];
 
@@ -27,6 +30,11 @@ void check(bool b, const char *s) {
 
 void check_alloc(void *p) {
     check(p != 0, "Unable to allocate memory");
+}
+
+void mpu_write_u16(uint16_t address, uint16_t data) {
+    mpu_memory[address    ] = data & 0xff;
+    mpu_memory[address + 1] = (data >> 8) & 0xff;
 }
 
 void mpu_clear_carry(M6502 *mpu) {
@@ -198,8 +206,16 @@ void init(void) {
     // since BASIC isn't actually running on the emulated machine.
     for (uint16_t address = 0; address < 0x100; ++address) {
         switch (address) {
+            case BASIC_LOMEM:
+            case BASIC_LOMEM + 1:
+            case BASIC_HEAP:
+            case BASIC_HEAP + 1:
             case BASIC_TOP:
             case BASIC_TOP + 1:
+            case BASIC_PAGE:
+            case 0x39: // pragmatic
+            case 0x3a: // pragmatic
+            case 0x3b: // pragmatic
             case 0xa8:
             case 0xa9:
             case 0xf2:
@@ -216,11 +232,13 @@ void init(void) {
                 break;
         }
     }
+#if 0 // SFTODO!?
     // TODO: If things aren't working, perhaps tighten this up - I'm assuming
     // pages 5/6/7 don't contain interesting BASIC housekeeping data for ABE.
     for (uint16_t address = 0x400; address < 0x500; ++address) {
         set_abort_callback(address);
     }
+#endif
 
     // Install handlers for OS entry points, using a default for unimplemented
     // ones.
@@ -264,8 +282,10 @@ void load_basic(const char *filename) {
     check(feof(file), "Input is too large");
     fclose(file);
     uint16_t top = page + length;
-    mpu_memory[BASIC_TOP    ] = top & 0xff;
-    mpu_memory[BASIC_TOP + 1] = (top >> 8) & 0xff;
+    mpu_memory[BASIC_PAGE] = (page >> 8) & 0xff;
+    mpu_write_u16(BASIC_TOP, top);
+    mpu_write_u16(BASIC_LOMEM, top);
+    mpu_write_u16(BASIC_HEAP, top); // SFTODO!?
     // TODO: Will need to set up some zp pointers to PAGE/TOP/whatever
 }
 
