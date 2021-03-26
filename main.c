@@ -100,6 +100,7 @@ int callback_oswrch(M6502 *mpu, uint16_t address, uint8_t data) {
         putchar('\n');
     } else if ((c >= ' ') && (c <= '~')) {
         putchar(c);
+        //putchar('\n'); // SFTODO TEMP HACK
     }
     return callback_return_via_rts(mpu);
 }
@@ -216,6 +217,8 @@ void init(void) {
             case 0x39: // pragmatic
             case 0x3a: // pragmatic
             case 0x3b: // pragmatic
+            case 0x3e: // pragmatic
+            case 0x47: // pragmatic
             case 0xa8:
             case 0xa9:
             case 0xf2:
@@ -277,7 +280,7 @@ void load_basic(const char *filename) {
     check(file != 0, "Can't open input");
     const uint16_t page = 0xe00;
     const uint16_t himem = 0x8000;
-    size_t length = fread(&mpu_memory[page], himem - page, 1, file);
+    size_t length = fread(&mpu_memory[page], 1, himem - page, file);
     check(!ferror(file), "Error reading input");
     check(feof(file), "Input is too large");
     fclose(file);
@@ -287,6 +290,13 @@ void load_basic(const char *filename) {
     mpu_write_u16(BASIC_LOMEM, top);
     mpu_write_u16(BASIC_HEAP, top); // SFTODO!?
     // TODO: Will need to set up some zp pointers to PAGE/TOP/whatever
+#if 1 // SFTODO
+    {
+    FILE *file = fopen("mem.tmp", "wb");
+    fwrite(mpu_memory, 1, 64 * 1024, file);
+    fclose(file);
+    }
+#endif
 }
 
 void make_service_call(void) {
