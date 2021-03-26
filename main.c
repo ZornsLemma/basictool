@@ -23,9 +23,16 @@ void check_alloc(void *p) {
     check(p != 0, "Unable to allocate memory");
 }
 
+void mpu_dump(void) {
+    char buffer[64];
+    M6502_dump(mpu, buffer);
+    fprintf(stderr, "%s\n", buffer);
+}
+
 void callback_abort(const char *type, uint16_t address, uint8_t data) {
     fprintf(stderr, "Unexpected %s at address %04x, data %02x\n", 
             type, address, data);
+    // No point doing this, externalise() hasn't been called: mpu_dump();
     exit(1);
 }
 
@@ -61,7 +68,7 @@ void set_abort_callback(uint16_t address) {
 }
 
 void load_rom(const char *filename, uint8_t *data) {
-    FILE *file = fopen(filename, "rb");;
+    FILE *file = fopen(filename, "rb");
     check(file != 0, "Can't find ABE ROM image");
     size_t items = fread(data, ROM_SIZE, 1, file);
     check(items == 1, "ABE ROM image is too short");
@@ -78,11 +85,19 @@ void init(void) {
     // since BASIC isn't actually running on the emulated machine.
     for (uint16_t address = 0; address < 0x100; ++address) {
         switch (address) {
+            case 0xa8:
+            case 0xa9:
+            case 0xf2:
+            case 0xf3:
             case 0xf4:
                 // Supported as far as necessary, don't install a handler.
                 break;
             default:
-                set_abort_callback(address);
+                if ((address >= 0x70) && (address <= 0x9f)) {
+                    // Supported as far as necessary, don't install a handler.
+                } else {
+                    set_abort_callback(address);
+                }
                 break;
         }
     }
