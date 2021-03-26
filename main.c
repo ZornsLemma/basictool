@@ -58,6 +58,7 @@ void load_rom(const char *filename, uint8_t *data) {
 void init(void) {
     mpu = M6502_new(&mpu_registers, mpu_memory, &mpu_callbacks);
     check_alloc(mpu);
+    M6502_reset(mpu);
 
     // Install handlers to abort on read or write of anywhere in language or OS
     // workspace; this will catch anything we haven't explicitly implemented,
@@ -98,7 +99,7 @@ void make_service_call(void) {
     *p++ = 0x00;                           // BRK
 
     mpu_registers.s  = 0xff;
-    mpu_registers.pc = code_address + 1; // TODO: why magic +1?
+    mpu_registers.pc = code_address; // TODO: why magic +1?
 #if 1 // TODO TEMP DEBUG
     char buffer[100];
     M6502_dump(mpu, buffer);
