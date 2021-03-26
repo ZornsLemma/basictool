@@ -848,7 +848,7 @@ void M6502_trace(M6502 *mpu)
 void M6502_run(M6502 *mpu, M6502_PollInterruptsCallback poll)
 //void M6502_run(M6502 *mpu)
 {
-#if 0 // SFTODO! #if defined(__GNUC__) && !defined(__STRICT_ANSI__)
+#if 1 // SFTODO! #if defined(__GNUC__) && !defined(__STRICT_ANSI__)
 
   static void *itab[256]= { &&_00, &&_01, &&_02, &&_03, &&_04, &&_05, &&_06, &&_07, &&_08, &&_09, &&_0a, &&_0b, &&_0c, &&_0d, &&_0e, &&_0f,
 			    &&_10, &&_11, &&_12, &&_13, &&_14, &&_15, &&_16, &&_17, &&_18, &&_19, &&_1a, &&_1b, &&_1c, &&_1d, &&_1e, &&_1f,

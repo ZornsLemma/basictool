@@ -16,6 +16,7 @@ uint8_t abe_roms[2][ROM_SIZE];
 #define BASIC_HEAP (0x2)
 #define BASIC_TOP (0x12)
 #define BASIC_PAGE (0x18) // Just the high byte
+#define BASIC_HIMEM (0x6)
 
 int vdu_variables[257];
 
@@ -216,12 +217,23 @@ void init(void) {
             case BASIC_TOP:
             case BASIC_TOP + 1:
             case BASIC_PAGE:
+            case BASIC_HIMEM:
+            case BASIC_HIMEM + 1:
+            case 0x0a: // pragmatic
+            case 0x0b: // pragmatic
+            case 0x0c: // pragmatic
             case 0x2a: // pragmatic
             case 0x2b: // pragmatic
+            case 0x2c: // pragmatic
+            case 0x2d: // pragmatic
+            case 0x37: // pragmatic
+            case 0x38: // pragmatic
             case 0x39: // pragmatic
             case 0x3a: // pragmatic
             case 0x3b: // pragmatic
+            case 0x3d: // pragmatic
             case 0x3e: // pragmatic
+            case 0x3f: // pragmatic
             case 0x47: // pragmatic
             case 0xa8:
             case 0xa9:
@@ -309,6 +321,7 @@ void load_basic(const char *filename) {
     mpu_write_u16(BASIC_TOP, top);
     mpu_write_u16(BASIC_LOMEM, top);
     mpu_write_u16(BASIC_HEAP, top); // SFTODO!?
+    mpu_write_u16(BASIC_HIMEM, himem);
     // TODO: Will need to set up some zp pointers to PAGE/TOP/whatever
 #if 1 // SFTODO
     {
