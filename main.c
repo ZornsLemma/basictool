@@ -83,14 +83,25 @@ int callback_osrdch(M6502 *mpu, uint16_t address, uint8_t data) {
 
 // TODO: Output should ultimately be gated via a -v option, perhaps with some
 // sort of (optional but default) filtering to tidy it up
-int callback_osasci(M6502 *mpu, uint16_t address, uint8_t data) {
+
+int callback_oswrch(M6502 *mpu, uint16_t address, uint8_t data) {
     int c = mpu->registers->a;
-    if (c == 0xd) {
+    if (c == 0xa) {
         putchar('\n');
     } else if ((c >= ' ') && (c <= '~')) {
         putchar(c);
     }
     return callback_return_via_rts(mpu);
+}
+
+int callback_osasci(M6502 *mpu, uint16_t address, uint8_t data) {
+    int c = mpu->registers->a;
+    if (c == 0xd) {
+        putchar('\n');
+        return callback_return_via_rts(mpu);
+    } else {
+        return callback_oswrch(mpu, address, data);
+    }
 }
 
 int callback_osnewl(M6502 *mpu, uint16_t address, uint8_t data) {
@@ -139,6 +150,10 @@ int callback_osbyte(M6502 *mpu, uint16_t address, uint8_t data) {
             mpu_dump();
             exit(1);
     }
+}
+
+int callback_read_escape_flag(M6502 *mpu, uint16_t address, uint8_t data) {
+    return 0; // Escape flag not set
 }
 
 int callback_romsel_write(M6502 *mpu, uint16_t address, uint8_t data) {
@@ -211,7 +226,12 @@ void init(void) {
     M6502_setCallback(mpu, call, 0xffe0, callback_osrdch);
     M6502_setCallback(mpu, call, 0xffe3, callback_osasci);
     M6502_setCallback(mpu, call, 0xffe7, callback_osnewl);
+    M6502_setCallback(mpu, call, 0xffee, callback_oswrch);
     M6502_setCallback(mpu, call, 0xfff4, callback_osbyte);
+
+    // Since we don't have an actual ESCAPE handler, just ensure any read from
+    // &ff always returns 0.
+    M6502_setCallback(mpu, read, 0xff, callback_read_escape_flag);
 
     // Install handler for hardware emulation.
     M6502_setCallback(mpu, write, 0xfe30, callback_romsel_write);
