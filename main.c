@@ -39,6 +39,19 @@ int callback_abort_write(M6502 *mpu, uint16_t address, uint8_t data) {
     exit(1); // prevent gcc warning
 }
 
+int callback_romsel_write(M6502 *mpu, uint16_t address, uint8_t data) {
+    switch (data) {
+        case 0:
+        case 1:
+            memcpy(&mpu_memory[0x8000], abe_roms[data], ROM_SIZE);
+            break;
+        default:
+            check(false, "Invalid ROM bank selected");
+            break;
+    }
+    return 0; // return value ignored
+}
+
 void callback_poll(M6502 *mpu) {
 }
 
@@ -64,11 +77,20 @@ void init(void) {
     // workspace; this will catch anything we haven't explicitly implemented,
     // since BASIC isn't actually running on the emulated machine.
     for (uint16_t address = 0; address < 0x100; ++address) {
-        set_abort_callback(address);
+        switch (address) {
+            case 0xf4:
+                // Supported as far as necessary, don't install a handler.
+                break;
+            default:
+                set_abort_callback(address);
+                break;
+        }
     }
     for (uint16_t address = 0x400; address < 0x800; ++address) {
         set_abort_callback(address);
     }
+
+    M6502_setCallback(mpu, write, 0xfe30, callback_romsel_write);
 
     // Load the ABE ROMs.
     // TODO: Subject to permission it might be nice to build these into the
