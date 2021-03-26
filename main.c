@@ -214,6 +214,8 @@ void init(void) {
             case BASIC_TOP:
             case BASIC_TOP + 1:
             case BASIC_PAGE:
+            case 0x2a: // pragmatic
+            case 0x2b: // pragmatic
             case 0x39: // pragmatic
             case 0x3a: // pragmatic
             case 0x3b: // pragmatic
@@ -235,6 +237,18 @@ void init(void) {
                 break;
         }
     }
+    // Trap access to unimplemented OS vectors.
+    for (uint16_t address = 0x200; address < 0x236; ++address) {
+        switch (address) {
+            case 0x20e:
+            case 0x20f:
+                // Supported as far as necessary, don't install a handler.
+                break;
+            default:
+                set_abort_callback(address);
+                break;
+        }
+    }
 #if 0 // SFTODO!?
     // TODO: If things aren't working, perhaps tighten this up - I'm assuming
     // pages 5/6/7 don't contain interesting BASIC housekeeping data for ABE.
@@ -253,6 +267,10 @@ void init(void) {
     M6502_setCallback(mpu, call, 0xffe7, callback_osnewl);
     M6502_setCallback(mpu, call, 0xffee, callback_oswrch);
     M6502_setCallback(mpu, call, 0xfff4, callback_osbyte);
+
+    // Install fake OS vectors. Because of the way our implementation works,
+    // these vectors actually point to the official entry points.
+    mpu_write_u16(0x20e, 0xffee);
 
     // Since we don't have an actual ESCAPE handler, just ensure any read from
     // &ff always returns 0.
