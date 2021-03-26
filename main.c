@@ -24,7 +24,7 @@ void check_alloc(void *p) {
 }
 
 void callback_abort(const char *type, uint16_t address, uint8_t data) {
-    fprintf(stderr, "Unexpected %s at address %04x, data %02x", 
+    fprintf(stderr, "Unexpected %s at address %04x, data %02x\n", 
             type, address, data);
     exit(1);
 }
