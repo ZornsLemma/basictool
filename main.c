@@ -14,6 +14,8 @@ uint8_t abe_roms[2][ROM_SIZE];
 
 int vdu_variables[257];
 
+const char *osrdch_queue = 0;
+
 void check(bool b, const char *s) {
     if (!b) {
         fprintf(stderr, "%s\n", s);
@@ -23,6 +25,10 @@ void check(bool b, const char *s) {
 
 void check_alloc(void *p) {
     check(p != 0, "Unable to allocate memory");
+}
+
+void mpu_clear_carry(M6502 *mpu) {
+    mpu->registers->p &= ~(1<<0);
 }
 
 void mpu_dump(void) {
@@ -63,6 +69,18 @@ int callback_return_via_rts(M6502 *mpu) {
     return address;
 }
 
+int callback_osrdch(M6502 *mpu, uint16_t address, uint8_t data) {
+    if (*osrdch_queue != '\0') {
+        mpu->registers->a = *osrdch_queue;
+        ++osrdch_queue;
+        mpu_clear_carry(mpu);
+        return callback_return_via_rts(mpu);
+    }
+    fprintf(stderr, "OSRDCH call with no keypress in queue\n");
+    mpu_dump();
+    exit(1);
+}
+
 // TODO: Output should ultimately be gated via a -v option, perhaps with some
 // sort of (optional but default) filtering to tidy it up
 int callback_osasci(M6502 *mpu, uint16_t address, uint8_t data) {
@@ -72,6 +90,17 @@ int callback_osasci(M6502 *mpu, uint16_t address, uint8_t data) {
     } else if ((c >= ' ') && (c <= '~')) {
         putchar(c);
     }
+    return callback_return_via_rts(mpu);
+}
+
+int callback_osnewl(M6502 *mpu, uint16_t address, uint8_t data) {
+    putchar('\n');
+    return callback_return_via_rts(mpu);
+}
+
+int callback_osbyte_return_u16(M6502 *mpu, uint16_t value) {
+    mpu->registers->x = value & 0xff;
+    mpu->registers->y = (value >> 8) & 0xff;
     return callback_return_via_rts(mpu);
 }
 
@@ -94,6 +123,14 @@ int callback_osbyte_read_vdu_variable(M6502 *mpu) {
 
 int callback_osbyte(M6502 *mpu, uint16_t address, uint8_t data) {
     switch (mpu->registers->a) {
+        case 0x03: // select output device
+            return callback_return_via_rts(mpu); // treat as no-op
+        case 0x0f: // flush buffers
+            return callback_return_via_rts(mpu); // treat as no-op
+        case 0x7c: // clear ESCAPE condition
+            return callback_return_via_rts(mpu); // treat as no-op
+        case 0x84: // read HIMEM
+            return callback_osbyte_return_u16(mpu, 0x8000); // TODO: MAGIC CONST
         case 0xa0:
             return callback_osbyte_read_vdu_variable(mpu);
         default:
@@ -171,7 +208,9 @@ void init(void) {
     for (uint16_t address = 0xc000; address != 0; ++address) {
         M6502_setCallback(mpu, call, address, callback_abort_call);
     }
+    M6502_setCallback(mpu, call, 0xffe0, callback_osrdch);
     M6502_setCallback(mpu, call, 0xffe3, callback_osasci);
+    M6502_setCallback(mpu, call, 0xffe7, callback_osnewl);
     M6502_setCallback(mpu, call, 0xfff4, callback_osbyte);
 
     // Install handler for hardware emulation.
@@ -244,6 +283,16 @@ int main(int argc, char *argv[]) {
     check(argc == 2, "No filename given!");
     init();
     load_basic(argv[1]);
+    // TODO: The different options should be exposed via command line switches
+    osrdch_queue = 
+        "P" // Pack
+        "Y" // REMs?
+        "Y" // Spaces?
+        "Y" // Comments?
+        "Y" // Variables?
+        "Y" // Use unused singles?
+        "Y" // Concatenate?
+        ;
     make_service_call();
 }
 
