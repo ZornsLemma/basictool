@@ -114,6 +114,17 @@ void init(void) {
     load_rom("roms/EDITORB100.rom", abe_roms[1]);
 }
 
+void load_basic(const char *filename) {
+    FILE *file = fopen(filename, "rb");
+    check(file != 0, "Can't open input");
+    const uint16_t page = 0xe00;
+    const uint16_t himem = 0x8000;
+    (void) fread(&mpu_memory[page], himem - page, 1, file);
+    check(!ferror(file), "Error reading input");
+    check(feof(file), "Input is too large");
+    fclose(file);
+}
+
 void make_service_call(void) {
     const uint16_t command_address = 0xa00;
     strcpy((char *) &mpu_memory[command_address], "BUTIL\x0d");
@@ -151,7 +162,10 @@ void make_service_call(void) {
 }
 
 int main(int argc, char *argv[]) {
+    // TODO: Super-crude!
+    check(argc == 2, "No filename given!");
     init();
+    load_basic(argv[1]);
     make_service_call();
 }
 
