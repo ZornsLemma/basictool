@@ -12,6 +12,8 @@ M6502 *mpu;
 #define ROM_SIZE (16 * 1024)
 uint8_t abe_roms[2][ROM_SIZE];
 
+int vdu_variables[257];
+
 void check(bool b, const char *s) {
     if (!b) {
         fprintf(stderr, "%s\n", s);
@@ -44,6 +46,50 @@ int callback_abort_read(M6502 *mpu, uint16_t address, uint8_t data) {
 int callback_abort_write(M6502 *mpu, uint16_t address, uint8_t data) {
     callback_abort("write", address, data);
     exit(1); // prevent gcc warning
+}
+
+int callback_abort_call(M6502 *mpu, uint16_t address, uint8_t data) {
+    callback_abort("call", address, data);
+    exit(1); // prevent gcc warning
+}
+
+int callback_return_via_rts(M6502 *mpu) {
+    uint8_t low  = mpu->memory[0x101 + mpu->registers->s];
+    uint8_t high = mpu->memory[0x102 + mpu->registers->s];
+    mpu->registers->s += 2;
+    uint16_t address = (high << 8) | low;
+    address += 1;
+    fprintf(stderr, "SFTODOXXX %04x\n", address);
+    return address;
+}
+
+int callback_osbyte_read_vdu_variable(M6502 *mpu) {
+    int i = mpu->registers->x;
+    if (vdu_variables[i] == -1) {
+        fprintf(stderr, "Unsupported VDU variable read: %02x\n", i);
+        mpu_dump();
+        exit(1);
+    }
+    if (vdu_variables[i + 1] == -1) {
+        fprintf(stderr, "Unsupported VDU variable read: %02x\n", i + 1);
+        mpu_dump();
+        exit(1);
+    }
+    mpu->registers->x = vdu_variables[i];
+    mpu->registers->y = vdu_variables[i + 1];
+    return callback_return_via_rts(mpu);
+}
+
+int callback_osbyte(M6502 *mpu, uint16_t address, uint8_t data) {
+    switch (mpu->registers->a) {
+        case 0xa0:
+            return callback_osbyte_read_vdu_variable(mpu);
+        default:
+            fprintf(stderr, "Unsupported OSBYTE: A=%02x, X=%02x, Y=%02x\n",
+                    mpu->registers->a, mpu->registers->x, mpu->registers->y);
+            mpu_dump();
+            exit(1);
+    }
 }
 
 int callback_romsel_write(M6502 *mpu, uint16_t address, uint8_t data) {
@@ -105,7 +151,22 @@ void init(void) {
         set_abort_callback(address);
     }
 
+    // Install handlers for OS entry points, using a default for unimplemented
+    // ones.
+    for (uint16_t address = 0xc000; address != 0; ++address) {
+        M6502_setCallback(mpu, call, address, callback_abort_call);
+    }
+    M6502_setCallback(mpu, call, 0xfff4, callback_osbyte);
+
+    // Install handler for hardware emulation.
     M6502_setCallback(mpu, write, 0xfe30, callback_romsel_write);
+
+    // Set up VDU variables.
+    for (int i = 0; i < 256; ++i) {
+        vdu_variables[i] = -1;
+    }
+    vdu_variables[0x55] = 7; // screen mode
+    vdu_variables[0x56] = 4; // memory map type: 1K mode
 
     // Load the ABE ROMs.
     // TODO: Subject to permission it might be nice to build these into the
@@ -123,6 +184,7 @@ void load_basic(const char *filename) {
     check(!ferror(file), "Error reading input");
     check(feof(file), "Input is too large");
     fclose(file);
+    // TODO: Will need to set up some zp pointers to PAGE/TOP/whatever
 }
 
 void make_service_call(void) {
