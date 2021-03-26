@@ -63,6 +63,18 @@ int callback_return_via_rts(M6502 *mpu) {
     return address;
 }
 
+// TODO: Output should ultimately be gated via a -v option, perhaps with some
+// sort of (optional but default) filtering to tidy it up
+int callback_osasci(M6502 *mpu, uint16_t address, uint8_t data) {
+    int c = mpu->registers->a;
+    if (c == 0xd) {
+        putchar('\n');
+    } else if ((c >= ' ') && (c <= '~')) {
+        putchar(c);
+    }
+    return callback_return_via_rts(mpu);
+}
+
 int callback_osbyte_read_vdu_variable(M6502 *mpu) {
     int i = mpu->registers->x;
     if (vdu_variables[i] == -1) {
@@ -148,7 +160,9 @@ void init(void) {
                 break;
         }
     }
-    for (uint16_t address = 0x400; address < 0x800; ++address) {
+    // TODO: If things aren't working, perhaps tighten this up - I'm assuming
+    // pages 5/6/7 don't contain interesting BASIC housekeeping data for ABE.
+    for (uint16_t address = 0x400; address < 0x500; ++address) {
         set_abort_callback(address);
     }
 
@@ -157,6 +171,7 @@ void init(void) {
     for (uint16_t address = 0xc000; address != 0; ++address) {
         M6502_setCallback(mpu, call, address, callback_abort_call);
     }
+    M6502_setCallback(mpu, call, 0xffe3, callback_osasci);
     M6502_setCallback(mpu, call, 0xfff4, callback_osbyte);
 
     // Install handler for hardware emulation.
