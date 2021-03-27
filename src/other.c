@@ -186,6 +186,7 @@ int callback_osbyte_read_vdu_variable(M6502 *mpu) {
     return callback_return_via_rts(mpu);
 }
 
+// TODO: Not here (this has to follow std prototype), but get rid of pointless mpu argument on some functions?
 int callback_osbyte(M6502 *mpu, uint16_t address, uint8_t data) {
     switch (mpu->registers->a) {
         case 0x03: // select output device
@@ -194,6 +195,8 @@ int callback_osbyte(M6502 *mpu, uint16_t address, uint8_t data) {
             return callback_return_via_rts(mpu); // treat as no-op
         case 0x7c: // clear ESCAPE condition
             return callback_return_via_rts(mpu); // treat as no-op
+        case 0x83: // read OSHWM
+            return callback_osbyte_return_u16(mpu, page);
         case 0x84: // read HIMEM
             return callback_osbyte_return_u16(mpu, 0x8000); // TODO: MAGIC CONST
         case 0x86: // read text cursor position
