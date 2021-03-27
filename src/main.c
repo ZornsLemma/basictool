@@ -76,15 +76,18 @@ static const char *parse_program_name(const char *name) {
     return program_name;
 }
 
-static int print_to_nul_and_pad(const uint8_t *data, int offset, int width) {
+static int print_to_nul_and_count(const uint8_t *data, int offset, int *width) {
     int c;
-    for (; (c = data[offset]) != '\0'; ++offset, --width) {
+    bool output = false;
+    for (; (c = data[offset]) != '\0'; ++offset, --(*width)) {
         if ((c >= ' ') && (c <= '~')) {
             putchar((char) c);
+            output = true;
         }
     }
-    for (; width > 0; --width) {
+    if (output) {
         putchar(' ');
+        --(*width);
     }
     return offset;
 }
@@ -103,16 +106,18 @@ static void show_roms(void) {
 
     for (int i = 0; i < CAG_ARRAY_SIZE(roms); ++i) {
         printf("    ");
-        int version_offset = print_to_nul_and_pad(roms[i], 9, 30); // title
+        int title_and_version_width = 40;
+        int version_offset = print_to_nul_and_count(roms[i], 9, &title_and_version_width); // title
         int copyright_offset = roms[i][7];
-        const int version_width = 20;
         if (version_offset < copyright_offset) {
-            print_to_nul_and_pad(roms[i], version_offset + 1, version_width);
-        } else {
-            printf("%*s", version_width, "");
+            print_to_nul_and_count(roms[i], version_offset + 1, &title_and_version_width);
+        }
+        if (title_and_version_width > 0) {
+            printf("%*s", title_and_version_width, "");
         }
         printf("(%02x) ", roms[i][8]); // binary version number
-        print_to_nul_and_pad(roms[i], copyright_offset + 1, 20);
+        int dummy = 0;
+        print_to_nul_and_count(roms[i], copyright_offset + 1, &dummy);
         putchar('\n');
     }
 
