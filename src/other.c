@@ -210,6 +210,32 @@ int callback_osbyte(M6502 *mpu, uint16_t address, uint8_t data) {
     }
 }
 
+int callback_osword_read_io_memory(M6502 *mpu) {
+    // So we don't bypass any lib6502 callbacks, we do this access via a
+    // dynamically generated code stub.
+    const uint16_t code_address = 0x900;
+    uint8_t *p = &mpu_memory[code_address];
+    uint16_t yx = (mpu->registers->y << 8) | mpu->registers->x;
+    uint16_t source = mpu_read_u16(yx);
+    uint16_t dest = yx + 4;
+    *p++ = 0xad; *p++ = source & 0xff; *p++ = (source >> 8) & 0xff; // LDA source
+    *p++ = 0x8d; *p++ = dest & 0xff; *p++ = (dest >> 8) & 0xff;     // STA dest
+    *p++ = 0x60;                                                    // RTS
+    return code_address;
+}
+
+int callback_osword(M6502 *mpu, uint16_t address, uint8_t data) {
+    switch (mpu->registers->a) {
+        case 0x05: // read I/O processor memory
+            return callback_osword_read_io_memory(mpu);
+        default:
+            fprintf(stderr, "Unsupported OSWORD: A=%02x, X=%02x, Y=%02x\n",
+                    mpu->registers->a, mpu->registers->x, mpu->registers->y);
+            mpu_dump();
+            exit(EXIT_FAILURE);
+    }
+}
+
 int callback_read_escape_flag(M6502 *mpu, uint16_t address, uint8_t data) {
     return 0; // Escape flag not set
 }
@@ -324,6 +350,7 @@ void init(void) {
     M6502_setCallback(mpu, call, 0xffe3, callback_osasci);
     M6502_setCallback(mpu, call, 0xffe7, callback_osnewl);
     M6502_setCallback(mpu, call, 0xffee, callback_oswrch);
+    M6502_setCallback(mpu, call, 0xfff1, callback_osword);
     M6502_setCallback(mpu, call, 0xfff4, callback_osbyte);
 
     // Install fake OS vectors. Because of the way our implementation works,
