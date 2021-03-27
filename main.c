@@ -1,3 +1,4 @@
+#include <assert.h>
 #include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -26,7 +27,7 @@ int vdu_variables[257];
 
 const char *osrdch_queue = 0;
 
-const char *output_filename = 0;
+const char *filenames[2];
 
 void check(bool b, const char *s) {
     if (!b) {
@@ -37,6 +38,28 @@ void check(bool b, const char *s) {
 
 void check_alloc(void *p) {
     check(p != 0, "Unable to allocate memory");
+}
+
+void die_help(const char *message) {
+    printf("%s\nTry 'SFTODOEXENAME --help' for more information.\n", message);
+    exit(EXIT_FAILURE);
+}
+
+// TODO: For stdout to be useful, I need to be sure all verbose output etc is written to stderr
+FILE *fopen_wrapper(const char *pathname, const char *mode) {
+    if (pathname == 0) {
+        assert(mode != 0);
+        if (strcmp(mode, "rb") == 0) {
+            return stdin;
+        } else if (strcmp(mode, "wb") == 0) {
+            return stdout;
+        } else {
+            check(false, "Invalid mode passed to fopen_wrapper()");
+            exit(EXIT_FAILURE); // prevent gcc warning
+        }
+    } else {
+        return fopen(pathname, mode);
+    }
 }
 
 void finished(void);
@@ -320,7 +343,7 @@ void init(void) {
 }
 
 void load_basic(const char *filename) {
-    FILE *file = fopen(filename, "rb");
+    FILE *file = fopen_wrapper(filename, "rb");
     check(file != 0, "Can't open input");
     size_t length = fread(&mpu_memory[page], 1, himem - page, file);
     check(!ferror(file), "Error reading input");
@@ -343,7 +366,7 @@ void load_basic(const char *filename) {
 }
 
 void save_basic(const char *filename) {
-    FILE *file = fopen(filename, "wb");
+    FILE *file = fopen_wrapper(filename, "wb");
     check(file != 0, "Can't open output");
     uint16_t top = mpu_read_u16(BASIC_TOP);
     size_t length = top - page;
@@ -389,7 +412,7 @@ void make_service_call(void) {
 }
 
 void finished(void) {
-    save_basic(output_filename);
+    save_basic(filenames[1]);
     exit(EXIT_SUCCESS);
 }
 
@@ -403,11 +426,17 @@ static struct cag_option options[] = {
       .access_letters = "v",
       .access_name = "verbose",
       .description = "increase verbosity (can be repeated)" },
+
+    { .identifier = 'f',
+      .access_letters = 0,
+      .access_name = "filter",
+      .description = "allow use as a filter (reading from stdin and writing to stdout)" },
 };
 
 struct {
     int verbose;
-} config = {0};
+    bool filter;
+} config = {0, false};
 
 int main(int argc, char *argv[]) {
     cag_option_context context;
@@ -425,6 +454,10 @@ int main(int argc, char *argv[]) {
                 ++config.verbose;
                 break;
 
+            case 'f':
+                config.filter = true;
+                break;
+
             default:
                 fprintf(stderr, "Unrecognised command line identifier: '%c'\n",
                         identifier);
@@ -433,15 +466,30 @@ int main(int argc, char *argv[]) {
     }
 
     printf("config.verbose %d\n", config.verbose);
-    for (int i = context.index; i < argc; ++i) {
-        printf("%d %s\n", i, argv[i]);
+    int filename_count = 0;
+    const int max_filenames = CAG_ARRAY_SIZE(filenames);
+    int i;
+    for (i = context.index; (i < argc) && (filename_count < max_filenames);
+         ++i, ++filename_count) {
+        const char *filename = argv[i];
+        if (strcmp(filename, "-") == 0) {
+            filename = 0;
+        }
+        filenames[filename_count] = filename;
     }
+    if (i != argc) {
+        die_help("Error: Please use a maximum of one input filename and one output filename.");
+    }
+    // Don't just sit waiting for input on stdin and writing to stdout if we're
+    // invoked with no filenames, unless the user explicitly says this is what
+    // they want by specifying --filter.
+    if ((filename_count == 0) && !config.filter) {
+        die_help("Error: Please specify at least one filename or use --filter.");
+    }
+    // TODO: If the output is binary we should probably also check an option (--filter again) and refuse to proceed if so. But *maybe* output being stdout will be used to choose a text output option.
 
-    // TODO: Super-crude!
-    check(argc == 3, "No filename given!");
     init();
-    load_basic(argv[1]);
-    output_filename = argv[2];
+    load_basic(filenames[0]);
     // TODO: The different options should be exposed via command line switches
     osrdch_queue = 
         "P" // Pack
