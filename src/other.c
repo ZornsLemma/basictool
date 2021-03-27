@@ -240,9 +240,9 @@ void set_abort_callback(uint16_t address) {
 
 void load_rom(const char *filename, uint8_t *data) {
     FILE *file = fopen(filename, "rb");
-    check(file != 0, "Can't find ABE ROM image");
+    check(file != 0, "Can't find ROM image"); // TODO: show filename!
     size_t items = fread(data, ROM_SIZE, 1, file);
-    check(items == 1, "ABE ROM image is too short");
+    check(items == 1, "ROM image is too short");
     fclose(file);
 }
 
@@ -250,7 +250,8 @@ void init(void) {
     mpu = M6502_new(&mpu_registers, mpu_memory, &mpu_callbacks);
     check_alloc(mpu);
     M6502_reset(mpu);
-
+    
+#if 0 // TODO: Hack to switch between ABE and BASIC, should be runtime!
     // Install handlers to abort on read or write of anywhere in language or OS
     // workspace; this will catch anything we haven't explicitly implemented,
     // since BASIC isn't actually running on the emulated machine.
@@ -297,6 +298,7 @@ void init(void) {
                 break;
         }
     }
+#endif
     // Trap access to unimplemented OS vectors.
     for (uint16_t address = 0x200; address < 0x236; ++address) {
         switch (address) {
@@ -332,11 +334,11 @@ void init(void) {
     // these vectors actually point to the official entry points.
     mpu_write_u16(0x20e, 0xffee);
 
-    // Since we don't have an actual ESCAPE handler, just ensure any read from
+    // Since we don't have an actual Escape handler, just ensure any read from
     // &ff always returns 0.
     M6502_setCallback(mpu, read, 0xff, callback_read_escape_flag);
 
-    // Install handler for hardware emulation.
+    // Install handler for hardware ROM paging emulation.
     M6502_setCallback(mpu, write, 0xfe30, callback_romsel_write);
 
     // Set up VDU variables.
@@ -402,14 +404,14 @@ void make_service_call(void) {
                                            // .loop
     *p++ = 0x86; *p++ = 0xf4;              // STX &F4
     *p++ = 0x8e; *p++ = 0x30; *p++ = 0xfe; // STX &FE30
-    *p++ = 0x20; *p++ = 0x03; *p++ = 0x80; // JSR &8003 (service call handler)
+    *p++ = 0x20; *p++ = 0x03; *p++ = 0x80; // JSR &8003 (service entry)
     *p++ = 0xa6; *p++ = 0xf4;              // LDX &F4
     *p++ = 0xca;                           // DEX
     *p++ = 0x10; *p++ = 256 - 13;          // BPL loop
     *p++ = 0x00;                           // BRK
 
     mpu_registers.s  = 0xff;
-    mpu_registers.pc = code_address; // TODO: why magic +1?
+    mpu_registers.pc = code_address;
 #if 1 // TODO TEMP DEBUG
     char buffer[100];
     M6502_dump(mpu, buffer);
@@ -420,6 +422,23 @@ void make_service_call(void) {
     fprintf(stderr, "%s\n", buffer);
     }
 #endif
+    M6502_run(mpu, callback_poll); // never returns
+}
+
+void enter_basic(void) {
+    mpu_registers.a = 1; // language entry special value in A
+    mpu_registers.x = 0;
+    mpu_registers.y = 0;
+
+    const uint16_t code_address = 0x900;
+    uint8_t *p = &mpu_memory[code_address];
+    *p++ = 0xa2; *p++ = 12;                // LDX #12 TODO: MAGIC CONSTANT
+    *p++ = 0x86; *p++ = 0xf4;              // STX &F4
+    *p++ = 0x8e; *p++ = 0x30; *p++ = 0xfe; // STX &FE30
+    *p++ = 0x4c; *p++ = 0x00; *p++ = 0x80; // JMP &8000 (language entry)
+
+    mpu_registers.s  = 0xff;
+    mpu_registers.pc = code_address; // TODO: why magic +1?
     M6502_run(mpu, callback_poll); // never returns
 }
 

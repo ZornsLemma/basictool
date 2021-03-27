@@ -10,6 +10,7 @@ void die_help(const char *message); // TODO!
 void load_basic(const char *filename); // TODO!
 void init(void); // TODO!
 void make_service_call(void); // TODO!
+void enter_basic(void); // TODO!
 
 const char *filenames[2];
 
@@ -137,7 +138,7 @@ int main(int argc, char *argv[]) {
         "Y" // Use unused singles?
         "Y" // Concatenate?
         ;
-    make_service_call();
+    enter_basic(); // TODO! make_service_call();
 }
 
 // vi: colorcolumn=80
