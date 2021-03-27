@@ -16,6 +16,12 @@ M6502 *mpu;
 
 const char *pending_osword_input_line = 0;
 
+// TODO: This probably needs expanding etc, I'm hacking right now
+enum {
+    SFTODOIDLE,
+    osword_input_line_pending,
+} state = SFTODOIDLE; // SFTODO: 'state' IS TOO SHORT A NAME
+
 // M6502_run() never returns, so we use this jmp_buf to return control when a
 // task has finished executing on the emulated CPU.
 jmp_buf mpu_env;
@@ -222,25 +228,10 @@ int callback_osword_input_line(M6502 *mpu) {
     // If we don't have any input to provide to the emulated machine, stop
     // emulating.
     fprintf(stderr, "SFTODOXA2\n");
-    if (pending_osword_input_line == 0) {
-        fprintf(stderr, "SFTODOXA3\n");
-        longjmp(mpu_env, 1);
-    }
-    fprintf(stderr, "SFTODOXA\n%s\n", pending_osword_input_line);
-    // TODO: We must respect the maximum line length
-    uint16_t yx = (mpu->registers->y << 8) | mpu->registers->x;
-    uint16_t buffer = mpu_read_u16(yx);
-    uint8_t buffer_size = mpu_memory[yx + 2];
-    size_t pending_length = strlen(pending_osword_input_line);
-    assert(pending_length != 0);
-    assert(pending_osword_input_line[pending_length - 1] == 0x0d);
-    check(pending_length <= buffer_size, "Line too long"); // TODO: PROPER ERROR ETC - BUT WE DO WANT TO TREAT THIS AS AN ERROR, NOT TRUNCATE - WE MAY ULTIMATELY WANT TO BE GIVING A LINE NUMBER FROM INPUT IF WE'RE TOKENISING BASIC VIA THIS
-    // TODO: Check/assert the last byte is 0xd?
-    memcpy(&mpu_memory[buffer], pending_osword_input_line, pending_length);
-    mpu->registers->y = pending_length - 1; // TODO HACK
-    mpu_clear_carry(mpu); // input not terminated by Escape
-    return callback_return_via_rts(mpu);
+    state = osword_input_line_pending;
+    longjmp(mpu_env, 1);
 }
+
 
 int callback_osword_read_io_memory(M6502 *mpu) {
     // So we don't bypass any lib6502 callbacks, we do this access via a
@@ -447,11 +438,26 @@ char *load_binary(const char *filename, size_t *length) {
 
 // TODO: MOVE
 void execute_input_line(const char *line) {
-    assert(pending_osword_input_line == 0);
-    pending_osword_input_line = line;
+    assert(state == osword_input_line_pending);
+    fprintf(stderr, "SFTODOXA\n");
+    // TODO: We must respect the maximum line length
+    uint16_t yx = (mpu->registers->y << 8) | mpu->registers->x;
+    uint16_t buffer = mpu_read_u16(yx);
+    uint8_t buffer_size = mpu_memory[yx + 2];
+    size_t pending_length = strlen(line);
+    assert(pending_length != 0);
+    assert(line[pending_length - 1] == 0x0d);
+    check(pending_length <= buffer_size, "Line too long"); // TODO: PROPER ERROR ETC - BUT WE DO WANT TO TREAT THIS AS AN ERROR, NOT TRUNCATE - WE MAY ULTIMATELY WANT TO BE GIVING A LINE NUMBER FROM INPUT IF WE'RE TOKENISING BASIC VIA THIS
+    // TODO: Check/assert the last byte is 0xd?
+    memcpy(&mpu_memory[buffer], line, pending_length);
+    mpu->registers->y = pending_length - 1; // TODO HACK
+    mpu_clear_carry(mpu); // input not terminated by Escape
+    mpu->registers->pc = callback_return_via_rts(mpu);
+    fprintf(stderr, "SFTODOZX0\n");
     if (setjmp(mpu_env) == 0) {
         M6502_run(mpu, callback_poll); // never returns
     }
+    fprintf(stderr, "SFTODOZXA\n");
 }
 
 void load_basic(const char *filename) {
@@ -475,6 +481,7 @@ void load_basic(const char *filename) {
         execute_input_line("PRINT 42\x0d"); // TODO!
         fprintf(stderr, "SFTODOYYY2\n");
         execute_input_line("OLD\x0d");
+        execute_input_line("LIST\x0d"); // TODO!
     } else {
         fprintf(stderr, "SFTODO NOT TOKENISED\n");
         abort();
