@@ -3,6 +3,8 @@
 #include <string.h>
 #include "cargs.h"
 
+#define VERSION "0.01"
+
 extern const char *osrdch_queue; // TODO!
 void die_help(const char *message); // TODO!
 void load_basic(const char *filename); // TODO!
@@ -76,6 +78,7 @@ int main(int argc, char *argv[]) {
         char identifier = cag_option_get(&context);
         switch (identifier) {
             case 'h':
+                printf("%s " VERSION "\n", program_name);
                 printf("Usage: %s [OPTION]... [INPUTFILE] [OUTPUTFILE]\n", program_name);
                 printf("SFTODO DESCRIPTION.\n\n");
                 cag_option_print(options, CAG_ARRAY_SIZE(options), stdout);
