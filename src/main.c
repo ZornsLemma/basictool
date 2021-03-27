@@ -103,10 +103,15 @@ static void show_roms(void) {
 
     for (int i = 0; i < CAG_ARRAY_SIZE(roms); ++i) {
         printf("    ");
-        int version_offset = print_to_nul_and_pad(roms[i], 9, 30);
-        print_to_nul_and_pad(roms[i], version_offset, 10);
-        printf("(%02x) ", roms[i][8]); // binary version number
+        int version_offset = print_to_nul_and_pad(roms[i], 9, 30); // title
         int copyright_offset = roms[i][7];
+        const int version_width = 20;
+        if (version_offset < copyright_offset) {
+            print_to_nul_and_pad(roms[i], version_offset + 1, version_width);
+        } else {
+            printf("%*s", version_width, "");
+        }
+        printf("(%02x) ", roms[i][8]); // binary version number
         print_to_nul_and_pad(roms[i], copyright_offset + 1, 20);
         putchar('\n');
     }
