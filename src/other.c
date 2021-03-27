@@ -5,6 +5,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include "data.h"
 #include "lib6502.h"
 
 M6502_Registers mpu_registers;
@@ -15,11 +16,9 @@ M6502 *mpu;
 extern const char *program_name; // TODO!
 
 #define ROM_SIZE (16 * 1024)
-uint8_t abe_roms[2][ROM_SIZE];
 // TODO: Support for HIBASIC might be nice (only for tokenising/detokenising;
 // ABE runs at &8000 so probably can't work with HIBASIC-sized programs), but
 // let's not worry about that yet.
-uint8_t basic_rom[ROM_SIZE];
 
 #define BASIC_LOMEM (0x0)
 #define BASIC_HEAP (0x2)
@@ -219,11 +218,13 @@ int callback_romsel_write(M6502 *mpu, uint16_t address, uint8_t data) {
     switch (data) {
         // TODO: The bank numbers should be named constants
         case 0:
+            memcpy(&mpu_memory[0x8000], rom_editor_a, ROM_SIZE);
+            break;
         case 1:
-            memcpy(&mpu_memory[0x8000], abe_roms[data], ROM_SIZE);
+            memcpy(&mpu_memory[0x8000], rom_editor_b, ROM_SIZE);
             break;
         case 12: // same bank as on Master 128, but not really important
-            memcpy(&mpu_memory[0x8000], basic_rom, ROM_SIZE);
+            memcpy(&mpu_memory[0x8000], rom_basic, ROM_SIZE);
             break;
         default:
             check(false, "Invalid ROM bank selected");
@@ -239,14 +240,6 @@ void set_abort_callback(uint16_t address) {
     M6502_setCallback(mpu, read,  address, callback_abort_read);
     // TODO: Get rid of write callback permanently?
     //M6502_setCallback(mpu, write, address, callback_abort_write);
-}
-
-void load_rom(const char *filename, uint8_t *data) {
-    FILE *file = fopen(filename, "rb");
-    check(file != 0, "Can't find ROM image"); // TODO: show filename!
-    size_t items = fread(data, ROM_SIZE, 1, file);
-    check(items == 1, "ROM image is too short");
-    fclose(file);
 }
 
 void init(void) {
@@ -350,13 +343,6 @@ void init(void) {
     }
     vdu_variables[0x55] = 7; // screen mode
     vdu_variables[0x56] = 4; // memory map type: 1K mode
-
-    // Load the ABE ROMs.
-    // TODO: Subject to permission it might be nice to build these into the
-    // executable to avoid awkward "where to load them from" PATH-type issues.
-    load_rom("roms/EDITORA100.rom", abe_roms[0]);
-    load_rom("roms/EDITORB100.rom", abe_roms[1]);
-    load_rom("roms/basic4.rom", basic_rom);
 }
 
 void load_basic(const char *filename) {
