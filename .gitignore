@@ -1,3 +1,4 @@
 roms/*
+src/rom-*
 test/*
 abe-util

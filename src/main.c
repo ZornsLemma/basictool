@@ -140,5 +140,6 @@ int main(int argc, char *argv[]) {
         ;
     enter_basic(); // TODO! make_service_call();
 }
+// TODO: I should check return value of fclose() everywhere
 
 // vi: colorcolumn=80
