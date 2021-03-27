@@ -1,5 +1,6 @@
 roms/*
+src/bintoinc
 src/rom-*
+src/*.o
 test/*
 basictool
-bintoinc

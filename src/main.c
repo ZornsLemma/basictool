@@ -139,16 +139,16 @@ int main(int argc, char *argv[]) {
         switch (identifier) {
             case 'h':
                 printf("%s " VERSION "\n", program_name);
-                printf("Usage: %s [OPTION]... [INPUTFILE] [OUTPUTFILE]\n", program_name);
-                printf("SFTODO DESCRIPTION.\n\n");
-                cag_option_print(options, CAG_ARRAY_SIZE(options), stdout);
-                printf(
+                printf("Usage: %s [OPTION]... [INPUTFILE] [OUTPUTFILE]\n\n", program_name);
+                // TODO: "analyse" is only true if I expose 
                         // TODO FORMATTING OF CODE
+                printf(
+"Tokenise, de-tokenise, examine, pack and generally munge BBC BASIC programs.\n"
 "\n"
 "This program is really a specialised BBC Micro emulator which uses the BBC\n"
 "BASIC and Advanced BASIC Editor ROMs to operate on BBC BASIC programs. Use\n"
-"--roms to see more information about these ROMs.\n"
-);
+"--roms to see more information about these ROMs.\n\n");
+                cag_option_print(options, CAG_ARRAY_SIZE(options), stdout);
                 // TODO: Show ROM versions? Or on a separate option? Partly
                 // depends whether ROM code is compiled in, if it's live-out
                 // don't want --help not working because ROMs can't be found.
