@@ -214,7 +214,7 @@ int callback_osword_input_line(M6502 *mpu) {
     // TODO: We must respect the maximum line length
     uint16_t yx = (mpu->registers->y << 8) | mpu->registers->x;
     uint16_t buffer = mpu_read_u16(yx);
-    strcpy(&mpu_memory[buffer], "REPEAT:PRINT \"Hello, world!\":UNTIL FALSE\x0d"); // TODO HACK
+    strcpy(&mpu_memory[buffer], "REPEAT:PRUNT \"Hello, world!\":UNTIL FALSE\x0d"); // TODO HACK
     mpu->registers->y = strlen(&mpu_memory[buffer]) - 1; // TODO HACK
     mpu_clear_carry(mpu); // input not terminated by Escape
     return callback_return_via_rts(mpu);
@@ -269,6 +269,25 @@ int callback_romsel_write(M6502 *mpu, uint16_t address, uint8_t data) {
             break;
     }
     return 0; // return value ignored
+}
+
+int callback_irq(M6502 *mpu, uint16_t address, uint8_t data) {
+    // The only possible cause of an interrupt on our emulated machine is a BRK
+    // instruction.
+    // TODO: Copy and paste of code from callback_return_via_rts() - not quite
+    uint8_t low  = mpu->memory[0x102 + mpu->registers->s];
+    uint8_t high = mpu->memory[0x103 + mpu->registers->s];
+    mpu->registers->s += 2; // TODO not necessary, we won't return
+    uint16_t error_string_ptr = (high << 8) | low;
+    uint16_t error_num_address = error_string_ptr - 1;
+    fprintf(stderr, "\nError: ");
+    for (uint8_t c; (c = mpu->memory[error_string_ptr]) != '\0'; ++error_string_ptr) {
+        fputc(c, stderr);
+    }
+    uint8_t error_num = mpu->memory[error_num_address];
+    fprintf(stderr, " (%d)\n", error_num);
+    // TODO: We will need an ability to include a pseudo-line number if we're tokenising a BASIC program
+    exit(EXIT_FAILURE);
 }
 
 void callback_poll(M6502 *mpu) {
@@ -375,6 +394,10 @@ void init(void) {
 
     // Install handler for hardware ROM paging emulation.
     M6502_setCallback(mpu, write, 0xfe30, callback_romsel_write);
+
+    // Install interrupt handler so we can catch BRK.
+    M6502_setVector(mpu, IRQ, 0xf000); // SFTODO: Magic constant
+    M6502_setCallback(mpu, call, 0xf000, callback_irq);
 
     // Set up VDU variables.
     for (int i = 0; i < 256; ++i) {
