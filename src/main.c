@@ -196,19 +196,26 @@ int main(int argc, char *argv[]) {
     }
     // TODO: If the output is binary we should probably also check an option (--filter again?) and refuse to proceed if so. But *maybe* output being stdout will be used to choose a text output option.
 
-    init();
+    init(); // TODO: RENAME AS IT'S MAINLY/ALL M6502 INIT
+    load_basic(filenames[0]);
+
+    enter_basic(); // TODO: RENAME START_BASIC()
+
+
+
+#if 0 // SFTODO!
     load_basic(filenames[0]);
     // TODO: The different options should be exposed via command line switches
     osrdch_queue = 
         "P" // Pack
         "Y" // REMs?
         "Y" // Spaces?
-        "Y" // Comments?
-        "Y" // Variables?
+        "Y" // Comments?        "Y" // Variables?
         "Y" // Use unused singles?
         "Y" // Concatenate?
         ;
     enter_basic(); // TODO! make_service_call();
+#endif
 }
 // TODO: I should check return value of fclose() everywhere
 

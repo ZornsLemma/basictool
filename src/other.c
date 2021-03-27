@@ -1,6 +1,7 @@
 // TODO: This file is a temporary collection of stuff as I refactor, there shouldn't ultimately be a file called other.c!
 
 #include <assert.h>
+#include <setjmp.h>
 #include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -12,6 +13,10 @@ M6502_Registers mpu_registers;
 M6502_Memory mpu_memory;
 M6502_Callbacks mpu_callbacks;
 M6502 *mpu;
+
+// M6502_run() never returns, so we use this jmp_buf to return control when a
+// task has finished executing on the emulated CPU.
+jmp_buf mpu_env;
 
 extern const char *program_name; // TODO!
 
@@ -42,8 +47,9 @@ void check(bool b, const char *s) {
     }
 }
 
-void check_alloc(void *p) {
+void *check_alloc(void *p) {
     check(p != 0, "Unable to allocate memory");
+    return p;
 }
 
 void die_help(const char *message) {
@@ -211,10 +217,15 @@ int callback_osbyte(M6502 *mpu, uint16_t address, uint8_t data) {
 }
 
 int callback_osword_input_line(M6502 *mpu) {
+    static int SFTODOHACK = 3;
+    --SFTODOHACK;
+    if (SFTODOHACK == 0) {
+        longjmp(mpu_env, 1);
+    }
     // TODO: We must respect the maximum line length
     uint16_t yx = (mpu->registers->y << 8) | mpu->registers->x;
     uint16_t buffer = mpu_read_u16(yx);
-    strcpy(&mpu_memory[buffer], "REPEAT:PRUNT \"Hello, world!\":UNTIL FALSE\x0d"); // TODO HACK
+    strcpy(&mpu_memory[buffer], "PRINT 42\x0d"); // TODO HACK
     mpu->registers->y = strlen(&mpu_memory[buffer]) - 1; // TODO HACK
     mpu_clear_carry(mpu); // input not terminated by Escape
     return callback_return_via_rts(mpu);
@@ -300,8 +311,7 @@ void set_abort_callback(uint16_t address) {
 }
 
 void init(void) {
-    mpu = M6502_new(&mpu_registers, mpu_memory, &mpu_callbacks);
-    check_alloc(mpu);
+    mpu = check_alloc(M6502_new(&mpu_registers, mpu_memory, &mpu_callbacks));
     M6502_reset(mpu);
     
 #if 0 // TODO: Hack to switch between ABE and BASIC, should be runtime!
@@ -407,7 +417,41 @@ void init(void) {
     vdu_variables[0x56] = 4; // memory map type: 1K mode
 }
 
+// Read a file into a malloc()-ed block of memory. The pointer to the
+// malloc()-ed block is returned and *length is set to the length.
+char *load_binary(const char *filename, size_t *length) {
+    assert(length != 0);
+    FILE *file = fopen_wrapper(filename, "rb");
+    check(file != 0, "Can't open input");
+    // Since we're dealing with BASIC programs on a 32K-ish machine, we don't
+    // need to handle arbitrarily large files.
+    const int max_size = 64 * 1024;
+    char *data = check_alloc(malloc(max_size));
+    *length = fread(data, 1, max_size, file);
+    check(!ferror(file), "Error reading input");
+    check(feof(file), "Input is too large");
+    check(fclose(file) == 0, "Error closing input");
+    return check_alloc(realloc(data, *length));
+}
+
 void load_basic(const char *filename) {
+    // We load the file as binary data so we can take a look at it and decide
+    // whether it's tokenised or text BASIC.
+    size_t length;
+    char *data = load_binary(filename, &length);
+    // http://beebwiki.mdfs.net/Program_format says a Wilson/Acorn format
+    // tokenised BASIC program (which is all we care about here) will end with
+    // <cr><ff>.
+    bool tokenised = ((length >= 2) && (data[length - 2] == '\x0d') && (data[length - 1] == '\xff'));
+    fprintf(stderr, "SFTODO TOKENISED %d\n", tokenised);
+    abort();
+
+
+
+
+
+#if 0 // SFTODO!
+    XXXX;
     FILE *file = fopen_wrapper(filename, "rb");
     check(file != 0, "Can't open input");
     size_t length = fread(&mpu_memory[page], 1, himem - page, file);
@@ -427,6 +471,7 @@ void load_basic(const char *filename) {
     fwrite(mpu_memory, 1, 64 * 1024, file);
     fclose(file);
     }
+#endif
 #endif
 }
 
@@ -490,7 +535,9 @@ void enter_basic(void) {
 
     mpu_registers.s  = 0xff;
     mpu_registers.pc = code_address; // TODO: why magic +1?
-    M6502_run(mpu, callback_poll); // never returns
+    if (setjmp(mpu_env) == 0) {
+        M6502_run(mpu, callback_poll); // never returns
+    }
 }
 
 void finished(void) {
