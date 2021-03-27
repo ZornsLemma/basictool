@@ -433,7 +433,9 @@ char *load_binary(const char *filename, size_t *length) {
     check(!ferror(file), "Error reading input");
     check(feof(file), "Input is too large");
     check(fclose(file) == 0, "Error closing input");
-    return check_alloc(realloc(data, *length));
+    // We allocate an extra byte so we can easily guarantee that the last line
+    // ends with a line terminator when reading non-tokenised input.
+    return check_alloc(realloc(data, (*length) + 1));
 }
 
 // TODO: MOVE
@@ -460,6 +462,59 @@ void execute_input_line(const char *line) {
     fprintf(stderr, "SFTODOZXA\n");
 }
 
+// TODO: COMMENT
+// TODO: Review this later, I think there are no missing corner cases (bearing in mind we deliberately put a CR at the end of the input to catch unterminated last lines) but a fresh look would be good
+char *get_line(char **data_ptr, size_t *length_ptr) {
+    assert(data_ptr != 0);
+    assert(length_ptr != 0);
+    char *data = *data_ptr;
+    size_t length = *length_ptr;
+
+    if (length == 0) {
+        return 0;
+    }
+
+    // Find the end of the line.
+    char *eol = data;
+    while ((*eol != 0x0d) && (*eol != 0x0a)) {
+        ++eol; --length;
+    }
+    assert(length > 0);
+    *eol = '\0'; --length;
+
+    // Now skip any following line terminators. This way we can cope with CR,
+    // LF, LFCR or CRLF-terminated files; we will skip blank lines but that's
+    // OK.
+    char *next_line = eol + 1;
+    while ((length > 0) && ((*next_line == 0x0d) || (*next_line == 0x0a))) {
+        ++next_line; --length;
+    }
+    *data_ptr = next_line;
+    *length_ptr = length;
+    return data;
+}
+
+// Enter the BASIC program text at data - using arbitrary line terminators -
+// a line at a time so BASIC will tokenise it for us.
+// TODO: PERHAPS CHANGE "type" TO SOMETHING ELSE, BE CONSISTENT
+void type_basic_program(char *data, size_t length) {
+    fprintf(stderr, "SFTODOpQ\n");
+    execute_input_line("NEW\x0d"); // TODO: WE MAY WANT TO MAKE EIL() ADD THE \X0D
+    fprintf(stderr, "SFTODOQQ\n");
+
+    // Ensure that the last line of the data is terminated by a carriage
+    // return, taking advantage of the extra byte allocated by load_binary() to
+    // know this is safe.
+    data[length] = 0x0d;
+
+    for (char *line = 0; (line = get_line(&data, &length)) != 0; ) {
+        fprintf(stderr, "SFTODOLINE!%s!\n", line);
+    }
+
+
+    abort();
+}
+
 void load_basic(const char *filename) {
     // We load the file as binary data so we can take a look at it and decide
     // whether it's tokenised or text BASIC.
@@ -477,14 +532,11 @@ void load_basic(const char *filename) {
         check(length <= max_length, "Input is too large");
         memcpy(&mpu_memory[page], data, length);
         // Now execute "OLD" so BASIC recognises the program.
-        fprintf(stderr, "SFTODOYYY\n");
-        execute_input_line("PRINT 42\x0d"); // TODO!
-        fprintf(stderr, "SFTODOYYY2\n");
         execute_input_line("OLD\x0d");
-        execute_input_line("LIST\x0d"); // TODO!
+        free(data); // TODO: DO THIS ON OTHER PATH TOO
     } else {
-        fprintf(stderr, "SFTODO NOT TOKENISED\n");
-        abort();
+        type_basic_program(data, length);
+        free(data);
     }
 
 
@@ -589,5 +641,7 @@ void finished(void) {
 // TODO: Don't forget to install and test a BRKV handler - wouldn't surprise me if ABE could throw an error if progam is malford, and of course BASIC could (if only a "line too long" error)
 
 // TODO: Test with invalid input - we don't want to be hanging if we can avoid it
+
+// TODO: Formatting of error messages is very inconsistent, e.g. use of Error: prefix
 
 // vi: colorcolumn=80
