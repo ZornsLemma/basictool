@@ -450,4 +450,8 @@ void finished(void) {
     exit(EXIT_SUCCESS);
 }
 
+// TODO: Don't forget to install and test a BRKV handler - wouldn't surprise me if ABE could throw an error if progam is malford, and of course BASIC could (if only a "line too long" error)
+
+// TODO: Test with invalid input - we don't want to be hanging if we can avoid it
+
 // vi: colorcolumn=80
