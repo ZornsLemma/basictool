@@ -12,6 +12,8 @@ M6502_Memory mpu_memory;
 M6502_Callbacks mpu_callbacks;
 M6502 *mpu;
 
+extern const char *program_name; // TODO!
+
 #define ROM_SIZE (16 * 1024)
 uint8_t abe_roms[2][ROM_SIZE];
 
@@ -42,7 +44,7 @@ void check_alloc(void *p) {
 }
 
 void die_help(const char *message) {
-    printf("%s\nTry 'SFTODOEXENAME --help' for more information.\n", message);
+    printf("%s\nTry '%s --help' for more information.\n", message, program_name);
     exit(EXIT_FAILURE);
 }
 
@@ -416,3 +418,5 @@ void finished(void) {
     save_basic(filenames[1]);
     exit(EXIT_SUCCESS);
 }
+
+// vi: colorcolumn=80

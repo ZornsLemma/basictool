@@ -11,6 +11,8 @@ void make_service_call(void); // TODO!
 
 const char *filenames[2];
 
+const char *program_name = 0;
+
 static struct cag_option options[] = {
     { .identifier = 'h',
       .access_letters = "h",
@@ -33,14 +35,48 @@ struct {
     bool filter;
 } config = {0, false};
 
+// argv[0] will contain the program name, but if we're not being run from the
+// PATH it may contain a (potentially quite long) path prefix of some kind.
+// parse_program_name() makes a reasonably cross-platform stab at getting the
+// leafname.
+
+static const char *parse_program_name_internal(const char *name) {
+    if (name == 0) {
+        return "";
+    }
+    const char *final_slash     = strrchr(name, '/');
+    const char *final_backslash = strrchr(name, '\\');
+    if ((final_slash != 0) && (final_backslash != 0)) {
+        return (final_slash > final_backslash) ? (final_slash + 1) :
+                                                 (final_backslash + 1);
+    }
+    if (final_slash != 0) {
+        return final_slash + 1;
+    }
+    if (final_backslash != 0) {
+        return final_backslash + 1;
+    }
+    return name;
+}
+
+static const char *parse_program_name(const char *name) {
+    const char *program_name = parse_program_name_internal(name);
+    if (*program_name == '\0') {
+        return "SFTODODEFAULTEXENAME";
+    }
+    return program_name;
+}
+
 int main(int argc, char *argv[]) {
+    program_name = parse_program_name(argv[0]);
+
     cag_option_context context;
     cag_option_prepare(&context, options, CAG_ARRAY_SIZE(options), argc, argv);
     while (cag_option_fetch(&context)) {
         char identifier = cag_option_get(&context);
         switch (identifier) {
             case 'h':
-                printf("Usage: SFTODOEXENAME [OPTION]... [INPUTFILE] [OUTPUTFILE]\n");
+                printf("Usage: %s [OPTION]... [INPUTFILE] [OUTPUTFILE]\n", program_name);
                 printf("SFTODO DESCRIPTION.\n\n");
                 cag_option_print(options, CAG_ARRAY_SIZE(options), stdout);
                 return EXIT_SUCCESS;
