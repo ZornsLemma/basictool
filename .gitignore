@@ -1,4 +1,5 @@
 roms/*
 src/rom-*
 test/*
-abe-util
+basictool
+bintoinc

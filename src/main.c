@@ -22,6 +22,11 @@ static struct cag_option options[] = {
       .access_name = "help",
       .description = "show this help and exit" },
 
+    { .identifier = 'r',
+      .access_letters = 0,
+      .access_name = "roms",
+      .description = "show information about the ROMs used and exit" },
+
     { .identifier = 'v',
       .access_letters = "v",
       .access_name = "verbose",
@@ -83,10 +88,30 @@ int main(int argc, char *argv[]) {
                 printf("Usage: %s [OPTION]... [INPUTFILE] [OUTPUTFILE]\n", program_name);
                 printf("SFTODO DESCRIPTION.\n\n");
                 cag_option_print(options, CAG_ARRAY_SIZE(options), stdout);
+                printf(
+                        // TODO FORMATTING OF CODE
+"\n"
+"This program is really a specialised BBC Micro emulator which uses the BBC\n"
+"BASIC and Advanced BASIC Editor ROMs to operate on BBC BASIC programs. Use\n"
+"--roms to see more information about these ROMs.\n"
+);
                 // TODO: Show ROM versions? Or on a separate option? Partly
                 // depends whether ROM code is compiled in, if it's live-out
                 // don't want --help not working because ROMs can't be found.
                 return EXIT_SUCCESS;
+
+            case 'r':
+                printf(
+                        // TODO FORMATTING OF CODE
+"This program uses the BBC BASIC and Advanced BASIC Editor ROMs to operate on\n"
+"BBC BASIC programs. The ROM headers are as follows:\n"
+);
+// TODO SHOW ROM HEADERS
+                printf(
+"\nThe BASIC editor and utilities were originally published separately by\n"
+"Altra. The Advanced BASIC Editor ROMs used here are (C) Baildon Electronics.\n"
+);
+                        // TODO FORMATTING OF CODE
 
             case 'v':
                 ++config.verbose;
@@ -103,7 +128,7 @@ int main(int argc, char *argv[]) {
         }
     }
 
-    printf("config.verbose %d\n", config.verbose); // TODO: RESPECT THIS!
+    //printf("config.verbose %d\n", config.verbose); // TODO: RESPECT THIS!
     int filename_count = 0;
     const int max_filenames = CAG_ARRAY_SIZE(filenames);
     int i;
