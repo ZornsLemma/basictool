@@ -2,6 +2,10 @@ TODO: Actually write something!
 
 ## Credits
 
-lib6502.[ch] were originally written by Ian Piumarta. I wanted to use an actively maintained version, so those included in this project were taken from https://github.com/hoglet67/PiTubeClient.
+6502 emulation is performed using lib6502. This was originally written by Ian Piumarta, but the versions of lib6502.[ch] included here are taken from PiTubeDirect (https://github.com/hoglet67/PiTubeClient).
 
-cargs.[ch] from https://github.com/likle/cargs are used for cross-platform command-line argument parsing.
+Cross-platform command line parsing is performed using cargs (https://github.com/likle/cargs).
+
+TODO BASIC ROM
+
+TODO: INCLUDE THE TEXT (OR A MILDLY MORE READABLE VARIANT) FROM THE "--roms" HELP ABOUT BASIC EDITOR/UTILITIES (ALTRA, BAILDON)

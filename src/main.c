@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include "cargs.h"
+#include "data.h"
 
 #define VERSION "0.01"
 
@@ -75,6 +76,49 @@ static const char *parse_program_name(const char *name) {
     return program_name;
 }
 
+static int print_to_nul_and_pad(const uint8_t *data, int offset, int width) {
+    int c;
+    for (; (c = data[offset]) != '\0'; ++offset, --width) {
+        if ((c >= ' ') && (c <= '~')) {
+            putchar((char) c);
+        }
+    }
+    for (; width > 0; --width) {
+        putchar(' ');
+    }
+    return offset;
+}
+
+static void show_roms(void) {
+    const uint8_t *roms[] = {
+        rom_basic,
+        rom_editor_a
+    };
+
+    printf(
+            // TODO FORMATTING OF CODE
+"This program uses the BBC BASIC and Advanced BASIC Editor ROMs to operate on\n"
+"BBC BASIC programs. The ROM headers contain the following details:\n"
+);
+
+    for (int i = 0; i < CAG_ARRAY_SIZE(roms); ++i) {
+        printf("    ");
+        int version_offset = print_to_nul_and_pad(roms[i], 9, 30);
+        print_to_nul_and_pad(roms[i], version_offset, 10);
+        printf("(%02x) ", roms[i][8]); // binary version number
+        int copyright_offset = roms[i][7];
+        print_to_nul_and_pad(roms[i], copyright_offset + 1, 20);
+        putchar('\n');
+    }
+
+// TODO SHOW ROM HEADERS
+    printf(
+"\nThe BASIC editor and utilities were originally published separately by\n"
+"Altra. The Advanced BASIC Editor ROMs used here are (C) Baildon Electronics.\n"
+);
+            // TODO FORMATTING OF CODE
+}
+
 int main(int argc, char *argv[]) {
     program_name = parse_program_name(argv[0]);
 
@@ -101,17 +145,8 @@ int main(int argc, char *argv[]) {
                 return EXIT_SUCCESS;
 
             case 'r':
-                printf(
-                        // TODO FORMATTING OF CODE
-"This program uses the BBC BASIC and Advanced BASIC Editor ROMs to operate on\n"
-"BBC BASIC programs. The ROM headers are as follows:\n"
-);
-// TODO SHOW ROM HEADERS
-                printf(
-"\nThe BASIC editor and utilities were originally published separately by\n"
-"Altra. The Advanced BASIC Editor ROMs used here are (C) Baildon Electronics.\n"
-);
-                        // TODO FORMATTING OF CODE
+                show_roms();
+                return EXIT_SUCCESS;
 
             case 'v':
                 ++config.verbose;
