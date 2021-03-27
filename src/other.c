@@ -117,7 +117,7 @@ int callback_return_via_rts(M6502 *mpu) {
     mpu->registers->s += 2;
     uint16_t address = (high << 8) | low;
     address += 1;
-    fprintf(stderr, "SFTODOXXX %04x\n", address);
+    //fprintf(stderr, "SFTODOXXX %04x\n", address);
     return address;
 }
 
@@ -210,6 +210,16 @@ int callback_osbyte(M6502 *mpu, uint16_t address, uint8_t data) {
     }
 }
 
+int callback_osword_input_line(M6502 *mpu) {
+    // TODO: We must respect the maximum line length
+    uint16_t yx = (mpu->registers->y << 8) | mpu->registers->x;
+    uint16_t buffer = mpu_read_u16(yx);
+    strcpy(&mpu_memory[buffer], "REPEAT:PRINT \"Hello, world!\":UNTIL FALSE\x0d"); // TODO HACK
+    mpu->registers->y = strlen(&mpu_memory[buffer]) - 1; // TODO HACK
+    mpu_clear_carry(mpu); // input not terminated by Escape
+    return callback_return_via_rts(mpu);
+}
+
 int callback_osword_read_io_memory(M6502 *mpu) {
     // So we don't bypass any lib6502 callbacks, we do this access via a
     // dynamically generated code stub.
@@ -226,6 +236,8 @@ int callback_osword_read_io_memory(M6502 *mpu) {
 
 int callback_osword(M6502 *mpu, uint16_t address, uint8_t data) {
     switch (mpu->registers->a) {
+        case 0x00: // input line
+            return callback_osword_input_line(mpu);
         case 0x05: // read I/O processor memory
             return callback_osword_read_io_memory(mpu);
         default:
