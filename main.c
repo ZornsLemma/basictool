@@ -2,6 +2,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include "cargs.h"
 #include "lib6502.h"
 
 M6502_Registers mpu_registers;
@@ -30,7 +31,7 @@ const char *output_filename = 0;
 void check(bool b, const char *s) {
     if (!b) {
         fprintf(stderr, "%s\n", s);
-        exit(1);
+        exit(EXIT_FAILURE);
     }
 }
 
@@ -63,22 +64,22 @@ void callback_abort(const char *type, uint16_t address, uint8_t data) {
     fprintf(stderr, "Unexpected %s at address %04x, data %02x\n", 
             type, address, data);
     // No point doing this, externalise() hasn't been called: mpu_dump();
-    exit(1);
+    exit(EXIT_FAILURE);
 }
 
 int callback_abort_read(M6502 *mpu, uint16_t address, uint8_t data) {
     callback_abort("read", address, data);
-    exit(1); // prevent gcc warning
+    exit(EXIT_FAILURE); // prevent gcc warning
 }
 
 int callback_abort_write(M6502 *mpu, uint16_t address, uint8_t data) {
     callback_abort("write", address, data);
-    exit(1); // prevent gcc warning
+    exit(EXIT_FAILURE); // prevent gcc warning
 }
 
 int callback_abort_call(M6502 *mpu, uint16_t address, uint8_t data) {
     callback_abort("call", address, data);
-    exit(1); // prevent gcc warning
+    exit(EXIT_FAILURE); // prevent gcc warning
 }
 
 int callback_return_via_rts(M6502 *mpu) {
@@ -143,12 +144,12 @@ int callback_osbyte_read_vdu_variable(M6502 *mpu) {
     if (vdu_variables[i] == -1) {
         fprintf(stderr, "Unsupported VDU variable read: %02x\n", i);
         mpu_dump();
-        exit(1);
+        exit(EXIT_FAILURE);
     }
     if (vdu_variables[i + 1] == -1) {
         fprintf(stderr, "Unsupported VDU variable read: %02x\n", i + 1);
         mpu_dump();
-        exit(1);
+        exit(EXIT_FAILURE);
     }
     mpu->registers->x = vdu_variables[i];
     mpu->registers->y = vdu_variables[i + 1];
@@ -173,7 +174,7 @@ int callback_osbyte(M6502 *mpu, uint16_t address, uint8_t data) {
             fprintf(stderr, "Unsupported OSBYTE: A=%02x, X=%02x, Y=%02x\n",
                     mpu->registers->a, mpu->registers->x, mpu->registers->y);
             mpu_dump();
-            exit(1);
+            exit(EXIT_FAILURE);
     }
 }
 
@@ -389,10 +390,53 @@ void make_service_call(void) {
 
 void finished(void) {
     save_basic(output_filename);
-    exit(0);
+    exit(EXIT_SUCCESS);
 }
 
+static struct cag_option options[] = {
+    { .identifier = 'h',
+      .access_letters = "h",
+      .access_name = "help",
+      .description = "show this help and exit" },
+
+    { .identifier = 'v',
+      .access_letters = "v",
+      .access_name = "verbose",
+      .description = "increase verbosity (can be repeated)" },
+};
+
+struct {
+    int verbose;
+} config = {0};
+
 int main(int argc, char *argv[]) {
+    cag_option_context context;
+    cag_option_prepare(&context, options, CAG_ARRAY_SIZE(options), argc, argv);
+    while (cag_option_fetch(&context)) {
+        char identifier = cag_option_get(&context);
+        switch (identifier) {
+            case 'h':
+                printf("Usage: SFTODOEXENAME [OPTION]... [INPUTFILE] [OUTPUTFILE]\n");
+                printf("SFTODO DESCRIPTION.\n\n");
+                cag_option_print(options, CAG_ARRAY_SIZE(options), stdout);
+                return EXIT_SUCCESS;
+
+            case 'v':
+                ++config.verbose;
+                break;
+
+            default:
+                fprintf(stderr, "Unrecognised command line identifier: '%c'\n",
+                        identifier);
+                return EXIT_FAILURE;
+        }
+    }
+
+    printf("config.verbose %d\n", config.verbose);
+    for (int i = context.index; i < argc; ++i) {
+        printf("%d %s\n", i, argv[i]);
+    }
+
     // TODO: Super-crude!
     check(argc == 3, "No filename given!");
     init();
