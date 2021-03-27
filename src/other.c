@@ -16,6 +16,10 @@ extern const char *program_name; // TODO!
 
 #define ROM_SIZE (16 * 1024)
 uint8_t abe_roms[2][ROM_SIZE];
+// TODO: Support for HIBASIC might be nice (only for tokenising/detokenising;
+// ABE runs at &8000 so probably can't work with HIBASIC-sized programs), but
+// let's not worry about that yet.
+uint8_t basic_rom[ROM_SIZE];
 
 #define BASIC_LOMEM (0x0)
 #define BASIC_HEAP (0x2)
@@ -210,9 +214,13 @@ int callback_read_escape_flag(M6502 *mpu, uint16_t address, uint8_t data) {
 
 int callback_romsel_write(M6502 *mpu, uint16_t address, uint8_t data) {
     switch (data) {
+        // TODO: The bank numbers should be named constants
         case 0:
         case 1:
             memcpy(&mpu_memory[0x8000], abe_roms[data], ROM_SIZE);
+            break;
+        case 12: // same bank as on Master 128, but not really important
+            memcpy(&mpu_memory[0x8000], basic_rom, ROM_SIZE);
             break;
         default:
             check(false, "Invalid ROM bank selected");
@@ -343,6 +351,7 @@ void init(void) {
     // executable to avoid awkward "where to load them from" PATH-type issues.
     load_rom("roms/EDITORA100.rom", abe_roms[0]);
     load_rom("roms/EDITORB100.rom", abe_roms[1]);
+    load_rom("roms/basic4.rom", basic_rom);
 }
 
 void load_basic(const char *filename) {

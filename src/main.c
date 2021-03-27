@@ -82,6 +82,9 @@ int main(int argc, char *argv[]) {
                 printf("Usage: %s [OPTION]... [INPUTFILE] [OUTPUTFILE]\n", program_name);
                 printf("SFTODO DESCRIPTION.\n\n");
                 cag_option_print(options, CAG_ARRAY_SIZE(options), stdout);
+                // TODO: Show ROM versions? Or on a separate option? Partly
+                // depends whether ROM code is compiled in, if it's live-out
+                // don't want --help not working because ROMs can't be found.
                 return EXIT_SUCCESS;
 
             case 'v':
@@ -99,7 +102,7 @@ int main(int argc, char *argv[]) {
         }
     }
 
-    printf("config.verbose %d\n", config.verbose);
+    printf("config.verbose %d\n", config.verbose); // TODO: RESPECT THIS!
     int filename_count = 0;
     const int max_filenames = CAG_ARRAY_SIZE(filenames);
     int i;
@@ -120,7 +123,7 @@ int main(int argc, char *argv[]) {
     if ((filename_count == 0) && !config.filter) {
         die_help("Error: Please specify at least one filename or use --filter.");
     }
-    // TODO: If the output is binary we should probably also check an option (--filter again) and refuse to proceed if so. But *maybe* output being stdout will be used to choose a text output option.
+    // TODO: If the output is binary we should probably also check an option (--filter again?) and refuse to proceed if so. But *maybe* output being stdout will be used to choose a text output option.
 
     init();
     load_basic(filenames[0]);
