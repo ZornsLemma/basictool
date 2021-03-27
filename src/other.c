@@ -14,6 +14,8 @@ M6502_Memory mpu_memory;
 M6502_Callbacks mpu_callbacks;
 M6502 *mpu;
 
+const char *pending_osword_input_line = 0;
+
 // M6502_run() never returns, so we use this jmp_buf to return control when a
 // task has finished executing on the emulated CPU.
 jmp_buf mpu_env;
@@ -217,16 +219,25 @@ int callback_osbyte(M6502 *mpu, uint16_t address, uint8_t data) {
 }
 
 int callback_osword_input_line(M6502 *mpu) {
-    static int SFTODOHACK = 3;
-    --SFTODOHACK;
-    if (SFTODOHACK == 0) {
+    // If we don't have any input to provide to the emulated machine, stop
+    // emulating.
+    fprintf(stderr, "SFTODOXA2\n");
+    if (pending_osword_input_line == 0) {
+        fprintf(stderr, "SFTODOXA3\n");
         longjmp(mpu_env, 1);
     }
+    fprintf(stderr, "SFTODOXA\n%s\n", pending_osword_input_line);
     // TODO: We must respect the maximum line length
     uint16_t yx = (mpu->registers->y << 8) | mpu->registers->x;
     uint16_t buffer = mpu_read_u16(yx);
-    strcpy(&mpu_memory[buffer], "PRINT 42\x0d"); // TODO HACK
-    mpu->registers->y = strlen(&mpu_memory[buffer]) - 1; // TODO HACK
+    uint8_t buffer_size = mpu_memory[yx + 2];
+    size_t pending_length = strlen(pending_osword_input_line);
+    assert(pending_length != 0);
+    assert(pending_osword_input_line[pending_length - 1] == 0x0d);
+    check(pending_length <= buffer_size, "Line too long"); // TODO: PROPER ERROR ETC - BUT WE DO WANT TO TREAT THIS AS AN ERROR, NOT TRUNCATE - WE MAY ULTIMATELY WANT TO BE GIVING A LINE NUMBER FROM INPUT IF WE'RE TOKENISING BASIC VIA THIS
+    // TODO: Check/assert the last byte is 0xd?
+    memcpy(&mpu_memory[buffer], pending_osword_input_line, pending_length);
+    mpu->registers->y = pending_length - 1; // TODO HACK
     mpu_clear_carry(mpu); // input not terminated by Escape
     return callback_return_via_rts(mpu);
 }
@@ -434,6 +445,15 @@ char *load_binary(const char *filename, size_t *length) {
     return check_alloc(realloc(data, *length));
 }
 
+// TODO: MOVE
+void execute_input_line(const char *line) {
+    assert(pending_osword_input_line == 0);
+    pending_osword_input_line = line;
+    if (setjmp(mpu_env) == 0) {
+        M6502_run(mpu, callback_poll); // never returns
+    }
+}
+
 void load_basic(const char *filename) {
     // We load the file as binary data so we can take a look at it and decide
     // whether it's tokenised or text BASIC.
@@ -443,8 +463,22 @@ void load_basic(const char *filename) {
     // tokenised BASIC program (which is all we care about here) will end with
     // <cr><ff>.
     bool tokenised = ((length >= 2) && (data[length - 2] == '\x0d') && (data[length - 1] == '\xff'));
-    fprintf(stderr, "SFTODO TOKENISED %d\n", tokenised);
-    abort();
+    // TODO: Print "tokenised" at suitably high verbosity level
+
+    if (tokenised) {
+        // Copy the data directly into the emulated machine's memory.
+        size_t max_length = himem - page - 512; // arbitrary safety margin
+        check(length <= max_length, "Input is too large");
+        memcpy(&mpu_memory[page], data, length);
+        // Now execute "OLD" so BASIC recognises the program.
+        fprintf(stderr, "SFTODOYYY\n");
+        execute_input_line("PRINT 42\x0d"); // TODO!
+        fprintf(stderr, "SFTODOYYY2\n");
+        execute_input_line("OLD\x0d");
+    } else {
+        fprintf(stderr, "SFTODO NOT TOKENISED\n");
+        abort();
+    }
 
 
 

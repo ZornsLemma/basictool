@@ -197,9 +197,9 @@ int main(int argc, char *argv[]) {
     // TODO: If the output is binary we should probably also check an option (--filter again?) and refuse to proceed if so. But *maybe* output being stdout will be used to choose a text output option.
 
     init(); // TODO: RENAME AS IT'S MAINLY/ALL M6502 INIT
+    enter_basic(); // TODO: RENAME START_BASIC()
     load_basic(filenames[0]);
 
-    enter_basic(); // TODO: RENAME START_BASIC()
 
 
 
