@@ -16,6 +16,11 @@ M6502 *mpu;
 
 const char *pending_osword_input_line = 0;
 
+// TODO: Ideally we would include this in *any* error message if it's not -1,
+// but it may be OK if it's a lot cleaner/easier to just do it in carefully
+// selected places.
+int error_line_number = -1;
+
 // TODO: This probably needs expanding etc, I'm hacking right now
 enum {
     SFTODOIDLE,
@@ -447,12 +452,10 @@ void execute_input_line(const char *line) {
     uint16_t buffer = mpu_read_u16(yx);
     uint8_t buffer_size = mpu_memory[yx + 2];
     size_t pending_length = strlen(line);
-    assert(pending_length != 0);
-    assert(line[pending_length - 1] == 0x0d);
-    check(pending_length <= buffer_size, "Line too long"); // TODO: PROPER ERROR ETC - BUT WE DO WANT TO TREAT THIS AS AN ERROR, NOT TRUNCATE - WE MAY ULTIMATELY WANT TO BE GIVING A LINE NUMBER FROM INPUT IF WE'RE TOKENISING BASIC VIA THIS
-    // TODO: Check/assert the last byte is 0xd?
+    check(pending_length < buffer_size, "Line too long"); // TODO: PROPER ERROR ETC - BUT WE DO WANT TO TREAT THIS AS AN ERROR, NOT TRUNCATE - WE MAY ULTIMATELY WANT TO BE GIVING A LINE NUMBER FROM INPUT IF WE'RE TOKENISING BASIC VIA THIS
     memcpy(&mpu_memory[buffer], line, pending_length);
-    mpu->registers->y = pending_length - 1; // TODO HACK
+    mpu_memory[buffer + pending_length] = 0xd;
+    mpu->registers->y = pending_length; // TODO HACK
     mpu_clear_carry(mpu); // input not terminated by Escape
     mpu->registers->pc = callback_return_via_rts(mpu);
     fprintf(stderr, "SFTODOZX0\n");
@@ -480,14 +483,18 @@ char *get_line(char **data_ptr, size_t *length_ptr) {
         ++eol; --length;
     }
     assert(length > 0);
+    char terminator = *eol;
     *eol = '\0'; --length;
 
-    // Now skip any following line terminators. This way we can cope with CR,
-    // LF, LFCR or CRLF-terminated files; we will skip blank lines but that's
-    // OK.
-    char *next_line = eol + 1;
-    while ((length > 0) && ((*next_line == 0x0d) || (*next_line == 0x0a))) {
-        ++next_line; --length;
+    // If there is a next character and it's the opposite terminator, skip it.
+    // This allows us to handle CR, LF, LFCR or CRLF-terminated lines.
+    char *next_line = eol;
+    if (length > 0) {
+        ++next_line;
+        const char opposite_terminator = (terminator == 0x0d) ? 0x0a: 0x0d;
+        if (*next_line == opposite_terminator) {
+            ++next_line; --length;
+        }
     }
     *data_ptr = next_line;
     *length_ptr = length;
@@ -499,7 +506,7 @@ char *get_line(char **data_ptr, size_t *length_ptr) {
 // TODO: PERHAPS CHANGE "type" TO SOMETHING ELSE, BE CONSISTENT
 void type_basic_program(char *data, size_t length) {
     fprintf(stderr, "SFTODOpQ\n");
-    execute_input_line("NEW\x0d"); // TODO: WE MAY WANT TO MAKE EIL() ADD THE \X0D
+    execute_input_line("NEW");
     fprintf(stderr, "SFTODOQQ\n");
 
     // Ensure that the last line of the data is terminated by a carriage
@@ -507,9 +514,40 @@ void type_basic_program(char *data, size_t length) {
     // know this is safe.
     data[length] = 0x0d;
 
-    for (char *line = 0; (line = get_line(&data, &length)) != 0; ) {
-        fprintf(stderr, "SFTODOLINE!%s!\n", line);
+    // We start our BASIC line numbering at 1, but allow line numbers in the
+    // text file to override the automatic line number providing they aren't
+    // lower than it.
+    // TODO: ARE WE GOING TO (OPTIONALLY?) STRIP LEADING AND TRAILING SPACES?
+    int basic_line_number = 1;
+    int file_line_number = 1;
+    for (char *line = 0; (line = get_line(&data, &length)) != 0; ++file_line_number) {
+        error_line_number = file_line_number;
+        // TODO: SHOULD (OPTIONALLY) STRIP TRAILING SPACES AT THIS POINT (MODIFY LINE IN PLACE)
+        size_t leading_space_length = strspn(line, " \t");
+        char *line_number_start = line + leading_space_length;
+        size_t line_number_length = strspn(line_number_start, "0123456789");
+        if (line_number_length > 0) {
+            const int buffer_size = 10; // TODO: DUPLICATION OF NAMES WITH OUTER SCOPE
+            char buffer[buffer_size];
+            check(line_number_length < buffer_size, "Line number too big");
+            memcpy(buffer, line_number_start, line_number_length);
+            buffer[line_number_length] = '\0';
+            int user_line_number = atoi(buffer);
+            check(user_line_number >= basic_line_number, "Line number too low");
+            basic_line_number = user_line_number;
+            line = line_number_start + line_number_length;
+        }
+        // TODO: SHOULD (OPTIONALLY) STRIP LEADING SPACES - ADJUST LINE
+        const int buffer_size = 256;
+        char buffer[buffer_size];
+        check(snprintf(buffer, buffer_size, "%d%s", basic_line_number, line) < buffer_size, "Line too long");
+        fprintf(stderr, "SFTODOLINE!%s!\n", buffer);
+        ++basic_line_number;
+
+
+        // fprintf(stderr, "SFTODOLINE!%s!\n", line);
     }
+    error_line_number = -1;
 
 
     abort();
@@ -532,11 +570,12 @@ void load_basic(const char *filename) {
         check(length <= max_length, "Input is too large");
         memcpy(&mpu_memory[page], data, length);
         // Now execute "OLD" so BASIC recognises the program.
-        execute_input_line("OLD\x0d");
-        free(data); // TODO: DO THIS ON OTHER PATH TOO
+        execute_input_line("OLD");
+        free(data);
     } else {
         type_basic_program(data, length);
         free(data);
+        execute_input_line("LIST"); // TODO TEMp
     }
 
 
@@ -627,7 +666,7 @@ void enter_basic(void) {
     *p++ = 0x4c; *p++ = 0x00; *p++ = 0x80; // JMP &8000 (language entry)
 
     mpu_registers.s  = 0xff;
-    mpu_registers.pc = code_address; // TODO: why magic +1?
+    mpu_registers.pc = code_address;
     if (setjmp(mpu_env) == 0) {
         M6502_run(mpu, callback_poll); // never returns
     }
@@ -643,5 +682,9 @@ void finished(void) {
 // TODO: Test with invalid input - we don't want to be hanging if we can avoid it
 
 // TODO: Formatting of error messages is very inconsistent, e.g. use of Error: prefix
+
+// TODO: Should create a test suite, which should include input text files with different line terminators and unterminated last lines
+
+// TODO: Should probably test under something like valgrind
 
 // vi: colorcolumn=80
