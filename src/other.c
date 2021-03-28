@@ -22,6 +22,7 @@ const char *pending_osword_input_line = 0;
 
 char *pending_output = 0;
 size_t pending_output_length = 0;
+size_t pending_output_cursor_x = 0;
 size_t pending_output_buffer_size = 0;
 
 // TODO: Ideally we would include this in *any* error message if it's not -1,
@@ -177,6 +178,10 @@ int callback_osrdch(M6502 *mpu, uint16_t address, uint8_t data) {
 // TODO: Output should ultimately be gated via a -v option, perhaps with some
 // sort of (optional but default) filtering to tidy it up
 
+int max(int lhs, int rhs) {
+    return (lhs > rhs) ? lhs : rhs;
+}
+
 void pending_output_insert(uint8_t data) {
     // We just discard NULs in the output; they aren't important for anything
     // we are emulating here.
@@ -186,9 +191,13 @@ void pending_output_insert(uint8_t data) {
 
     // SFTODO EXPERIMENTAL HACK
     if (data == 13) {
+        pending_output_cursor_x = 0;
+        return;
+    }
+    if (data == 10) {
         fprintf(stderr, "SFTODOJJ2!%s!\n", pending_output);
-        pending_output_length = 0;
-        pending_output[0] = '\0';
+        pending_output_length = pending_output_cursor_x = 0;
+        return;
     }
 
     if (data == 127) {
@@ -196,7 +205,7 @@ void pending_output_insert(uint8_t data) {
         abort(); // SFTODO TEMP HACK
     }
 
-    if ((pending_output_length + 2) > pending_output_buffer_size) {
+    if ((pending_output_cursor_x + 2) > pending_output_buffer_size) {
         if (pending_output_buffer_size == 0) {
             pending_output_buffer_size = 4; // TODO: make 64 or 128 or something
         } else {
@@ -205,28 +214,33 @@ void pending_output_insert(uint8_t data) {
         pending_output = check_alloc(realloc(pending_output, pending_output_buffer_size));
     }
 
-    pending_output[pending_output_length] = data;
-    pending_output[pending_output_length + 1] = '\0';
-    pending_output_length += 1;
+    pending_output[pending_output_cursor_x] = data;
+    pending_output[max(pending_output_cursor_x, pending_output_length) + 1] = '\0';
+    pending_output_cursor_x += 1;
+    pending_output_length = max(pending_output_cursor_x, pending_output_length);
     assert(strlen(pending_output) == pending_output_length);
 }
 
 int callback_oswrch(M6502 *mpu, uint16_t address, uint8_t data) {
     int c = mpu->registers->a;
     pending_output_insert(c);
+#if 0 // TODO
     if (c == 0xa) {
         putchar('\n');
     } else if ((c >= ' ') && (c <= '~')) {
         putchar(c);
         //putchar('\n'); // SFTODO TEMP HACK
     }
+#endif
     return callback_return_via_rts(mpu);
 }
 
 int callback_osnewl(M6502 *mpu, uint16_t address, uint8_t data) {
     pending_output_insert(0xa);
     pending_output_insert(0xd);
+#if 0 // TODO
     putchar('\n');
+#endif
     return callback_return_via_rts(mpu);
 }
 
@@ -593,6 +607,14 @@ void execute_input_line(const char *line) {
     size_t pending_length = strlen(line);
     check(pending_length < buffer_size, "Line too long"); // TODO: PROPER ERROR ETC - BUT WE DO WANT TO TREAT THIS AS AN ERROR, NOT TRUNCATE - WE MAY ULTIMATELY WANT TO BE GIVING A LINE NUMBER FROM INPUT IF WE'RE TOKENISING BASIC VIA THIS
     memcpy(&mpu_memory[buffer], line, pending_length);
+
+    // OSWORD 0 would echo the typed characters and move to a new line, so do
+    // the same with our pending output.
+    for (int i = 0; i < pending_length; ++i) {
+        pending_output_insert(line[i]);
+    }
+    pending_output_insert(0xa); pending_output_insert(0xd);
+
     mpu_memory[buffer + pending_length] = 0xd;
     mpu->registers->y = pending_length; // TODO HACK
     mpu_clear_carry(mpu); // input not terminated by Escape
