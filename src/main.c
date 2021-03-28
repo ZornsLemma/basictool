@@ -254,11 +254,6 @@ int main(int argc, char *argv[]) {
         if (strcmp(filename, "-") == 0) {
             filename = 0;
         }
-        // TODO: At the moment, if there's an option after non-option arguments
-        // the non-option arguments can be permuted inconsistently. I can't
-        // accept this in the long run, but I've raised an issue with cargs
-        // upstream so let's see what happens before taking any steps to fix
-        // this myself or adjust my command line structure to work round it.
         filenames[filename_count] = filename;
         fprintf(stderr, "SFTODOFILE %i %s\n", filename_count, filename);
     }
