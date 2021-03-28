@@ -27,6 +27,7 @@ enum {
     os_discard_pack_concatenate,
     os_pack
 } output_state;
+FILE *output_state_file = 0; // TODO: RENAME? REMOVE "STATE"?
 
 char *pending_output = 0;
 size_t pending_output_length = 0;
@@ -220,8 +221,8 @@ void complete_output_line_handler(const char *line) {
             break;
 
         case os_list:
-            // TODO: This needs to go to file or screen as appropriate
-            fprintf(stderr, "SFTODOLIST!%s!\n", line);
+            assert(output_state_file != 0);
+            fprintf(output_state_file, "%s\n", line);
             break;
 
         case os_discard_pack_concatenate:
@@ -869,9 +870,9 @@ void save_ascii_basic(const char *filename) {
     // about how my OSWRCH etc emulation works. Let's just do a LIST so I can
     // see the output on screen for now.
     assert(output_state == os_discard);
-    output_state = os_discard_list_command;
+    output_state = os_discard_list_command; output_state_file = file;
     execute_input_line("LIST");
-    output_state = os_discard;
+    output_state = os_discard; output_state_file = 0;
     check(fclose(file) == 0, "Error closing output");
 }
 
