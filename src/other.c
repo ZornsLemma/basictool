@@ -23,7 +23,9 @@ const char *pending_osword_input_line = 0;
 enum {
     os_discard,
     os_discard_list_command,
-    os_list
+    os_list,
+    os_discard_pack_concatenate,
+    os_pack
 } output_state;
 
 char *pending_output = 0;
@@ -199,13 +201,23 @@ void complete_output_line_handler(const char *line) {
             break;
 
         case os_discard_list_command:
-            assert(strcmp(line, ">LIST") == 0);
+            check_pending_output(">LIST");
             output_state = os_list;
             break;
 
         case os_list:
             // TODO: This needs to go to file or screen as appropriate
             fprintf(stderr, "SFTODOLIST!%s!\n", line);
+            break;
+
+        case os_discard_pack_concatenate:
+            check_pending_output("Concatenate?");
+            output_state = os_pack;
+            break;
+
+        case os_pack:
+            // TODO: This needs to respect verbosity
+            fprintf(stderr, "SFTODOPACK!%s!\n", line);
             break;
 
         default:
@@ -855,16 +867,18 @@ void save_ascii_basic(const char *filename) {
 void pack(void) {
     execute_input_line("*BUTIL");
     fprintf(stderr, "SFTODOLLL\n");
-    check_pending_output("Ready:");
-    execute_osrdch("P"); // Pack
+    check_pending_output("Ready:"); execute_osrdch("P"); // pack
     check_pending_output("REMs?"); execute_osrdch("Y");
     check_pending_output("Spaces?"); execute_osrdch("Y");
     check_pending_output("Comments?"); execute_osrdch("Y");
     check_pending_output("Variables?"); execute_osrdch("Y");
     check_pending_output("Use unused singles?"); execute_osrdch("Y");
-    check_pending_output("Concatenate?"); execute_osrdch("Y");
-    // TODO: We probably need to detect errors by looking at the output and terminate with an error instead of pressing "Q" blindly.
-    execute_osrdch("Q"); // Quit
+    check_pending_output("Concatenate?");
+    assert(output_state == os_discard);
+    output_state = os_pack;
+    execute_osrdch("Y"); // concatenate
+    check_pending_output("Ready:"); execute_osrdch("Q"); // quit
+    output_state = os_discard;
     execute_input_line("OLD"); // TODO: Because ABE's *FX138 calls are treated as no-op
     fprintf(stderr, "SFTODOHHH\n");
 }
