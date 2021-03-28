@@ -253,6 +253,15 @@ void pending_output_insert(uint8_t data) {
     assert(strlen(pending_output) == pending_output_length);
 }
 
+void check_pending_output(const char *s) {
+    if (strstr(pending_output, s) != 0) {
+        return;
+    }
+    // TODO: We need something which can sanitise control codes when printing pending_output
+    fprintf(stderr, "Error: expected to see '%s', got '%s'\n", s, pending_output);
+    exit(EXIT_FAILURE);
+}
+
 int callback_oswrch(M6502 *mpu, uint16_t address, uint8_t data) {
     int c = mpu->registers->a;
     pending_output_insert(c);
@@ -846,13 +855,14 @@ void save_ascii_basic(const char *filename) {
 void pack(void) {
     execute_input_line("*BUTIL");
     fprintf(stderr, "SFTODOLLL\n");
+    check_pending_output("Ready:");
     execute_osrdch("P"); // Pack
-    execute_osrdch("Y"); // REMs?
-    execute_osrdch("Y"); // Spaces?
-    execute_osrdch("Y"); // Comments?
-    execute_osrdch("Y"); // Variables?
-    execute_osrdch("Y"); // Use unused singles?
-    execute_osrdch("Y"); // Concatenate?
+    check_pending_output("REMs?"); execute_osrdch("Y");
+    check_pending_output("Spaces?"); execute_osrdch("Y");
+    check_pending_output("Comments?"); execute_osrdch("Y");
+    check_pending_output("Variables?"); execute_osrdch("Y");
+    check_pending_output("Use unused singles?"); execute_osrdch("Y");
+    check_pending_output("Concatenate?"); execute_osrdch("Y");
     // TODO: We probably need to detect errors by looking at the output and terminate with an error instead of pressing "Q" blindly.
     execute_osrdch("Q"); // Quit
     execute_input_line("OLD"); // TODO: Because ABE's *FX138 calls are treated as no-op
