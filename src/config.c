@@ -5,4 +5,5 @@ struct s_config config = {
     false,  // filter
     true,   // strip leading spaces
     true,   // strip trailing spaces
+    false,  // pack
 };

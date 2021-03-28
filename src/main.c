@@ -13,6 +13,7 @@ void load_basic(const char *filename); // TODO!
 void init(void); // TODO!
 void make_service_call(void); // TODO!
 void enter_basic(void); // TODO!
+void pack(void); // TODO!
 
 const char *filenames[2];
 
@@ -48,6 +49,13 @@ static struct cag_option options[] = {
       .access_letters = 0,
       .access_name = "keep-trailing-spaces",
       .description = "don't strip trailing spaces from non-tokenised BASIC" },
+
+    { .identifier = 'p',
+      .access_letters = "p",
+      .access_name = "pack",
+      .description = "pack the program to reduce its size" },
+
+    // TODO: Options to override default Y for pack options
 };
 
 // argv[0] will contain the program name, but if we're not being run from the
@@ -77,7 +85,7 @@ static const char *parse_program_name_internal(const char *name) {
 static const char *parse_program_name(const char *name) {
     const char *program_name = parse_program_name_internal(name);
     if (*program_name == '\0') {
-        return "SFTODODEFAULTEXENAME";
+        return "basictool";
     }
     return program_name;
 }
@@ -179,6 +187,10 @@ int main(int argc, char *argv[]) {
             case 't':
                 config.strip_trailing_spaces = false;
                 break;
+            
+            case 'p':
+                config.pack = true;
+                break;
 
             default:
                 fprintf(stderr, "Unrecognised command line identifier: '%c'\n",
@@ -213,6 +225,9 @@ int main(int argc, char *argv[]) {
     init(); // TODO: RENAME AS IT'S MAINLY/ALL M6502 INIT
     enter_basic(); // TODO: RENAME START_BASIC()
     load_basic(filenames[0]);
+    if (config.pack) {
+        pack();
+    }
 
 
 

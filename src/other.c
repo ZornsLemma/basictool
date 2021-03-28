@@ -142,6 +142,7 @@ int callback_return_via_rts(M6502 *mpu) {
 }
 
 int callback_osrdch(M6502 *mpu, uint16_t address, uint8_t data) {
+    fprintf(stderr, "SFTODOSSA\n");
     if (*osrdch_queue != '\0') {
         mpu->registers->a = *osrdch_queue;
         ++osrdch_queue;
@@ -228,6 +229,47 @@ int callback_osbyte(M6502 *mpu, uint16_t address, uint8_t data) {
             mpu_dump();
             exit(EXIT_FAILURE);
     }
+}
+
+int callback_oscli(M6502 *mpu, uint16_t address, uint8_t data) {
+    uint16_t yx = (mpu_registers.y << 8) | mpu_registers.x;
+    mpu_memory[0xf2] = mpu_registers.x;
+    mpu_memory[0xf3] = mpu_registers.y;
+
+    mpu_registers.a = 4; // unrecognised * command
+    mpu_registers.x = 1; // current ROM bank TODO: MAGIC HACK, WE KNOW ABE IS BANKS 0 AND 1 AND THEY ARE THE ONLY BANKS WE NEED TO PASS SERVICE CALLS TO - IDEALLy WE'D RUN OVER ALL ROMS, THO BASIC HAS NO SERVICE ENTRY OF COURSE
+    mpu_registers.y = 0; // command tail offset
+
+    // TODO: It would be possible to write all this in assembler and have it
+    // pre-built into a "mini OS" which we load at 0xc000 or 0xf000 or something.
+    // However, we'd then need an assembler as part of the build process. We
+    // could hand-assemble it like this, but do it once on startup, but then
+    // we'd have to write more code (e.g. this "*" skipped loop) in hand-
+    // assembled code, which would be painful.
+
+    // Skip leading "*" on the command; this is essential to have it recognised
+    // properly (as that's what the real OS does).
+    while (mpu_memory[yx + mpu_registers.y] == '*') {
+        ++mpu_registers.y;
+        check(mpu_registers.y <= 255, "Too many * on OSCLI"); // unlikely!
+    }
+
+    // TODO: If the * command is not recognised, this will just return to the
+    // caller. This is probably not a big deal in this restricted environment,
+    // but think about it - it might be less confusing if we generate an error.
+    const uint16_t code_address = 0x900;
+    uint8_t *p = &mpu_memory[code_address];
+                                           // .loop
+    *p++ = 0x86; *p++ = 0xf4;              // STX &F4
+    *p++ = 0x8e; *p++ = 0x30; *p++ = 0xfe; // STX &FE30
+    *p++ = 0x20; *p++ = 0x03; *p++ = 0x80; // JSR &8003 (service entry)
+    *p++ = 0xa6; *p++ = 0xf4;              // LDX &F4
+    *p++ = 0xca;                           // DEX
+    *p++ = 0x10; *p++ = 256 - 13;          // BPL loop
+    *p++ = 0x60;                           // RTS
+    
+    fprintf(stderr, "SFTODO999\n");
+    return code_address;
 }
 
 int callback_osword_input_line(M6502 *mpu) {
@@ -401,6 +443,7 @@ void init(void) {
     M6502_setCallback(mpu, call, 0xffee, callback_oswrch);
     M6502_setCallback(mpu, call, 0xfff1, callback_osword);
     M6502_setCallback(mpu, call, 0xfff4, callback_osbyte);
+    M6502_setCallback(mpu, call, 0xfff7, callback_oscli);
 
     // Install fake OS vectors. Because of the way our implementation works,
     // these vectors actually point to the official entry points.
@@ -633,40 +676,9 @@ void save_basic(const char *filename) {
     fclose(file);
 }
 
-void make_service_call(void) {
-    const uint16_t command_address = 0xa00;
-    strcpy((char *) &mpu_memory[command_address], "BUTIL\x0d");
-    mpu_memory[0xf2] = command_address & 0xff;
-    mpu_memory[0xf3] = (command_address >> 8) & 0xff;
-
-    mpu_registers.a = 4; // unrecognised * command
-    mpu_registers.x = 1; // current ROM bank
-    mpu_registers.y = 0; // command tail offset
-
-    const uint16_t code_address = 0x900;
-    uint8_t *p = &mpu_memory[code_address];
-                                           // .loop
-    *p++ = 0x86; *p++ = 0xf4;              // STX &F4
-    *p++ = 0x8e; *p++ = 0x30; *p++ = 0xfe; // STX &FE30
-    *p++ = 0x20; *p++ = 0x03; *p++ = 0x80; // JSR &8003 (service entry)
-    *p++ = 0xa6; *p++ = 0xf4;              // LDX &F4
-    *p++ = 0xca;                           // DEX
-    *p++ = 0x10; *p++ = 256 - 13;          // BPL loop
-    *p++ = 0x00;                           // BRK
-
-    mpu_registers.s  = 0xff;
-    mpu_registers.pc = code_address;
-#if 1 // TODO TEMP DEBUG
-    char buffer[100];
-    M6502_dump(mpu, buffer);
-    fprintf(stderr, "%s\n", buffer);
-    uint16_t addr = 0x900;
-    for (int i = 16; i > 0; --i) {
-    addr += M6502_disassemble(mpu, addr, buffer);
-    fprintf(stderr, "%s\n", buffer);
-    }
-#endif
-    M6502_run(mpu, callback_poll); // never returns
+void pack(void) {
+    execute_input_line("*BUTIL");
+    abort();
 }
 
 void enter_basic(void) {

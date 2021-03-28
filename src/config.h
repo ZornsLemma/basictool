@@ -8,6 +8,7 @@ struct s_config {
     bool filter;
     bool strip_leading_spaces;
     bool strip_trailing_spaces;
+    bool pack;
 };
 
 extern struct s_config config;
