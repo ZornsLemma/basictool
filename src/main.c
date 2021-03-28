@@ -216,7 +216,9 @@ int main(int argc, char *argv[]) {
     }
     // Don't just sit waiting for input on stdin and writing to stdout if we're
     // invoked with no filenames, unless the user explicitly says this is what
-    // they want by specifying --filter.
+    // they want by specifying --filter. TODO: If the user specifies filename
+    // "-" this check is bypassed, so maybe we don't need --filter? The message
+    // given here could say to use filename "-" to allow this.
     if ((filename_count == 0) && !config.filter) {
         die_help("Error: Please specify at least one filename or use --filter.");
     }
