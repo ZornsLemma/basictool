@@ -23,9 +23,13 @@ const char *pending_osword_input_line = 0;
 int error_line_number = -1;
 
 // TODO: This probably needs expanding etc, I'm hacking right now
+// TODO: Should probably not check this via assert(), it *shouldn't* go wrong
+// if there are no program bugs, but it is quite likely some strange situations
+// can occur if given invalid user input and ABE or BASIC does something I am not expecting in response.
 enum {
-    SFTODOIDLE,
+    SFTODOIDLE, // SFTODO: NOT "IDLE", RENAME THIS
     osword_input_line_pending,
+    osrdch_pending,
 } state = SFTODOIDLE; // SFTODO: 'state' IS TOO SHORT A NAME
 
 // M6502_run() never returns, so we use this jmp_buf to return control when a
@@ -143,15 +147,8 @@ int callback_return_via_rts(M6502 *mpu) {
 
 int callback_osrdch(M6502 *mpu, uint16_t address, uint8_t data) {
     fprintf(stderr, "SFTODOSSA\n");
-    if (*osrdch_queue != '\0') {
-        mpu->registers->a = *osrdch_queue;
-        ++osrdch_queue;
-        mpu_clear_carry(mpu);
-        return callback_return_via_rts(mpu);
-    } else {
-        finished(); // not expected to return
-        abort();
-    }
+    state = osrdch_pending;
+    longjmp(mpu_env, 1);
 }
 
 // TODO: Output should ultimately be gated via a -v option, perhaps with some
@@ -273,8 +270,6 @@ int callback_oscli(M6502 *mpu, uint16_t address, uint8_t data) {
 }
 
 int callback_osword_input_line(M6502 *mpu) {
-    // If we don't have any input to provide to the emulated machine, stop
-    // emulating.
     fprintf(stderr, "SFTODOXA2\n");
     state = osword_input_line_pending;
     longjmp(mpu_env, 1);
@@ -488,6 +483,26 @@ char *load_binary(const char *filename, size_t *length) {
 }
 
 // TODO: MOVE
+// TODO: RENAME
+void execute_osrdch(const char *s) {
+    assert(strlen(s) == 1);
+    assert(state == osrdch_pending);
+    char c = s[0];
+    mpu->registers->a = c;
+    mpu_clear_carry(mpu); // no error
+    // TODO: Following code fragment may be common to OSWORD 0 and can be factored out
+    mpu->registers->pc = callback_return_via_rts(mpu);
+    fprintf(stderr, "SFTODOZX022 %d\n", c);
+    // SFTODO: WE SHOULD PROBABLY ALWAYS SET STATE TO SOMETHING WHEN WE DO M6502_RUN
+    if (setjmp(mpu_env) == 0) {
+        fprintf(stderr, "SFTODORUN\n");
+        state = SFTODOIDLE;
+        M6502_run(mpu, callback_poll); // never returns
+    }
+    fprintf(stderr, "SFTODOZXA22\n");
+} 
+
+// TODO: MOVE
 void execute_input_line(const char *line) {
     assert(state == osword_input_line_pending);
     fprintf(stderr, "SFTODOXA\n");
@@ -504,6 +519,7 @@ void execute_input_line(const char *line) {
     mpu->registers->pc = callback_return_via_rts(mpu);
     fprintf(stderr, "SFTODOZX0\n");
     if (setjmp(mpu_env) == 0) {
+        state = SFTODOIDLE;
         M6502_run(mpu, callback_poll); // never returns
     }
     fprintf(stderr, "SFTODOZXA\n");
@@ -678,6 +694,15 @@ void save_basic(const char *filename) {
 
 void pack(void) {
     execute_input_line("*BUTIL");
+    fprintf(stderr, "SFTODOLLL\n");
+    execute_osrdch("P"); // Pack
+    execute_osrdch("Y"); // REMs?
+    execute_osrdch("Y"); // Spaces?
+    execute_osrdch("Y"); // Comments?
+    execute_osrdch("Y"); // Variables?
+    execute_osrdch("Y"); // Use unused singles?
+    execute_osrdch("Y"); // Concatenate?
+    fprintf(stderr, "SFTODOHHH\n");
     abort();
 }
 
