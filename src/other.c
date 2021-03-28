@@ -179,7 +179,7 @@ int callback_return_via_rts(M6502 *mpu) {
 }
 
 int callback_osrdch(M6502 *mpu, uint16_t address, uint8_t data) {
-    fprintf(stderr, "SFTODOSSA\n");
+    //fprintf(stderr, "SFTODOSSA\n");
     state = osrdch_pending;
     longjmp(mpu_env, 1);
 }
@@ -263,11 +263,6 @@ void pending_output_insert(uint8_t data) {
         pending_output_length = pending_output_cursor_x = 0;
         pending_output[0] = '\0';
         return;
-    }
-
-    if (data == 127) {
-        fprintf(stderr, "SFTODOJJ1!%s!\n", pending_output);
-        abort(); // SFTODO TEMP HACK
     }
 
     if ((pending_output_cursor_x + 2) > pending_output_buffer_size) {
@@ -380,7 +375,7 @@ int callback_oscli(M6502 *mpu, uint16_t address, uint8_t data) {
     uint16_t yx = (mpu_registers.y << 8) | mpu_registers.x;
     mpu_memory[0xf2] = mpu_registers.x;
     mpu_memory[0xf3] = mpu_registers.y;
-    fprintf(stderr, "SFTODOXCC %c%c%c\n", mpu_memory[yx], mpu_memory[yx+1], mpu_memory[yx+2]);
+    //fprintf(stderr, "SFTODOXCC %c%c%c\n", mpu_memory[yx], mpu_memory[yx+1], mpu_memory[yx+2]);
 
     mpu_registers.a = 4; // unrecognised * command
     mpu_registers.x = 1; // current ROM bank TODO: MAGIC HACK, WE KNOW ABE IS BANKS 0 AND 1 AND THEY ARE THE ONLY BANKS WE NEED TO PASS SERVICE CALLS TO - IDEALLy WE'D RUN OVER ALL ROMS, THO BASIC HAS NO SERVICE ENTRY OF COURSE
@@ -403,7 +398,7 @@ int callback_oscli(M6502 *mpu, uint16_t address, uint8_t data) {
     // This isn't case-insensitive and doesn't recognise abbreviations, but
     // in practice it's good enough.
     if (memcmp(&mpu_memory[yx + mpu_registers.y], "BASIC", 5) == 0) {
-        fprintf(stderr, "SFTODO BASIC!\n");
+        //fprintf(stderr, "SFTODO BASIC!\n");
         return enter_basic2();
     }
 
@@ -424,12 +419,12 @@ int callback_oscli(M6502 *mpu, uint16_t address, uint8_t data) {
     *p++ = 0xfe;                           // error code
     strcpy(p, "Bad command");              // error string and terminator
     
-    fprintf(stderr, "SFTODO999\n");
+    //fprintf(stderr, "SFTODO999\n");
     return code_address;
 }
 
 int callback_osword_input_line(M6502 *mpu) {
-    fprintf(stderr, "SFTODOXA2\n");
+    //fprintf(stderr, "SFTODOXA2\n");
     state = osword_input_line_pending;
     longjmp(mpu_env, 1);
 }
@@ -653,20 +648,20 @@ void execute_osrdch(const char *s) {
     mpu_clear_carry(mpu); // no error
     // TODO: Following code fragment may be common to OSWORD 0 and can be factored out
     mpu->registers->pc = callback_return_via_rts(mpu);
-    fprintf(stderr, "SFTODOZX022 %d\n", c);
+    //fprintf(stderr, "SFTODOZX022 %d\n", c);
     // SFTODO: WE SHOULD PROBABLY ALWAYS SET STATE TO SOMETHING WHEN WE DO M6502_RUN
     if (setjmp(mpu_env) == 0) {
-        fprintf(stderr, "SFTODORUN\n");
+        //fprintf(stderr, "SFTODORUN\n");
         state = SFTODOIDLE;
         M6502_run(mpu, callback_poll); // never returns
     }
-    fprintf(stderr, "SFTODOZXA22\n");
+    //fprintf(stderr, "SFTODOZXA22\n");
 } 
 
 // TODO: MOVE
 void execute_input_line(const char *line) {
     assert(state == osword_input_line_pending);
-    fprintf(stderr, "SFTODOXA\n");
+    //fprintf(stderr, "SFTODOXA\n");
     // TODO: We must respect the maximum line length
     uint16_t yx = (mpu->registers->y << 8) | mpu->registers->x;
     uint16_t buffer = mpu_read_u16(yx);
@@ -686,12 +681,12 @@ void execute_input_line(const char *line) {
     mpu->registers->y = pending_length; // TODO HACK
     mpu_clear_carry(mpu); // input not terminated by Escape
     mpu->registers->pc = callback_return_via_rts(mpu);
-    fprintf(stderr, "SFTODOZX0\n");
+    //fprintf(stderr, "SFTODOZX0\n");
     if (setjmp(mpu_env) == 0) {
         state = SFTODOIDLE;
         M6502_run(mpu, callback_poll); // never returns
     }
-    fprintf(stderr, "SFTODOZXA\n");
+    //fprintf(stderr, "SFTODOZXA\n");
 }
 
 // TODO: COMMENT
@@ -734,9 +729,9 @@ char *get_line(char **data_ptr, size_t *length_ptr) {
 // a line at a time so BASIC will tokenise it for us.
 // TODO: PERHAPS CHANGE "type" TO SOMETHING ELSE, BE CONSISTENT
 void type_basic_program(char *data, size_t length) {
-    fprintf(stderr, "SFTODOpQ\n");
+    //fprintf(stderr, "SFTODOpQ\n");
     execute_input_line("NEW");
-    fprintf(stderr, "SFTODOQQ\n");
+    //fprintf(stderr, "SFTODOQQ\n");
 
     // Ensure that the last line of the data is terminated by a carriage
     // return, taking advantage of the extra byte allocated by load_binary() to
@@ -878,7 +873,7 @@ void save_ascii_basic(const char *filename) {
 
 void pack(void) {
     execute_input_line("*BUTIL");
-    fprintf(stderr, "SFTODOLLL\n");
+    //fprintf(stderr, "SFTODOLLL\n");
     check_pending_output("Ready:"); execute_osrdch("P"); // pack
     check_pending_output("REMs?"); execute_osrdch("Y");
     check_pending_output("Spaces?"); execute_osrdch("Y");
@@ -892,7 +887,7 @@ void pack(void) {
     check_pending_output("Ready:"); execute_osrdch("Q"); // quit
     output_state = os_discard;
     execute_input_line("OLD"); // TODO: Because ABE's *FX138 calls are treated as no-op
-    fprintf(stderr, "SFTODOHHH\n");
+    //fprintf(stderr, "SFTODOHHH\n");
 }
 
 void enter_basic(void) {

@@ -255,7 +255,7 @@ int main(int argc, char *argv[]) {
             filename = 0;
         }
         filenames[filename_count] = filename;
-        fprintf(stderr, "SFTODOFILE %i %s\n", filename_count, filename);
+        //fprintf(stderr, "SFTODOFILE %i %s\n", filename_count, filename);
     }
     if (i != argc) {
         die_help("Error: Please use a maximum of one input filename and one output filename.");
