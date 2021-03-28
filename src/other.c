@@ -732,6 +732,17 @@ void save_basic(const char *filename) {
     fclose(file);
 }
 
+void save_ascii_basic(const char *filename) {
+    FILE *file = fopen_wrapper(filename, "wb");
+    check(file != 0, "Can't open output");
+    // TODO: We need to get the output into the file, which requires thinking
+    // about how my OSWRCH etc emulation works. Let's just do a LIST so I can
+    // see the output on screen for now.
+    execute_input_line("LIST");
+    check(fclose(file) == 0, "Error closing output");
+    abort(); // TODO!
+}
+
 void pack(void) {
     execute_input_line("*BUTIL");
     fprintf(stderr, "SFTODOLLL\n");

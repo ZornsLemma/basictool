@@ -9,6 +9,7 @@ struct s_config {
     bool strip_leading_spaces;
     bool strip_trailing_spaces;
     bool pack;
+    bool tokenise_output;
 };
 
 extern struct s_config config;

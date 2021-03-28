@@ -14,11 +14,16 @@ void init(void); // TODO!
 void make_service_call(void); // TODO!
 void enter_basic(void); // TODO!
 void pack(void); // TODO!
+void check(bool b, const char *s); // TODO!
+void save_basic(const char *filename); // TODO!
+void save_ascii_basic(const char *filename); // TODO!
 
-const char *filenames[2];
+const char *filenames[2] = {0, 0};
 
 const char *program_name = 0;
 
+// TODO: The .identifier values here could probably be char-sized enum values,
+// which might be more readable.
 static struct cag_option options[] = {
     { .identifier = 'h',
       .access_letters = "h",
@@ -40,12 +45,13 @@ static struct cag_option options[] = {
       .access_name = "filter",
       .description = "allow use as a filter (reading from stdin and writing to stdout)" },
 
+    // TODO: These keep... option names are a bit too long and break --help formatting
     { .identifier = 'l',
       .access_letters = 0,
       .access_name = "keep-leading-spaces",
       .description = "don't strip leading spaces from non-tokenised BASIC" },
 
-    { .identifier = 't',
+    { .identifier = 't', // TODO: confusing this isn't "tokenise", which uses 't' for *user* access - a good reason to change to enums maybe
       .access_letters = 0,
       .access_name = "keep-trailing-spaces",
       .description = "don't strip trailing spaces from non-tokenised BASIC" },
@@ -56,6 +62,19 @@ static struct cag_option options[] = {
       .description = "pack the program to reduce its size" },
 
     // TODO: Options to override default Y for pack options
+
+    { .identifier = 'T',
+      .access_letters = "t",
+      .access_name = "tokenise",
+      .description = "output tokenised BASIC" },
+
+    { .identifier = 'a',
+      .access_letters = "a",
+      .access_name = "ascii",
+      .description = "output ASCII text (non-tokenised) BASIC (default)" },
+
+    // TODO: An option to set LISTO for text output (should probably imply text
+    // output option)
 };
 
 // argv[0] will contain the program name, but if we're not being run from the
@@ -143,9 +162,19 @@ static void show_roms(void) {
             // TODO FORMATTING OF CODE
 }
 
+static void check_only_one_token_option(bool new) {
+    static int call_count = 0;
+    ++call_count;
+    if ((call_count == 1) || (config.tokenise_output == new)) {
+        return;
+    }
+    check(call_count == 1, "Please only specify one of --tokenise and --ascii");
+}
+
 int main(int argc, char *argv[]) {
     program_name = parse_program_name(argv[0]);
 
+    bool explicit_tokenise_output = false;
     cag_option_context context;
     cag_option_prepare(&context, options, CAG_ARRAY_SIZE(options), argc, argv);
     while (cag_option_fetch(&context)) {
@@ -192,6 +221,22 @@ int main(int argc, char *argv[]) {
                 config.pack = true;
                 break;
 
+            case 'T':
+                check_only_one_token_option(true);
+                // TODO: Should we require some kind of force option if this
+                // is set and we're writing to stdout? But stdout could be a
+                // file, should we get unportable and check if stdout is a
+                // terminal as well?
+                config.tokenise_output = true;
+                explicit_tokenise_output = true;
+                break;
+
+            case 'a':
+                check_only_one_token_option(false);
+                config.tokenise_output = false;
+                explicit_tokenise_output = true;
+                break;
+
             default:
                 fprintf(stderr, "Unrecognised command line identifier: '%c'\n",
                         identifier);
@@ -205,11 +250,17 @@ int main(int argc, char *argv[]) {
     int i;
     for (i = context.index; (i < argc) && (filename_count < max_filenames);
          ++i, ++filename_count) {
-        const char *filename = argv[i];
+        const char *filename = context.argv[i];
         if (strcmp(filename, "-") == 0) {
             filename = 0;
         }
+        // TODO: At the moment, if there's an option after non-option arguments
+        // the non-option arguments can be permuted inconsistently. I can't
+        // accept this in the long run, but I've raised an issue with cargs
+        // upstream so let's see what happens before taking any steps to fix
+        // this myself or adjust my command line structure to work round it.
         filenames[filename_count] = filename;
+        fprintf(stderr, "SFTODOFILE %i %s\n", filename_count, filename);
     }
     if (i != argc) {
         die_help("Error: Please use a maximum of one input filename and one output filename.");
@@ -224,11 +275,24 @@ int main(int argc, char *argv[]) {
     }
     // TODO: If the output is binary we should probably also check an option (--filter again?) and refuse to proceed if so. But *maybe* output being stdout will be used to choose a text output option.
 
+    if (!explicit_tokenise_output) {
+        // TODO: Should we do anything to "intelligently" change the default
+        // depending on other options? My current feeling is it's better not
+        // to, as it just gets confusing when the program changes its behaviour
+        // seemingly at random. If it's not used, get rid of
+        // explicit_tokenise_output.
+    }
+
     init(); // TODO: RENAME AS IT'S MAINLY/ALL M6502 INIT
-    enter_basic(); // TODO: RENAME START_BASIC()
-    load_basic(filenames[0]);
+    enter_basic(); // TODO: RENAME START_BASIC()? THO enter_basic2() DOES FEEL BETTER AS 'ENTER'...
+    load_basic(filenames[0]); // TODO: rename load_basic_program()? tho symmetry with save would suggest no "_program"
     if (config.pack) {
         pack();
+    }
+    if (config.tokenise_output) {
+        save_basic(filenames[1]); // TODO: rename save_tokenised_basic()
+    } else {
+        save_ascii_basic(filenames[1]);
     }
 
 
