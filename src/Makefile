@@ -13,7 +13,7 @@ BASIC   = ../roms/basic4.rom
 
 all: ../basictool
 
-BASICTOOLOBJS  = main.o other.o data.o lib6502.o cargs.o
+BASICTOOLOBJS  = main.o config.o other.o data.o lib6502.o cargs.o
 ../basictool: $(BASICTOOLOBJS)
 	$(CC) $(LDFLAGS) -o $@ $(BASICTOOLOBJS)
 

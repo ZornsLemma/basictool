@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include "cargs.h"
+#include "config.h"
 #include "data.h"
 
 #define VERSION "0.01"
@@ -37,12 +38,17 @@ static struct cag_option options[] = {
       .access_letters = 0,
       .access_name = "filter",
       .description = "allow use as a filter (reading from stdin and writing to stdout)" },
-};
 
-struct {
-    int verbose;
-    bool filter;
-} config = {0, false};
+    { .identifier = 'l',
+      .access_letters = 0,
+      .access_name = "keep-leading-spaces",
+      .description = "don't strip leading spaces from non-tokenised BASIC" },
+
+    { .identifier = 't',
+      .access_letters = 0,
+      .access_name = "keep-trailing-spaces",
+      .description = "don't strip trailing spaces from non-tokenised BASIC" },
+};
 
 // argv[0] will contain the program name, but if we're not being run from the
 // PATH it may contain a (potentially quite long) path prefix of some kind.
@@ -164,6 +170,14 @@ int main(int argc, char *argv[]) {
 
             case 'f':
                 config.filter = true;
+                break;
+
+            case 'l':
+                config.strip_leading_spaces = false;
+                break;
+
+            case 't':
+                config.strip_trailing_spaces = false;
                 break;
 
             default:

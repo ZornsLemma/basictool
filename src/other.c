@@ -6,6 +6,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include "config.h"
 #include "data.h"
 #include "lib6502.h"
 
@@ -514,15 +515,20 @@ void type_basic_program(char *data, size_t length) {
     // know this is safe.
     data[length] = 0x0d;
 
-    // We start our BASIC line numbering at 1, but allow line numbers in the
-    // text file to override the automatic line number providing they aren't
-    // lower than it.
+    // As with beebasm's PUTBASIC, line numbers are optional on the input. We
+    // auto-assign line numbers; line numbers in the input are recognised and
+    // used to advance the automatic line number, as long as they don't move
+    // it backwards. This allows using line numbers on just a few select lines
+    // (e.g. DATA statements) if desired.
     // TODO: ARE WE GOING TO (OPTIONALLY?) STRIP LEADING AND TRAILING SPACES?
-    int basic_line_number = 1;
+    int basic_line_number = 1; // TODO: Allow this and increment to be specified on command line?
     int file_line_number = 1;
     for (char *line = 0; (line = get_line(&data, &length)) != 0; ++file_line_number) {
         error_line_number = file_line_number;
-        // TODO: SHOULD (OPTIONALLY) STRIP TRAILING SPACES AT THIS POINT (MODIFY LINE IN PLACE)
+
+        // Check for a user-specified line number; if we find one we set
+        // basic_line_number to the user-specified value and adjust line to
+        // skip over the line number.
         size_t leading_space_length = strspn(line, " \t");
         char *line_number_start = line + leading_space_length;
         size_t line_number_length = strspn(line_number_start, "0123456789");
@@ -536,6 +542,19 @@ void type_basic_program(char *data, size_t length) {
             check(user_line_number >= basic_line_number, "Line number too low");
             basic_line_number = user_line_number;
             line = line_number_start + line_number_length;
+        }
+
+        // We now have the line number to use in basic_line_number and the line
+        // with no line number at 'line'.
+        if (config.strip_leading_spaces) {
+            line += strspn(line, " \t");
+        }
+        if (config.strip_trailing_spaces) {
+            int length = strlen(line);
+            while ((length > 0) && (strchr(" \t", line[length - 1]) != 0)) {
+                --length;
+            }
+            line[length] = '\0';
         }
         // TODO: SHOULD (OPTIONALLY) STRIP LEADING SPACES - ADJUST LINE
         const int buffer_size = 256;
