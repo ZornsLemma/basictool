@@ -225,6 +225,9 @@ int callback_osbyte(M6502 *mpu, uint16_t address, uint8_t data) {
             return callback_osbyte_return_u16(mpu, 0x8000); // TODO: MAGIC CONST
         case 0x86: // read text cursor position
             return callback_osbyte_return_u16(mpu, 0); // TODO: MAGIC CONST, HACK
+        case 0x8a: // place character into buffer
+            // TODO: We shouldn't be treating this is a no-op but let's hack
+            return callback_return_via_rts(mpu); // treat as no-op
         case 0xa0:
             return callback_osbyte_read_vdu_variable(mpu);
         default:
@@ -239,6 +242,7 @@ int callback_oscli(M6502 *mpu, uint16_t address, uint8_t data) {
     uint16_t yx = (mpu_registers.y << 8) | mpu_registers.x;
     mpu_memory[0xf2] = mpu_registers.x;
     mpu_memory[0xf3] = mpu_registers.y;
+    fprintf(stderr, "SFTODOXCC %c%c%c\n", mpu_memory[yx], mpu_memory[yx+1], mpu_memory[yx+2]);
 
     mpu_registers.a = 4; // unrecognised * command
     mpu_registers.x = 1; // current ROM bank TODO: MAGIC HACK, WE KNOW ABE IS BANKS 0 AND 1 AND THEY ARE THE ONLY BANKS WE NEED TO PASS SERVICE CALLS TO - IDEALLy WE'D RUN OVER ALL ROMS, THO BASIC HAS NO SERVICE ENTRY OF COURSE
@@ -261,7 +265,7 @@ int callback_oscli(M6502 *mpu, uint16_t address, uint8_t data) {
     // TODO: If the * command is not recognised, this will just return to the
     // caller. This is probably not a big deal in this restricted environment,
     // but think about it - it might be less confusing if we generate an error.
-    const uint16_t code_address = 0x900;
+    const uint16_t code_address = 0xb00; // TODO: HACK - OTHER BITS OF HACKERY CAN OVERWRITE THIS WHILE WE'RE PART WAY THROUGH EXECUTING *BUTIL IF WE USE 0x900 - NO, THAT DOESN'T HELP, MAYBE THIS WOULD BE FINE, BUT LET'S LEAVE IT AT B00 FOR NOW
     uint8_t *p = &mpu_memory[code_address];
                                            // .loop
     *p++ = 0x86; *p++ = 0xf4;              // STX &F4
@@ -270,7 +274,13 @@ int callback_oscli(M6502 *mpu, uint16_t address, uint8_t data) {
     *p++ = 0xa6; *p++ = 0xf4;              // LDX &F4
     *p++ = 0xca;                           // DEX
     *p++ = 0x10; *p++ = 256 - 13;          // BPL loop
+    *p++ = 0xc9; *p++ = 0;                 // CMP #0
+    *p++ = 0xd0; *p++ = 1;                 // BNE skip_rts
     *p++ = 0x60;                           // RTS
+                                           // .skip_rts
+    *p++ = 0x00;                           // BRK
+    *p++ = 0xfe;                           // error code
+    strcpy(p, "Bad command");              // error string and terminator
     
     fprintf(stderr, "SFTODO999\n");
     return code_address;
