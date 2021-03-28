@@ -10,6 +10,9 @@
 #include "data.h"
 #include "lib6502.h"
 
+// TODO: I am quite inconsistent about mpu->foo vs just using these structure
+// directly. I should be consistent, but when choosing how to be consistent,
+// perhaps favour the shortest code?
 M6502_Registers mpu_registers;
 M6502_Memory mpu_memory;
 M6502_Callbacks mpu_callbacks;
