@@ -245,7 +245,7 @@ int callback_osbyte(M6502 *mpu, uint16_t address, uint8_t data) {
         case 0x86: // read text cursor position
             return callback_osbyte_return_u16(mpu, 0); // TODO: MAGIC CONST, HACK
         case 0x8a: // place character into buffer
-            // TODO: We shouldn't be treating this is a no-op but let's hack
+            // TODO: We probably shouldn't be treating this is a no-op but let's hack
             return callback_return_via_rts(mpu); // treat as no-op
         case 0xa0:
             return callback_osbyte_read_vdu_variable(mpu);
@@ -744,6 +744,7 @@ void pack(void) {
     execute_osrdch("Y"); // Concatenate?
     // TODO: We probably need to detect errors by looking at the output and terminate with an error instead of pressing "Q" blindly.
     execute_osrdch("Q"); // Quit
+    execute_input_line("OLD"); // TODO: Because ABE's *FX138 calls are treated as no-op
     fprintf(stderr, "SFTODOHHH\n");
 }
 
