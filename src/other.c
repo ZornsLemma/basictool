@@ -190,6 +190,20 @@ int max(int lhs, int rhs) {
     return (lhs > rhs) ? lhs : rhs;
 }
 
+bool is_in_pending_output(const char *s) {
+    return strstr(pending_output, s) != 0;
+}
+
+void check_pending_output(const char *s) {
+    if (is_in_pending_output(s)) {
+        return;
+    }
+    // TODO: We need something which can sanitise control codes when printing pending_output
+    fprintf(stderr, "Error: expected to see '%s', got '%s'\n", s, pending_output);
+    exit(EXIT_FAILURE);
+}
+
+
 void complete_output_line_handler(const char *line) {
 #if 0 // TODO
     if (true) { // SFTODO CONFIG FOR "SHOW ALL OUTPUT"
@@ -217,7 +231,12 @@ void complete_output_line_handler(const char *line) {
 
         case os_pack:
             // TODO: This needs to respect verbosity
-            fprintf(stderr, "SFTODOPACK!%s!\n", line);
+            if (config.verbose >= 1) {
+                if (is_in_pending_output("Bytes saved") || (config.verbose >= 2)) {
+                    // TODO: Should this go to stderr or stdout?
+                    fprintf(stderr, "SFTODOPACK!%s!\n", line);
+                }
+            }
             break;
 
         default:
@@ -264,15 +283,6 @@ void pending_output_insert(uint8_t data) {
     pending_output_cursor_x += 1;
     pending_output_length = max(pending_output_cursor_x, pending_output_length);
     assert(strlen(pending_output) == pending_output_length);
-}
-
-void check_pending_output(const char *s) {
-    if (strstr(pending_output, s) != 0) {
-        return;
-    }
-    // TODO: We need something which can sanitise control codes when printing pending_output
-    fprintf(stderr, "Error: expected to see '%s', got '%s'\n", s, pending_output);
-    exit(EXIT_FAILURE);
 }
 
 int callback_oswrch(M6502 *mpu, uint16_t address, uint8_t data) {
@@ -917,5 +927,12 @@ void finished(void) {
 // TODO: Should create a test suite, which should include input text files with different line terminators and unterminated last lines
 
 // TODO: Should probably test under something like valgrind
+
+// TODO: verbose thoughts
+// - level 0 - no output unless something goes wrong, although if output is to stdout of course the BASIC program is shown
+// - level 1 - pack shows bytes saved, no more
+// - level 2 - pack shows all output
+// - so in general verbose is defined on a per-op basis, and has no effect on the tokenise/detokenise stages
+// verbose does not control whether we show all output from emulated machine for debugging, that's some separate --debug-foo option
 
 // vi: colorcolumn=80
