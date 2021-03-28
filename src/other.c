@@ -180,6 +180,11 @@ int callback_osnewl(M6502 *mpu, uint16_t address, uint8_t data) {
     return callback_return_via_rts(mpu);
 }
 
+int callback_osbyte_return_x(M6502 *mpu, uint8_t x) {
+    mpu->registers->x = x;
+    return callback_return_via_rts(mpu);
+}
+
 int callback_osbyte_return_u16(M6502 *mpu, uint16_t value) {
     mpu->registers->x = value & 0xff;
     mpu->registers->y = (value >> 8) & 0xff;
@@ -210,8 +215,10 @@ int callback_osbyte(M6502 *mpu, uint16_t address, uint8_t data) {
             return callback_return_via_rts(mpu); // treat as no-op
         case 0x0f: // flush buffers
             return callback_return_via_rts(mpu); // treat as no-op
-        case 0x7c: // clear ESCAPE condition
+        case 0x7c: // clear Escape condition
             return callback_return_via_rts(mpu); // treat as no-op
+        case 0x7e: // acknowledge Escape condition
+            return callback_osbyte_return_x(mpu, 0); // no Escape condition pending
         case 0x83: // read OSHWM
             return callback_osbyte_return_u16(mpu, page);
         case 0x84: // read HIMEM
@@ -702,8 +709,9 @@ void pack(void) {
     execute_osrdch("Y"); // Variables?
     execute_osrdch("Y"); // Use unused singles?
     execute_osrdch("Y"); // Concatenate?
+    // TODO: We probably need to detect errors by looking at the output and terminate with an error instead of pressing "Q" blindly.
+    execute_osrdch("Q"); // Quit
     fprintf(stderr, "SFTODOHHH\n");
-    abort();
 }
 
 void enter_basic(void) {
