@@ -520,7 +520,6 @@ void type_basic_program(char *data, size_t length) {
     // used to advance the automatic line number, as long as they don't move
     // it backwards. This allows using line numbers on just a few select lines
     // (e.g. DATA statements) if desired.
-    // TODO: ARE WE GOING TO (OPTIONALLY?) STRIP LEADING AND TRAILING SPACES?
     int basic_line_number = 1; // TODO: Allow this and increment to be specified on command line?
     int file_line_number = 1;
     for (char *line = 0; (line = get_line(&data, &length)) != 0; ++file_line_number) {
@@ -543,9 +542,10 @@ void type_basic_program(char *data, size_t length) {
             basic_line_number = user_line_number;
             line = line_number_start + line_number_length;
         }
-
         // We now have the line number to use in basic_line_number and the line
         // with no line number at 'line'.
+
+        // Strip leading/trailing spaces if required.
         if (config.strip_leading_spaces) {
             line += strspn(line, " \t");
         }
@@ -556,20 +556,17 @@ void type_basic_program(char *data, size_t length) {
             }
             line[length] = '\0';
         }
-        // TODO: SHOULD (OPTIONALLY) STRIP LEADING SPACES - ADJUST LINE
+
+        // Generate the fake input for BASIC and pass it over.
         const int buffer_size = 256;
         char buffer[buffer_size];
         check(snprintf(buffer, buffer_size, "%d%s", basic_line_number, line) < buffer_size, "Line too long");
-        fprintf(stderr, "SFTODOLINE!%s!\n", buffer);
+        //fprintf(stderr, "SFTODOLINE!%s!\n", buffer);
+        execute_input_line(buffer);
+
         ++basic_line_number;
-
-
-        // fprintf(stderr, "SFTODOLINE!%s!\n", line);
     }
     error_line_number = -1;
-
-
-    abort();
 }
 
 void load_basic(const char *filename) {
