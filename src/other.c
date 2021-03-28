@@ -241,6 +241,7 @@ void pending_output_insert(uint8_t data) {
     if (data == 10) {
         complete_output_line_handler(pending_output);
         pending_output_length = pending_output_cursor_x = 0;
+        pending_output[0] = '\0';
         return;
     }
 
