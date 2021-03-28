@@ -20,6 +20,10 @@ M6502 *mpu;
 
 const char *pending_osword_input_line = 0;
 
+char *pending_output = 0;
+size_t pending_output_length = 0;
+size_t pending_output_buffer_size = 0;
+
 // TODO: Ideally we would include this in *any* error message if it's not -1,
 // but it may be OK if it's a lot cleaner/easier to just do it in carefully
 // selected places.
@@ -173,8 +177,43 @@ int callback_osrdch(M6502 *mpu, uint16_t address, uint8_t data) {
 // TODO: Output should ultimately be gated via a -v option, perhaps with some
 // sort of (optional but default) filtering to tidy it up
 
+void pending_output_insert(uint8_t data) {
+    // We just discard NULs in the output; they aren't important for anything
+    // we are emulating here.
+    if (data == '\0') {
+        return;
+    }
+
+    // SFTODO EXPERIMENTAL HACK
+    if (data == 13) {
+        fprintf(stderr, "SFTODOJJ2!%s!\n", pending_output);
+        pending_output_length = 0;
+        pending_output[0] = '\0';
+    }
+
+    if (data == 127) {
+        fprintf(stderr, "SFTODOJJ1!%s!\n", pending_output);
+        abort(); // SFTODO TEMP HACK
+    }
+
+    if ((pending_output_length + 2) > pending_output_buffer_size) {
+        if (pending_output_buffer_size == 0) {
+            pending_output_buffer_size = 4; // TODO: make 64 or 128 or something
+        } else {
+            pending_output_buffer_size *= 2;
+        }
+        pending_output = check_alloc(realloc(pending_output, pending_output_buffer_size));
+    }
+
+    pending_output[pending_output_length] = data;
+    pending_output[pending_output_length + 1] = '\0';
+    pending_output_length += 1;
+    assert(strlen(pending_output) == pending_output_length);
+}
+
 int callback_oswrch(M6502 *mpu, uint16_t address, uint8_t data) {
     int c = mpu->registers->a;
+    pending_output_insert(c);
     if (c == 0xa) {
         putchar('\n');
     } else if ((c >= ' ') && (c <= '~')) {
@@ -184,19 +223,20 @@ int callback_oswrch(M6502 *mpu, uint16_t address, uint8_t data) {
     return callback_return_via_rts(mpu);
 }
 
+int callback_osnewl(M6502 *mpu, uint16_t address, uint8_t data) {
+    pending_output_insert(0xa);
+    pending_output_insert(0xd);
+    putchar('\n');
+    return callback_return_via_rts(mpu);
+}
+
 int callback_osasci(M6502 *mpu, uint16_t address, uint8_t data) {
     int c = mpu->registers->a;
     if (c == 0xd) {
-        putchar('\n');
-        return callback_return_via_rts(mpu);
+        return callback_osnewl(mpu, address, data);
     } else {
         return callback_oswrch(mpu, address, data);
     }
-}
-
-int callback_osnewl(M6502 *mpu, uint16_t address, uint8_t data) {
-    putchar('\n');
-    return callback_return_via_rts(mpu);
 }
 
 int callback_osbyte_return_x(M6502 *mpu, uint8_t x) {
@@ -743,7 +783,6 @@ void save_ascii_basic(const char *filename) {
     // see the output on screen for now.
     execute_input_line("LIST");
     check(fclose(file) == 0, "Error closing output");
-    abort(); // TODO!
 }
 
 void pack(void) {
