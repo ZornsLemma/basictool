@@ -116,6 +116,22 @@ void mpu_dump(void) {
     fprintf(stderr, "%s\n", buffer);
 }
 
+// TODO: COPY AND PASTE OF enter_basic()
+uint16_t enter_basic2(void) {
+    mpu_registers.a = 1; // language entry special value in A
+    mpu_registers.x = 0;
+    mpu_registers.y = 0;
+
+    const uint16_t code_address = 0x900;
+    uint8_t *p = &mpu_memory[code_address];
+    *p++ = 0xa2; *p++ = 12;                // LDX #12 TODO: MAGIC CONSTANT
+    *p++ = 0x86; *p++ = 0xf4;              // STX &F4
+    *p++ = 0x8e; *p++ = 0x30; *p++ = 0xfe; // STX &FE30
+    *p++ = 0x4c; *p++ = 0x00; *p++ = 0x80; // JMP &8000 (language entry)
+
+    return code_address;
+}
+
 void callback_abort(const char *type, uint16_t address, uint8_t data) {
     fprintf(stderr, "Unexpected %s at address %04x, data %02x\n", 
             type, address, data);
@@ -265,9 +281,13 @@ int callback_oscli(M6502 *mpu, uint16_t address, uint8_t data) {
         check(mpu_registers.y <= 255, "Too many * on OSCLI"); // unlikely!
     }
 
-    // TODO: If the * command is not recognised, this will just return to the
-    // caller. This is probably not a big deal in this restricted environment,
-    // but think about it - it might be less confusing if we generate an error.
+    // This isn't case-insensitive and doesn't recognise abbreviations, but
+    // in practice it's good enough.
+    if (memcmp(&mpu_memory[yx + mpu_registers.y], "BASIC", 5) == 0) {
+        fprintf(stderr, "SFTODO BASIC!\n");
+        return enter_basic2();
+    }
+
     const uint16_t code_address = 0xb00; // TODO: HACK - OTHER BITS OF HACKERY CAN OVERWRITE THIS WHILE WE'RE PART WAY THROUGH EXECUTING *BUTIL IF WE USE 0x900 - NO, THAT DOESN'T HELP, MAYBE THIS WOULD BE FINE, BUT LET'S LEAVE IT AT B00 FOR NOW
     uint8_t *p = &mpu_memory[code_address];
                                            // .loop
