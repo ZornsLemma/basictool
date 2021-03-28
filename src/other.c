@@ -20,6 +20,12 @@ M6502 *mpu;
 
 const char *pending_osword_input_line = 0;
 
+enum {
+    os_discard,
+    os_discard_list_command,
+    os_list
+} output_state;
+
 char *pending_output = 0;
 size_t pending_output_length = 0;
 size_t pending_output_cursor_x = 0;
@@ -182,6 +188,32 @@ int max(int lhs, int rhs) {
     return (lhs > rhs) ? lhs : rhs;
 }
 
+void complete_output_line_handler(const char *line) {
+#if 0 // TODO
+    if (true) { // SFTODO CONFIG FOR "SHOW ALL OUTPUT"
+        fprintf(stderr, "SFTODOHQQ:%d:%s\n", output_state, line);
+    }
+#endif
+    switch (output_state) {
+        case os_discard:
+            break;
+
+        case os_discard_list_command:
+            assert(strcmp(line, ">LIST") == 0);
+            output_state = os_list;
+            break;
+
+        case os_list:
+            // TODO: This needs to go to file or screen as appropriate
+            fprintf(stderr, "SFTODOLIST!%s!\n", line);
+            break;
+
+        default:
+            assert(false);
+            break;
+    }
+}
+
 void pending_output_insert(uint8_t data) {
     // We just discard NULs in the output; they aren't important for anything
     // we are emulating here.
@@ -195,7 +227,7 @@ void pending_output_insert(uint8_t data) {
         return;
     }
     if (data == 10) {
-        fprintf(stderr, "SFTODOJJ2!%s!\n", pending_output);
+        complete_output_line_handler(pending_output);
         pending_output_length = pending_output_cursor_x = 0;
         return;
     }
@@ -555,6 +587,8 @@ void init(void) {
     }
     vdu_variables[0x55] = 7; // screen mode
     vdu_variables[0x56] = 4; // memory map type: 1K mode
+
+    output_state = os_discard; // TODO: MOVE ELSEWHERE?
 }
 
 // Read a file into a malloc()-ed block of memory. The pointer to the
@@ -755,7 +789,6 @@ void load_basic(const char *filename) {
     } else {
         type_basic_program(data, length);
         free(data);
-        execute_input_line("LIST"); // TODO TEMp
     }
 
 
@@ -803,7 +836,10 @@ void save_ascii_basic(const char *filename) {
     // TODO: We need to get the output into the file, which requires thinking
     // about how my OSWRCH etc emulation works. Let's just do a LIST so I can
     // see the output on screen for now.
+    assert(output_state == os_discard);
+    output_state = os_discard_list_command;
     execute_input_line("LIST");
+    output_state = os_discard;
     check(fclose(file) == 0, "Error closing output");
 }
 
