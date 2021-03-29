@@ -245,9 +245,11 @@ void complete_output_line_handler(const char *line) {
             if (config.verbose >= 1) {
                 bool is_bytes_saved = is_in_pending_output("Bytes saved");
                 if (is_bytes_saved || (config.verbose >= 2)) {
+                    // TODO: We could maybe force alignment of the columns
+                    // in the verbose>=2 output
                     // TODO: Should this go to stderr or stdout?
                     // TODO: Sanitise output? It should be fairly ASCII tho...
-                    fprintf(stderr, "SFTODO%s\n", line);
+                    fprintf(stderr, "%s\n", line);
                 }
                 if (is_bytes_saved) {
                     output_state = os_discard;
@@ -923,11 +925,11 @@ void finished(void) {
     exit(EXIT_SUCCESS);
 }
 
-// TODO: Don't forget to install and test a BRKV handler - wouldn't surprise me if ABE could throw an error if progam is malford, and of course BASIC could (if only a "line too long" error)
+// TODO: Don't forget to install and test a BRKV handler - wouldn't surprise me if ABE could throw an error if progam is malformed, and of course BASIC could (if only a "line too long" error)
 
 // TODO: Test with invalid input - we don't want to be hanging if we can avoid it
 
-// TODO: Formatting of error messages is very inconsistent, e.g. use of Error: prefix
+// TODO: Formatting of error messages is very inconsistent, e.g. use of Error: prefix - this is better now, but well worth reviewing later
 
 // TODO: Should create a test suite, which should include input text files with different line terminators and unterminated last lines
 
@@ -941,5 +943,7 @@ void finished(void) {
 // verbose does not control whether we show all output from emulated machine for debugging, that's some separate --debug-foo option
 
 // TODO: I'm being very casual about mixing char/uint8_t/int. It *may* be wise to use char for input/output - that is relatively pure ASCII, although some care is needed as there might be non-ASCII chars mixed in. For cases where I'm dealing with tokenised BASIC or raw 6502 memory not containing (near) ASCII, unsigned char might be a better bet. But think about it.
+
+// TODO: Add option to RENUMBER the program before "saving" it?
 
 // vi: colorcolumn=80
