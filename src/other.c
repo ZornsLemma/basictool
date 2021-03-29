@@ -931,6 +931,6 @@ void finished(void) {
 // - so in general verbose is defined on a per-op basis, and has no effect on the tokenise/detokenise stages
 // verbose does not control whether we show all output from emulated machine for debugging, that's some separate --debug-foo option
 
-// TODO: I'm being very casual about mixing char/uint8_t/int
+// TODO: I'm being very casual about mixing char/uint8_t/int. It *may* be wise to use char for input/output - that is relatively pure ASCII, although some care is needed as there might be non-ASCII chars mixed in. For cases where I'm dealing with tokenised BASIC or raw 6502 memory not containing (near) ASCII, unsigned char might be a better bet. But think about it.
 
 // vi: colorcolumn=80
