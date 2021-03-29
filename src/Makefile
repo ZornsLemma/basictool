@@ -13,7 +13,7 @@ BASIC   = ../roms/basic4.rom
 
 all: ../basictool
 
-BASICTOOLOBJS  = main.o config.o other.o data.o lib6502.o cargs.o
+BASICTOOLOBJS  = main.o config.o other.o data.o utils.o lib6502.o cargs.o
 ../basictool: $(BASICTOOLOBJS)
 	$(CC) $(LDFLAGS) -o $@ $(BASICTOOLOBJS)
 
@@ -49,10 +49,13 @@ depend:
 # TODO: Keep this up to date!
 bintoinc.o: bintoinc.c
 cargs.o: cargs.c cargs.h
+config.o: config.c config.h
 data.o: data.c data.h rom-editor-a.c rom-editor-b.c rom-basic.c
+foo.o: foo.c cargs.h
 lib6502.o: lib6502.c lib6502.h
-main.o: main.c cargs.h data.h
-other.o: other.c data.h lib6502.h
+main.o: main.c cargs.h config.h data.h utils.h
+other.o: other.c config.h data.h lib6502.h utils.h
 rom-basic.o: rom-basic.c
 rom-editor-a.o: rom-editor-a.c
 rom-editor-b.o: rom-editor-b.c
+utils.o: utils.c utils.h

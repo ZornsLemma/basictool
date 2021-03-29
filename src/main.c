@@ -4,6 +4,7 @@
 #include "cargs.h"
 #include "config.h"
 #include "data.h"
+#include "utils.h"
 
 #define VERSION "0.01"
 
@@ -238,9 +239,9 @@ int main(int argc, char *argv[]) {
                 break;
 
             default:
-                fprintf(stderr, "Unrecognised command line identifier: '%c'\n",
-                        identifier);
-                return EXIT_FAILURE;
+                die("Internal error: Unrecognised command line identifier %d",
+                    identifier);
+                break;
         }
     }
 

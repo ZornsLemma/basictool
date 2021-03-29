@@ -2,6 +2,7 @@
 
 #include <assert.h>
 #include <setjmp.h>
+#include <stdarg.h>
 #include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -9,6 +10,7 @@
 #include "config.h"
 #include "data.h"
 #include "lib6502.h"
+#include "utils.h"
 
 // TODO: I am quite inconsistent about mpu->foo vs just using these structure
 // directly. I should be consistent, but when choosing how to be consistent,
@@ -22,9 +24,10 @@ const char *pending_osword_input_line = 0;
 
 enum {
     os_discard,
-    os_discard_list_command,
+    os_list_discard_command,
     os_list,
-    os_discard_pack_concatenate,
+    os_pack_discard_concatenate,
+    os_pack_discard_blank,
     os_pack
 } output_state;
 FILE *output_state_file = 0; // TODO: RENAME? REMOVE "STATE"?
@@ -75,24 +78,24 @@ extern const char *filenames[2]; // TODO!
 
 const char *osrdch_queue = 0;
 
+// TODO: I should probably extend check to be printf-like and make all callers use this where helpful
 void check(bool b, const char *s) {
     if (!b) {
-        fprintf(stderr, "%s\n", s);
-        exit(EXIT_FAILURE);
+        die("%s", s);
     }
 }
 
 void *check_alloc(void *p) {
-    check(p != 0, "Unable to allocate memory");
+    check(p != 0, "Error: Unable to allocate memory");
     return p;
 }
 
+// TODO: This should probably be printf-like, but check callers - they may not need it
 void die_help(const char *message) {
-    printf("%s\nTry '%s --help' for more information.\n", message, program_name);
-    exit(EXIT_FAILURE);
+    die("%s\nTry '%s --help' for more information.", message, program_name);
 }
 
-// TODO: For stdout to be useful, I need to be sure all verbose output etc is written to stderr
+// TODO: For stdout to be useful, I need to be sure all verbose output etc is written to stderr - maybe not, it depends how you view the verbose output. A user might want to do "basictool input.txt --pack -vv output.tok > pack-output.txt"; if we output to stderr this redirection becomes fiddlier.
 FILE *fopen_wrapper(const char *pathname, const char *mode) {
     if (pathname == 0) {
         assert(mode != 0);
@@ -101,8 +104,7 @@ FILE *fopen_wrapper(const char *pathname, const char *mode) {
         } else if (strcmp(mode, "wb") == 0) {
             return stdout;
         } else {
-            check(false, "Invalid mode passed to fopen_wrapper()");
-            exit(EXIT_FAILURE); // prevent gcc warning
+            die("Internal error: Invalid mode passed to fopen_wrapper()");
         }
     } else {
         return fopen(pathname, mode);
@@ -127,7 +129,7 @@ void mpu_clear_carry(M6502 *mpu) {
 void mpu_dump(void) {
     char buffer[64];
     M6502_dump(mpu, buffer);
-    fprintf(stderr, "%s\n", buffer);
+    fprintf(stderr, "6502 state: %s\n", buffer);
 }
 
 // TODO: COPY AND PASTE OF enter_basic()
@@ -146,26 +148,25 @@ uint16_t enter_basic2(void) {
     return code_address;
 }
 
-void callback_abort(const char *type, uint16_t address, uint8_t data) {
-    fprintf(stderr, "Unexpected %s at address %04x, data %02x\n", 
-            type, address, data);
-    // No point doing this, externalise() hasn't been called: mpu_dump();
-    exit(EXIT_FAILURE);
+NORETURN void callback_abort(const char *type, uint16_t address, uint8_t data) {
+    die("Error: Unexpected %s at address %04x, data %02x", type, address, data);
 }
 
-int callback_abort_read(M6502 *mpu, uint16_t address, uint8_t data) {
+NORETURN int callback_abort_read(M6502 *mpu, uint16_t address, uint8_t data) {
+    // externalise() hasn't been called by lib6502 at this point so we can't
+    // dump the registers.
     callback_abort("read", address, data);
-    exit(EXIT_FAILURE); // prevent gcc warning
 }
 
-int callback_abort_write(M6502 *mpu, uint16_t address, uint8_t data) {
+NORETURN int callback_abort_write(M6502 *mpu, uint16_t address, uint8_t data) {
+    // externalise() hasn't been called by lib6502 at this point so we can't
+    // dump the registers.
     callback_abort("write", address, data);
-    exit(EXIT_FAILURE); // prevent gcc warning
 }
 
-int callback_abort_call(M6502 *mpu, uint16_t address, uint8_t data) {
+NORETURN int callback_abort_call(M6502 *mpu, uint16_t address, uint8_t data) {
+    mpu_dump();
     callback_abort("call", address, data);
-    exit(EXIT_FAILURE); // prevent gcc warning
 }
 
 int callback_return_via_rts(M6502 *mpu) {
@@ -195,13 +196,17 @@ bool is_in_pending_output(const char *s) {
     return strstr(pending_output, s) != 0;
 }
 
+char *make_printable(const char *s) {
+    return (char *) s; // TODO: total hack, implement properly - this should escape control characters, e.g. as \xnn - it can just malloc space for the result - or maybe we could take a non-const char argument and just replace with spaces, that might actually be better
+}
+
 void check_pending_output(const char *s) {
     if (is_in_pending_output(s)) {
         return;
     }
-    // TODO: We need something which can sanitise control codes when printing pending_output
-    fprintf(stderr, "Error: expected to see '%s', got '%s'\n", s, pending_output);
-    exit(EXIT_FAILURE);
+    // TODO: Perhaps suggest use of the debug output help option in this message? (On a new line after the existing message)
+    die("Error: Expected to see output containing '%s', got '%s'", s,
+        make_printable(pending_output));
 }
 
 
@@ -215,7 +220,7 @@ void complete_output_line_handler(const char *line) {
         case os_discard:
             break;
 
-        case os_discard_list_command:
+        case os_list_discard_command:
             check_pending_output(">LIST");
             output_state = os_list;
             break;
@@ -225,17 +230,27 @@ void complete_output_line_handler(const char *line) {
             fprintf(output_state_file, "%s\n", line);
             break;
 
-        case os_discard_pack_concatenate:
+        case os_pack_discard_concatenate:
             check_pending_output("Concatenate?");
+            output_state = os_pack_discard_blank;
+            break;
+
+        case os_pack_discard_blank:
+            check(*pending_output == '\0', "Error: Expected to see a blank line"); // TODO: SHOULD SAY GOT XXX - NEED CHECK TO BE PRINTF-IFIED
             output_state = os_pack;
             break;
 
         case os_pack:
             // TODO: This needs to respect verbosity
             if (config.verbose >= 1) {
-                if (is_in_pending_output("Bytes saved") || (config.verbose >= 2)) {
+                bool is_bytes_saved = is_in_pending_output("Bytes saved");
+                if (is_bytes_saved || (config.verbose >= 2)) {
                     // TODO: Should this go to stderr or stdout?
-                    fprintf(stderr, "SFTODOPACK!%s!\n", line);
+                    // TODO: Sanitise output? It should be fairly ASCII tho...
+                    fprintf(stderr, "SFTODO%s\n", line);
+                }
+                if (is_bytes_saved) {
+                    output_state = os_discard;
                 }
             }
             break;
@@ -327,14 +342,12 @@ int callback_osbyte_return_u16(M6502 *mpu, uint16_t value) {
 int callback_osbyte_read_vdu_variable(M6502 *mpu) {
     int i = mpu->registers->x;
     if (vdu_variables[i] == -1) {
-        fprintf(stderr, "Unsupported VDU variable read: %02x\n", i);
         mpu_dump();
-        exit(EXIT_FAILURE);
+        die("Error: Unsupported VDU variable %d read", i);
     }
     if (vdu_variables[i + 1] == -1) {
-        fprintf(stderr, "Unsupported VDU variable read: %02x\n", i + 1);
         mpu_dump();
-        exit(EXIT_FAILURE);
+        die("Error: Unsupported VDU variable %d read", i + 1);
     }
     mpu->registers->x = vdu_variables[i];
     mpu->registers->y = vdu_variables[i + 1];
@@ -364,10 +377,8 @@ int callback_osbyte(M6502 *mpu, uint16_t address, uint8_t data) {
         case 0xa0:
             return callback_osbyte_read_vdu_variable(mpu);
         default:
-            fprintf(stderr, "Unsupported OSBYTE: A=%02x, X=%02x, Y=%02x\n",
-                    mpu->registers->a, mpu->registers->x, mpu->registers->y);
             mpu_dump();
-            exit(EXIT_FAILURE);
+            die("Error: Unsupported OSBYTE");
     }
 }
 
@@ -451,10 +462,8 @@ int callback_osword(M6502 *mpu, uint16_t address, uint8_t data) {
         case 0x05: // read I/O processor memory
             return callback_osword_read_io_memory(mpu);
         default:
-            fprintf(stderr, "Unsupported OSWORD: A=%02x, X=%02x, Y=%02x\n",
-                    mpu->registers->a, mpu->registers->x, mpu->registers->y);
             mpu_dump();
-            exit(EXIT_FAILURE);
+            die("Error: Unsupported OSWORD");
     }
 }
 
@@ -490,13 +499,13 @@ int callback_irq(M6502 *mpu, uint16_t address, uint8_t data) {
     mpu->registers->s += 2; // TODO not necessary, we won't return
     uint16_t error_string_ptr = (high << 8) | low;
     uint16_t error_num_address = error_string_ptr - 1;
-    fprintf(stderr, "\nError: ");
+    fprintf(stderr, "Error: ");
     for (uint8_t c; (c = mpu->memory[error_string_ptr]) != '\0'; ++error_string_ptr) {
         fputc(c, stderr);
     }
     uint8_t error_num = mpu->memory[error_num_address];
+    // TODO: We will need an ability to include a pseudo-line number if we're tokenising a BASIC program - but maybe not just here, maybe on other errors too (e.g. in die()?)
     fprintf(stderr, " (%d)\n", error_num);
-    // TODO: We will need an ability to include a pseudo-line number if we're tokenising a BASIC program
     exit(EXIT_FAILURE);
 }
 
@@ -865,7 +874,7 @@ void save_ascii_basic(const char *filename) {
     // about how my OSWRCH etc emulation works. Let's just do a LIST so I can
     // see the output on screen for now.
     assert(output_state == os_discard);
-    output_state = os_discard_list_command; output_state_file = file;
+    output_state = os_list_discard_command; output_state_file = file;
     execute_input_line("LIST");
     output_state = os_discard; output_state_file = 0;
     check(fclose(file) == 0, "Error closing output");
@@ -882,7 +891,7 @@ void pack(void) {
     check_pending_output("Use unused singles?"); execute_osrdch("Y");
     check_pending_output("Concatenate?");
     assert(output_state == os_discard);
-    output_state = os_pack;
+    output_state = os_pack_discard_concatenate;
     execute_osrdch("Y"); // concatenate
     check_pending_output("Ready:"); execute_osrdch("Q"); // quit
     output_state = os_discard;
