@@ -931,4 +931,6 @@ void finished(void) {
 // - so in general verbose is defined on a per-op basis, and has no effect on the tokenise/detokenise stages
 // verbose does not control whether we show all output from emulated machine for debugging, that's some separate --debug-foo option
 
+// TODO: I'm being very casual about mixing char/uint8_t/int
+
 // vi: colorcolumn=80
