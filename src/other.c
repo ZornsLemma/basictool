@@ -901,6 +901,13 @@ void pack(void) {
     //fprintf(stderr, "SFTODOHHH\n");
 }
 
+void renumber(void) {
+    check_pending_output(">");
+    char buffer[256];
+    sprintf(buffer, "RENUMBER %d,%d", config.renumber_start, config.renumber_step);
+    execute_input_line(buffer);
+}
+
 void enter_basic(void) {
     mpu_registers.a = 1; // language entry special value in A
     mpu_registers.x = 0;

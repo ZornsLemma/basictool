@@ -15,6 +15,7 @@ void init(void); // TODO!
 void make_service_call(void); // TODO!
 void enter_basic(void); // TODO!
 void pack(void); // TODO!
+void renumber(void); // TODO!
 void check(bool b, const char *s); // TODO!
 void save_basic(const char *filename); // TODO!
 void save_ascii_basic(const char *filename); // TODO!
@@ -32,6 +33,9 @@ enum option_id {
     oi_keep_spaces_start,
     oi_keep_spaces_end,
     oi_pack,
+    oi_renumber,
+    oi_renumber_start,
+    oi_renumber_step,
     oi_tokenise,
     oi_ascii
 };
@@ -80,6 +84,24 @@ static struct cag_option options[] = {
       .description = "pack the program to reduce its size" },
 
     // TODO: Options to override default Y for pack options
+
+    // TODO: This breaks alignment in -h output, can I tweak it?
+    { .identifier = oi_renumber,
+      .access_letters = "r",
+      .access_name = "renumber",
+      .description = "renumber the program" },
+
+    { .identifier = oi_renumber_start,
+      .access_letters = 0,
+      .access_name = "renumber-start",
+      .value_name = "N",
+      .description = "renumber starting from N (implies -r)" },
+
+    { .identifier = oi_renumber_step,
+      .access_letters = 0,
+      .access_name = "renumber-step",
+      .value_name = "N",
+      .description = "renumber so line numbers increment by N (implies -r)" },
 
     { .identifier = oi_tokenise,
       .access_letters = "t",
@@ -189,6 +211,14 @@ static void check_only_one_token_option(bool new) {
     check(call_count == 1, "Please only specify one of --tokenise and --ascii");
 }
 
+static long parse_long_argument(const char *name, const char *value, int min, int max) {
+    check((value != 0) && (*value != '\0'), "Error: missing value"); // SFTODO: USE 'name' WITH A PRINTF-LIKE CHECK FUNCTION, OR RERWITE AS AN EXPLICIT IF AND USE DIE (OR MAYBE A PRINTF LIKE DIE_HELP);
+    char *endptr;
+    long result = strtol(value, &endptr, 10);
+    check(*endptr == '\0' && (result >= min) && (result <= max), "Error: invalid integer"); // SFTODO: USE 'name' AND 'value' IN THIS MESSAGE AND MIN AND MAX
+    return result;
+}
+
 int main(int argc, char *argv[]) {
     program_name = parse_program_name(argv[0]);
 
@@ -242,6 +272,24 @@ int main(int argc, char *argv[]) {
             
             case oi_pack:
                 config.pack = true;
+                break;
+
+            case oi_renumber:
+                config.renumber = true;
+                break;
+
+            case oi_renumber_start:
+                config.renumber = true;
+                config.renumber_start = (int) parse_long_argument(
+                    "--renumber-start", cag_option_get_value(&context),
+                    0, 32767);
+                break;
+
+            case oi_renumber_step:
+                config.renumber = true;
+                config.renumber_step = (int) parse_long_argument(
+                    "--renumber-step", cag_option_get_value(&context),
+                    1, 255);
                 break;
 
             case oi_tokenise:
@@ -306,6 +354,9 @@ int main(int argc, char *argv[]) {
     load_basic(filenames[0]); // TODO: rename load_basic_program()? tho symmetry with save would suggest no "_program"
     if (config.pack) {
         pack();
+    }
+    if (config.renumber) {
+        renumber();
     }
     if (config.tokenise_output) {
         save_basic(filenames[1]); // TODO: rename save_tokenised_basic()

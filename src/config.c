@@ -10,5 +10,8 @@ struct s_config config = {
     true,   // strip leading spaces
     true,   // strip trailing spaces
     false,  // pack
+    false,  // renumber
+    10,     // renumber start
+    10,     // renumber step
     false,  // tokenise output
 };
