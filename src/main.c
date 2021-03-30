@@ -9,6 +9,9 @@
 
 #define VERSION "0.01"
 
+// We could just sum the bool variables, but let's play it safe in case we
+// want to support pre-C99 compilers where bool is a typedef for something
+// like int and may have values other than 0 and 1.
 #define COUNT_BOOL(count, b) \
     do { \
         if (b) { \
@@ -304,18 +307,14 @@ int main(int argc, char *argv[]) {
                 printf("Usage: %s [OPTION]... INPUTFILE [OUTPUTFILE]\n", program_name);
                 printf("INPUTFILE should be ASCII or tokenised BBC BASIC.\n");
                 printf("(A filename of \"-\" indicates standard input/output.)\n\n");
-                // TODO: "analyse" is only true if I expose 
                         // TODO FORMATTING OF CODE
                 printf(
-"Tokenise, de-tokenise, pack and examine BBC BASIC programs.\n"
+"Tokenise, de-tokenise, pack and analyse BBC BASIC programs.\n"
 "\n"
 "This program is really a specialised BBC Micro emulator which uses the BBC\n"
 "BASIC and Advanced BASIC Editor ROMs to operate on BBC BASIC programs. Use\n"
 "--roms to see more information about these ROMs.\n\n");
                 cag_option_print(options, CAG_ARRAY_SIZE(options), stdout);
-                // TODO: Show ROM versions? Or on a separate option? Partly
-                // depends whether ROM code is compiled in, if it's live-out
-                // don't want --help not working because ROMs can't be found.
                 return EXIT_SUCCESS;
 
             case oi_roms:
@@ -483,23 +482,6 @@ int main(int argc, char *argv[]) {
         assert(config.ascii_output);
         save_ascii_basic(filenames[1]);
     }
-
-
-
-
-#if 0 // SFTODO!
-    load_basic(filenames[0]);
-    // TODO: The different options should be exposed via command line switches
-    osrdch_queue = 
-        "P" // Pack
-        "Y" // REMs?
-        "Y" // Spaces?
-        "Y" // Comments?        "Y" // Variables?
-        "Y" // Use unused singles?
-        "Y" // Concatenate?
-        ;
-    enter_basic(); // TODO! make_service_call();
-#endif
 }
 // TODO: I should check return value of fclose() everywhere
 
