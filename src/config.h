@@ -20,6 +20,7 @@ struct s_config {
     int renumber_start;
     int renumber_step;
     int listo;
+    bool format;
     bool tokenise_output;
 };
 

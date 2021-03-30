@@ -19,6 +19,7 @@ void renumber(void); // TODO!
 void check(bool b, const char *s); // TODO!
 void save_basic(const char *filename); // TODO!
 void save_ascii_basic(const char *filename); // TODO!
+void save_formatted_basic(const char *filename); // TODO!
 
 const char *filenames[2] = {0, 0};
 
@@ -44,6 +45,7 @@ enum option_id {
     oi_renumber_start,
     oi_renumber_step,
     oi_listo,
+    oi_format,
     oi_tokenise,
     oi_ascii
 };
@@ -151,6 +153,12 @@ static struct cag_option options[] = {
       .access_name = "listo",
       .value_name = "N",
       .description = "use LISTO N to indent ASCII output" },
+
+    // TODO: NEED TO GENERATE ERROR IF USER GIVES INCOMPATIBLE OPTIONS, E.G. LISTO WITH TOKENISE, OR FORMAT WITH TOKENISE
+    { .identifier = oi_format,
+      .access_letters = "f",
+      .access_name = "format",
+      .description = "output formatted ASCII text (non-tokenised) BASIC" },
 
     { .identifier = oi_tokenise,
       .access_letters = "t",
@@ -384,6 +392,10 @@ int main(int argc, char *argv[]) {
                     "--listo", cag_option_get_value(&context), 0, 7);
                 break;
 
+            case oi_format:
+                config.format = true;
+                break;
+
             case oi_tokenise:
                 check_only_one_token_option(true);
                 // TODO: Should we require some kind of force option if this
@@ -445,7 +457,9 @@ int main(int argc, char *argv[]) {
     if (config.renumber) {
         renumber();
     }
-    if (config.tokenise_output) {
+    if (config.format) {
+        save_formatted_basic(filenames[1]);
+    } else if (config.tokenise_output) {
         save_basic(filenames[1]); // TODO: rename save_tokenised_basic()
     } else {
         save_ascii_basic(filenames[1]);

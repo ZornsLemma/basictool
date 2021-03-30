@@ -25,6 +25,7 @@ const char *pending_osword_input_line = 0;
 enum {
     os_discard,
     os_list_discard_command,
+    os_format_discard_command,
     os_list,
     os_pack_discard_concatenate,
     os_pack_discard_blank,
@@ -225,9 +226,19 @@ void complete_output_line_handler(const char *line) {
             output_state = os_list;
             break;
 
-        case os_list:
+        case os_format_discard_command:
+            check_pending_output("Format listing");
+            output_state = os_list;
+            break;
+
+        case os_list: // TODO: RENAME os_list_or_format?
             assert(output_state_file != 0);
-            fprintf(output_state_file, "%s\n", line);
+            // Neither LIST output nor ABE "format" output can include blank
+            // lines, except at the end (in the case of ABE "format"), so we
+            // can safely discard them.
+            if (*line != '\0') {
+                fprintf(output_state_file, "%s\n", line);
+            }
             break;
 
         case os_pack_discard_concatenate:
@@ -873,15 +884,24 @@ void save_basic(const char *filename) {
 void save_ascii_basic(const char *filename) {
     FILE *file = fopen_wrapper(filename, "wb");
     check(file != 0, "Can't open output");
-    // TODO: We need to get the output into the file, which requires thinking
-    // about how my OSWRCH etc emulation works. Let's just do a LIST so I can
-    // see the output on screen for now.
     assert(output_state == os_discard);
     char buffer[256];
     sprintf(buffer, "LISTO %d", config.listo);
     execute_input_line(buffer);
     output_state = os_list_discard_command; output_state_file = file;
     execute_input_line("LIST");
+    output_state = os_discard; output_state_file = 0;
+    check(fclose(file) == 0, "Error closing output");
+}
+
+void save_formatted_basic(const char *filename) {
+    FILE *file = fopen_wrapper(filename, "wb");
+    check(file != 0, "Can't open output");
+    execute_input_line("*BUTIL");
+    check_pending_output("Ready:");
+    assert(output_state == os_discard);
+    output_state = os_format_discard_command; output_state_file = file; // TODO!
+    execute_osrdch("F"); // format
     output_state = os_discard; output_state_file = 0;
     check(fclose(file) == 0, "Error closing output");
 }

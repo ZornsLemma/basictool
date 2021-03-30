@@ -21,5 +21,6 @@ struct s_config config = {
     10,     // renumber start
     10,     // renumber step
     0,      // LISTO
+    false,  // format
     false,  // tokenise output
 };
