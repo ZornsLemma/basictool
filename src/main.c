@@ -54,8 +54,6 @@ enum option_id {
     oi_ascii
 };
 
-// TODO: The .identifier values here could probably be char-sized enum values,
-// which might be more readable.
 static struct cag_option options[] = {
     { .identifier = oi_help,
       .access_letters = "h",
@@ -161,9 +159,20 @@ static struct cag_option options[] = {
       .access_letters = "l",
       .access_name = "listo",
       .value_name = "N",
-      .description = "use LISTO N to indent ASCII output" },
+      .description = "use LISTO N to indent ASCII output\n\nOutput options (pick one only):" },
 
     // TODO: NEED TO GENERATE ERROR IF USER GIVES INCOMPATIBLE OPTIONS, E.G. LISTO WITH TOKENISE, OR FORMAT WITH TOKENISE
+    // TODO: REORDER ENUM LIST AND MAIN SWITCH() TO MATCH ORDER
+    { .identifier = oi_ascii,
+      .access_letters = "a",
+      .access_name = "ascii",
+      .description = "output ASCII text (non-tokenised) BASIC (default)" },
+
+    { .identifier = oi_tokenise,
+      .access_letters = "t",
+      .access_name = "tokenise",
+      .description = "output tokenised BASIC" },
+
     { .identifier = oi_format,
       .access_letters = "f",
       .access_name = "format",
@@ -178,16 +187,6 @@ static struct cag_option options[] = {
       .access_letters = 0,
       .access_name = "variable-xref",
       .description = "output variable cross references" },
-
-    { .identifier = oi_tokenise,
-      .access_letters = "t",
-      .access_name = "tokenise",
-      .description = "output tokenised BASIC" },
-
-    { .identifier = oi_ascii,
-      .access_letters = "a",
-      .access_name = "ascii",
-      .description = "output ASCII text (non-tokenised) BASIC (default)" },
 
     // TODO: An option to set LISTO for text output (should probably imply text
     // output option)
@@ -314,7 +313,7 @@ int main(int argc, char *argv[]) {
                 // TODO: "analyse" is only true if I expose 
                         // TODO FORMATTING OF CODE
                 printf(
-"Tokenise, de-tokenise, examine, pack and generally munge BBC BASIC programs.\n"
+"Tokenise, de-tokenise, pack and examine BBC BASIC programs.\n"
 "\n"
 "This program is really a specialised BBC Micro emulator which uses the BBC\n"
 "BASIC and Advanced BASIC Editor ROMs to operate on BBC BASIC programs. Use\n"
