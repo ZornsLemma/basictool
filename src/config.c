@@ -25,4 +25,5 @@ struct s_config config = {
     false,  // line_ref
     false,  // variable_xref
     false,  // tokenise output
+    false,  // ASCII output
 };

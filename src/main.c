@@ -1,3 +1,4 @@
+#include <assert.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -7,6 +8,13 @@
 #include "utils.h"
 
 #define VERSION "0.01"
+
+#define COUNT_BOOL(count, b) \
+    do { \
+        if (b) { \
+            ++count; \
+       } \
+    } while (0)
 
 extern const char *osrdch_queue; // TODO!
 void die_help(const char *message); // TODO!
@@ -271,15 +279,6 @@ static void show_roms(void) {
             // TODO FORMATTING OF CODE
 }
 
-static void check_only_one_token_option(bool new) {
-    static int call_count = 0;
-    ++call_count;
-    if ((call_count == 1) || (config.tokenise_output == new)) {
-        return;
-    }
-    check(call_count == 1, "Please only specify one of --tokenise and --ascii");
-}
-
 static long parse_long_argument(const char *name, const char *value, int min, int max) {
     check((value != 0) && (*value != '\0'), "Error: missing value"); // SFTODO: USE 'name' WITH A PRINTF-LIKE CHECK FUNCTION, OR RERWITE AS AN EXPLICIT IF AND USE DIE (OR MAYBE A PRINTF LIKE DIE_HELP);
     char *endptr;
@@ -291,7 +290,6 @@ static long parse_long_argument(const char *name, const char *value, int min, in
 int main(int argc, char *argv[]) {
     program_name = parse_program_name(argv[0]);
 
-    bool explicit_tokenise_output = false;
     cag_option_context context;
     cag_option_prepare(&context, options, CAG_ARRAY_SIZE(options), argc, argv);
     while (cag_option_fetch(&context)) {
@@ -414,19 +412,15 @@ int main(int argc, char *argv[]) {
                 break;
 
             case oi_tokenise:
-                check_only_one_token_option(true);
                 // TODO: Should we require some kind of force option if this
                 // is set and we're writing to stdout? But stdout could be a
                 // file, should we get unportable and check if stdout is a
                 // terminal as well?
                 config.tokenise_output = true;
-                explicit_tokenise_output = true;
                 break;
 
             case oi_ascii:
-                check_only_one_token_option(false);
-                config.tokenise_output = false;
-                explicit_tokenise_output = true;
+                config.ascii_output = true;
                 break;
         }
     }
@@ -455,12 +449,16 @@ int main(int argc, char *argv[]) {
     }
     // TODO: If the output is binary we should probably also check an option (--filter again?) and refuse to proceed if so. But *maybe* output being stdout will be used to choose a text output option.
 
-    if (!explicit_tokenise_output) {
-        // TODO: Should we do anything to "intelligently" change the default
-        // depending on other options? My current feeling is it's better not
-        // to, as it just gets confusing when the program changes its behaviour
-        // seemingly at random. If it's not used, get rid of
-        // explicit_tokenise_output.
+    int output_options = 0;
+    COUNT_BOOL(output_options, config.format);
+    COUNT_BOOL(output_options, config.line_ref);
+    COUNT_BOOL(output_options, config.variable_xref);
+    COUNT_BOOL(output_options, config.tokenise_output);
+    COUNT_BOOL(output_options, config.ascii_output);
+    if (output_options == 0) {
+        config.ascii_output = true;
+    } else if (output_options > 1) {
+        die_help("Error: Please don't use more than one output option.");
     }
 
     init(); // TODO: RENAME AS IT'S MAINLY/ALL M6502 INIT
@@ -481,6 +479,7 @@ int main(int argc, char *argv[]) {
     } else if (config.tokenise_output) {
         save_basic(filenames[1]); // TODO: rename save_tokenised_basic()
     } else {
+        assert(config.ascii_output);
         save_ascii_basic(filenames[1]);
     }
 
