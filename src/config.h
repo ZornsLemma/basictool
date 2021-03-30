@@ -6,6 +6,7 @@
 struct s_config {
     int verbose;
     bool filter;
+    bool input_tokenised;
     bool strip_leading_spaces;
     bool strip_trailing_spaces;
     bool pack;

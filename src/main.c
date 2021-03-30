@@ -29,6 +29,7 @@ enum option_id {
     oi_roms,
     oi_verbose,
     oi_filter,
+    oi_input_tokenised,
     oi_keep_spaces,
     oi_keep_spaces_start,
     oi_keep_spaces_end,
@@ -69,6 +70,11 @@ static struct cag_option options[] = {
       .access_letters = 0,
       .access_name = "filter",
       .description = "allow use as a filter (reading from stdin and writing to stdout)" },
+
+    { .identifier = oi_input_tokenised,
+      .access_letters = 0,
+      .access_name = "input-tokenised",
+      .description = "assume the input is tokenised BASIC instead of auto-detecting" },
 
     { .identifier = oi_keep_spaces,
       .access_letters = "k",
@@ -302,6 +308,10 @@ int main(int argc, char *argv[]) {
 
             case oi_filter:
                 config.filter = true;
+                break;
+
+            case oi_input_tokenised:
+                config.input_tokenised = true;
                 break;
 
             case oi_keep_spaces:

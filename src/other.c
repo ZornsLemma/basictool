@@ -808,13 +808,14 @@ void load_basic(const char *filename) {
     // whether it's tokenised or text BASIC.
     size_t length;
     char *data = load_binary(filename, &length);
-    // http://beebwiki.mdfs.net/Program_format says a Wilson/Acorn format
-    // tokenised BASIC program (which is all we care about here) will end with
-    // <cr><ff>. TODO: The same page also says it's legit to append data to the
-    // end of a BASIC program, so I should probably offer some command line
-    // option to override this ("--assume-input-tokenised" or whatever) just in
-    // case.
-    bool tokenised = ((length >= 2) && (data[length - 2] == '\x0d') && (data[length - 1] == '\xff'));
+    bool tokenised;
+    if (config.input_tokenised) {
+        tokenised = true;
+    } else {
+        // http://beebwiki.mdfs.net/Program_format says a Wilson/Acorn format
+        // tokenised BASIC program will end with <cr><ff>.
+        tokenised = ((length >= 2) && (data[length - 2] == '\x0d') && (data[length - 1] == '\xff'));
+    }
     // TODO: Print "tokenised" at suitably high verbosity level
 
     if (tokenised) {
