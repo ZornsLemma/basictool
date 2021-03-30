@@ -161,7 +161,7 @@ static struct cag_option options[] = {
       .access_letters = "l",
       .access_name = "listo",
       .value_name = "N",
-      .description = "use LISTO N to indent ASCII output\n\nOutput options (pick one only):" },
+      .description = "use LISTO N to indent ASCII output\n\nOutput type options (pick one only):" },
 
     // TODO: NEED TO GENERATE ERROR IF USER GIVES INCOMPATIBLE OPTIONS, E.G. LISTO WITH TOKENISE, OR FORMAT WITH TOKENISE
     // TODO: REORDER ENUM LIST AND MAIN SWITCH() TO MATCH ORDER
@@ -302,6 +302,7 @@ int main(int argc, char *argv[]) {
             case oi_help:
                 printf("%s " VERSION "\n", program_name);
                 printf("Usage: %s [OPTION]... INPUTFILE [OUTPUTFILE]\n", program_name);
+                printf("INPUTFILE should be ASCII or tokenised BBC BASIC.\n");
                 printf("(A filename of \"-\" indicates standard input/output.)\n\n");
                 // TODO: "analyse" is only true if I expose 
                         // TODO FORMATTING OF CODE
@@ -458,7 +459,7 @@ int main(int argc, char *argv[]) {
     if (output_options == 0) {
         config.ascii_output = true;
     } else if (output_options > 1) {
-        die_help("Error: Please don't use more than one output option.");
+        die_help("Error: Please don't use more than one output type option.");
     }
 
     init(); // TODO: RENAME AS IT'S MAINLY/ALL M6502 INIT
