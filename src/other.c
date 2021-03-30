@@ -876,6 +876,9 @@ void save_ascii_basic(const char *filename) {
     // about how my OSWRCH etc emulation works. Let's just do a LIST so I can
     // see the output on screen for now.
     assert(output_state == os_discard);
+    char buffer[256];
+    sprintf(buffer, "LISTO %d", config.listo);
+    execute_input_line(buffer);
     output_state = os_list_discard_command; output_state_file = file;
     execute_input_line("LIST");
     output_state = os_discard; output_state_file = 0;

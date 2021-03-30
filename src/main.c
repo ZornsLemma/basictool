@@ -42,6 +42,7 @@ enum option_id {
     oi_renumber,
     oi_renumber_start,
     oi_renumber_step,
+    oi_listo,
     oi_tokenise,
     oi_ascii
 };
@@ -138,6 +139,12 @@ static struct cag_option options[] = {
       .access_name = "renumber-step",
       .value_name = "N",
       .description = "renumber so line numbers increment by N" },
+
+    { .identifier = oi_listo,
+      .access_letters = "l",
+      .access_name = "listo",
+      .value_name = "N",
+      .description = "use LISTO N to indent ASCII output" },
 
     { .identifier = oi_tokenise,
       .access_letters = "t",
@@ -362,6 +369,11 @@ int main(int argc, char *argv[]) {
                     1, 255);
                 break;
 
+            case oi_listo:
+                config.listo = (int) parse_long_argument(
+                    "--listo", cag_option_get_value(&context), 0, 7);
+                break;
+
             case oi_tokenise:
                 check_only_one_token_option(true);
                 // TODO: Should we require some kind of force option if this
@@ -447,5 +459,12 @@ int main(int argc, char *argv[]) {
 #endif
 }
 // TODO: I should check return value of fclose() everywhere
+
+// TODO: It might be nice to offer option to strip line numbers on non-tokenised
+// output. However, that would break programs which need to use line numbers,
+// so it might be nice to do that in conjunction with the ABE "table line
+// references" option to try (we'd never get it perfect, due to things like
+// calculated line numbers) to remove line numbers except where they're not
+// used.
 
 // vi: colorcolumn=80
