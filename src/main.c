@@ -33,6 +33,12 @@ enum option_id {
     oi_keep_spaces_start,
     oi_keep_spaces_end,
     oi_pack,
+    oi_pack_rems_n,
+    oi_pack_spaces_n,
+    oi_pack_comments_n,
+    oi_pack_variables_n,
+    oi_pack_singles_n,
+    oi_pack_concatenate_n,
     oi_renumber,
     oi_renumber_start,
     oi_renumber_step,
@@ -66,7 +72,7 @@ static struct cag_option options[] = {
     { .identifier = oi_keep_spaces,
       .access_letters = "k",
       .access_name = "keep-spaces",
-      .description = "don't strip leading or trailing spaces from lines when tokenising" },
+      .description = "don't strip spaces at start/end of lines when tokenising" },
 
     { .identifier = oi_keep_spaces_start,
       .access_letters = 0,
@@ -81,27 +87,57 @@ static struct cag_option options[] = {
     { .identifier = oi_pack,
       .access_letters = "p",
       .access_name = "pack",
-      .description = "pack the program to reduce its size" },
+      .description = "pack the program to reduce its size (implied by --pack-*)" },
 
-    // TODO: Options to override default Y for pack options
+    // TODO: Arguably these options should be named and described in "standalone"
+    // terms, not as if the user is familiar with ABE's pack questions.
+ 
+    { .identifier = oi_pack_rems_n,
+      .access_letters = "",
+      .access_name = "pack-rems-n",
+      .description = "answer N to \"REMs?\" question when packing" },
 
-    // TODO: This breaks alignment in -h output, can I tweak it?
+    { .identifier = oi_pack_spaces_n,
+      .access_letters = "",
+      .access_name = "pack-spaces-n",
+      .description = "answer N to \"Spaces?\" question when packing" },
+
+    { .identifier = oi_pack_comments_n,
+      .access_letters = "",
+      .access_name = "pack-comments-n",
+      .description = "answer N to \"Comments?\" question when packing" },
+
+    { .identifier = oi_pack_variables_n,
+      .access_letters = "",
+      .access_name = "pack-variables-n",
+      .description = "answer N to \"Variables?\" question when packing" },
+
+    { .identifier = oi_pack_singles_n,
+      .access_letters = "",
+      .access_name = "pack-singles-n",
+      .description = "answer N to \"Use unused singles?\" question when packing" },
+
+    { .identifier = oi_pack_concatenate_n,
+      .access_letters = "",
+      .access_name = "pack-concatenate-n",
+      .description = "answer N to \"Concatenate?\" question when packing" },
+
     { .identifier = oi_renumber,
       .access_letters = "r",
       .access_name = "renumber",
-      .description = "renumber the program" },
+      .description = "renumber the program (implied by --renumber-start/step)" },
 
     { .identifier = oi_renumber_start,
       .access_letters = 0,
       .access_name = "renumber-start",
       .value_name = "N",
-      .description = "renumber starting from N (implies -r)" },
+      .description = "renumber starting from N" },
 
     { .identifier = oi_renumber_step,
       .access_letters = 0,
       .access_name = "renumber-step",
       .value_name = "N",
-      .description = "renumber so line numbers increment by N (implies -r)" },
+      .description = "renumber so line numbers increment by N" },
 
     { .identifier = oi_tokenise,
       .access_letters = "t",
@@ -228,6 +264,10 @@ int main(int argc, char *argv[]) {
     while (cag_option_fetch(&context)) {
         char identifier = cag_option_get(&context);
         switch (identifier) {
+            default:
+                // This occurs for unsupported options entered by the user,
+                // not just options we've told cargs about but forgotten to
+                // implement, so fall through to --help.
             case oi_help:
                 printf("%s " VERSION "\n", program_name);
                 printf("Usage: %s [OPTION]... [INPUTFILE] [OUTPUTFILE]\n\n", program_name);
@@ -274,6 +314,36 @@ int main(int argc, char *argv[]) {
                 config.pack = true;
                 break;
 
+            case oi_pack_rems_n:
+                config.pack = true;
+                config.pack_rems_n = true;
+                break;
+
+            case oi_pack_spaces_n:
+                config.pack = true;
+                config.pack_spaces_n = true;
+                break;
+
+            case oi_pack_comments_n:
+                config.pack = true;
+                config.pack_comments_n = true;
+                break;
+
+            case oi_pack_variables_n:
+                config.pack = true;
+                config.pack_variables_n = true;
+                break;
+
+            case oi_pack_singles_n:
+                config.pack = true;
+                config.pack_singles_n = true;
+                break;
+
+            case oi_pack_concatenate_n:
+                config.pack = true;
+                config.pack_concatenate_n = true;
+                break;
+
             case oi_renumber:
                 config.renumber = true;
                 break;
@@ -306,11 +376,6 @@ int main(int argc, char *argv[]) {
                 check_only_one_token_option(false);
                 config.tokenise_output = false;
                 explicit_tokenise_output = true;
-                break;
-
-            default:
-                die("Internal error: Unrecognised command line identifier %d",
-                    identifier);
                 break;
         }
     }

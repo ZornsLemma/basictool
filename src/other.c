@@ -882,19 +882,30 @@ void save_ascii_basic(const char *filename) {
     check(fclose(file) == 0, "Error closing output");
 }
 
+static const char *no(bool no) {
+    return no ? "N" : "Y";
+}
+
 void pack(void) {
     execute_input_line("*BUTIL");
     //fprintf(stderr, "SFTODOLLL\n");
     check_pending_output("Ready:"); execute_osrdch("P"); // pack
-    check_pending_output("REMs?"); execute_osrdch("Y");
-    check_pending_output("Spaces?"); execute_osrdch("Y");
-    check_pending_output("Comments?"); execute_osrdch("Y");
-    check_pending_output("Variables?"); execute_osrdch("Y");
-    check_pending_output("Use unused singles?"); execute_osrdch("Y");
+    check_pending_output("REMs?");
+    execute_osrdch(no(config.pack_rems_n));
+    check_pending_output("Spaces?");
+    execute_osrdch(no(config.pack_spaces_n));
+    check_pending_output("Comments?");
+    execute_osrdch(no(config.pack_comments_n));
+    check_pending_output("Variables?");
+    execute_osrdch(no(config.pack_variables_n));
+    if (!config.pack_variables_n) {
+        check_pending_output("Use unused singles?");
+        execute_osrdch(no(config.pack_singles_n));
+    }
     check_pending_output("Concatenate?");
     assert(output_state == os_discard);
     output_state = os_pack_discard_concatenate;
-    execute_osrdch("Y"); // concatenate
+    execute_osrdch(no(config.pack_concatenate_n));
     check_pending_output("Ready:"); execute_osrdch("Q"); // quit
     output_state = os_discard;
     execute_input_line("OLD"); // TODO: Because ABE's *FX138 calls are treated as no-op

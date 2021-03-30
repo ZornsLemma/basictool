@@ -10,6 +10,12 @@ struct s_config config = {
     true,   // strip leading spaces
     true,   // strip trailing spaces
     false,  // pack
+    false,  // pack_rems_n
+    false,  // pack_spaces_n
+    false,  // pack_comments_n
+    false,  // pack_variables_n
+    false,  // pack_singles_n
+    false,  // pack_concatenate_n
     false,  // renumber
     10,     // renumber start
     10,     // renumber step
