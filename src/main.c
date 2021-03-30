@@ -23,53 +23,70 @@ const char *filenames[2] = {0, 0};
 
 const char *program_name = 0;
 
+enum option_id {
+    oi_help,
+    oi_roms,
+    oi_verbose,
+    oi_filter,
+    oi_keep_spaces,
+    oi_keep_spaces_start,
+    oi_keep_spaces_end,
+    oi_pack,
+    oi_tokenise,
+    oi_ascii
+};
+
 // TODO: The .identifier values here could probably be char-sized enum values,
 // which might be more readable.
 static struct cag_option options[] = {
-    { .identifier = 'h',
+    { .identifier = oi_help,
       .access_letters = "h",
       .access_name = "help",
       .description = "show this help and exit" },
 
-    { .identifier = 'r',
+    { .identifier = oi_roms,
       .access_letters = 0,
       .access_name = "roms",
       .description = "show information about the ROMs used and exit" },
 
-    { .identifier = 'v',
+    { .identifier = oi_verbose,
       .access_letters = "v",
       .access_name = "verbose",
       .description = "increase verbosity (can be repeated)" },
 
-    { .identifier = 'f',
+    { .identifier = oi_filter,
       .access_letters = 0,
       .access_name = "filter",
       .description = "allow use as a filter (reading from stdin and writing to stdout)" },
 
-    // TODO: These keep... option names are a bit too long and break --help formatting
-    { .identifier = 'l',
-      .access_letters = 0,
-      .access_name = "keep-leading-spaces",
-      .description = "don't strip leading spaces from non-tokenised BASIC" },
+    { .identifier = oi_keep_spaces,
+      .access_letters = "k",
+      .access_name = "keep-spaces",
+      .description = "don't strip leading or trailing spaces from lines when tokenising" },
 
-    { .identifier = 't', // TODO: confusing this isn't "tokenise", which uses 't' for *user* access - a good reason to change to enums maybe
+    { .identifier = oi_keep_spaces_start,
       .access_letters = 0,
-      .access_name = "keep-trailing-spaces",
-      .description = "don't strip trailing spaces from non-tokenised BASIC" },
+      .access_name = "keep-spaces-start",
+      .description = "don't strip spaces at start of lines when tokenising" },
 
-    { .identifier = 'p',
+    { .identifier = oi_keep_spaces_end,
+      .access_letters = 0,
+      .access_name = "keep-spaces-end",
+      .description = "don't strip spaces at end of lines when tokenising" },
+
+    { .identifier = oi_pack,
       .access_letters = "p",
       .access_name = "pack",
       .description = "pack the program to reduce its size" },
 
     // TODO: Options to override default Y for pack options
 
-    { .identifier = 'T',
+    { .identifier = oi_tokenise,
       .access_letters = "t",
       .access_name = "tokenise",
       .description = "output tokenised BASIC" },
 
-    { .identifier = 'a',
+    { .identifier = oi_ascii,
       .access_letters = "a",
       .access_name = "ascii",
       .description = "output ASCII text (non-tokenised) BASIC (default)" },
@@ -181,7 +198,7 @@ int main(int argc, char *argv[]) {
     while (cag_option_fetch(&context)) {
         char identifier = cag_option_get(&context);
         switch (identifier) {
-            case 'h':
+            case oi_help:
                 printf("%s " VERSION "\n", program_name);
                 printf("Usage: %s [OPTION]... [INPUTFILE] [OUTPUTFILE]\n\n", program_name);
                 // TODO: "analyse" is only true if I expose 
@@ -198,31 +215,36 @@ int main(int argc, char *argv[]) {
                 // don't want --help not working because ROMs can't be found.
                 return EXIT_SUCCESS;
 
-            case 'r':
+            case oi_roms:
                 show_roms();
                 return EXIT_SUCCESS;
 
-            case 'v':
+            case oi_verbose:
                 ++config.verbose;
                 break;
 
-            case 'f':
+            case oi_filter:
                 config.filter = true;
                 break;
 
-            case 'l':
+            case oi_keep_spaces:
+                config.strip_leading_spaces = false;
+                config.strip_trailing_spaces = false;
+                break;
+
+            case oi_keep_spaces_start:
                 config.strip_leading_spaces = false;
                 break;
 
-            case 't':
+            case oi_keep_spaces_end:
                 config.strip_trailing_spaces = false;
                 break;
             
-            case 'p':
+            case oi_pack:
                 config.pack = true;
                 break;
 
-            case 'T':
+            case oi_tokenise:
                 check_only_one_token_option(true);
                 // TODO: Should we require some kind of force option if this
                 // is set and we're writing to stdout? But stdout could be a
@@ -232,7 +254,7 @@ int main(int argc, char *argv[]) {
                 explicit_tokenise_output = true;
                 break;
 
-            case 'a':
+            case oi_ascii:
                 check_only_one_token_option(false);
                 config.tokenise_output = false;
                 explicit_tokenise_output = true;

@@ -6,7 +6,7 @@ TODO: Actually write something!
 
 You can download EDITORA100 and EDITORB100 from https://stardot.org.uk/forums/viewtopic.php?p=81362#p81362. Rename them to have a ".rom" extension and copy them into the roms directory.
 
-I recommend using BBC BASIC 4r32, simply because that's what I've done most testing with. You can download it from http://mdfs.net/Software/BBCBasic/BBC/. Other versions of 6502 BASIC will probably work as well. Rename the file "basic4.rom" and copy it into the roms directory.
+I recommend using BBC BASIC 4r32, simply because that's what I've done most testing with. You can download it from http://mdfs.net/Software/BBCBasic/BBC/. Other versions of 6502 BASIC will probably work as well; the BASIC ROM is only used for tokenised, de-tokenising and renumbering BASIC programs, so most of the changes between different BASIC versions aren't relevant. Rename the file "basic4.rom" and copy it into the roms directory.
 
 TODO: This seems a little fiddly, if those are going to be my recommended download options. Maybe I should just use the original names with no extensions.
 
