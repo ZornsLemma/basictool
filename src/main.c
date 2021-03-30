@@ -31,7 +31,6 @@ enum option_id {
     oi_help,
     oi_roms,
     oi_verbose,
-    oi_filter,
     oi_input_tokenised,
     oi_keep_spaces,
     oi_keep_spaces_start,
@@ -69,11 +68,6 @@ static struct cag_option options[] = {
       .access_letters = "v",
       .access_name = "verbose",
       .description = "increase verbosity (can be repeated)" },
-
-    { .identifier = oi_filter,
-      .access_letters = 0,
-      .access_name = "filter",
-      .description = "allow use as a filter (reading from stdin and writing to stdout)" },
 
     { .identifier = oi_input_tokenised,
       .access_letters = 0,
@@ -309,7 +303,8 @@ int main(int argc, char *argv[]) {
                 // implement, so fall through to --help.
             case oi_help:
                 printf("%s " VERSION "\n", program_name);
-                printf("Usage: %s [OPTION]... [INPUTFILE] [OUTPUTFILE]\n\n", program_name);
+                printf("Usage: %s [OPTION]... INPUTFILE [OUTPUTFILE]\n", program_name);
+                printf("(A filename of \"-\" indicates standard input/output.)\n\n");
                 // TODO: "analyse" is only true if I expose 
                         // TODO FORMATTING OF CODE
                 printf(
@@ -330,10 +325,6 @@ int main(int argc, char *argv[]) {
 
             case oi_verbose:
                 ++config.verbose;
-                break;
-
-            case oi_filter:
-                config.filter = true;
                 break;
 
             case oi_input_tokenised:
@@ -457,12 +448,10 @@ int main(int argc, char *argv[]) {
         die_help("Error: Please use a maximum of one input filename and one output filename.");
     }
     // Don't just sit waiting for input on stdin and writing to stdout if we're
-    // invoked with no filenames, unless the user explicitly says this is what
-    // they want by specifying --filter. TODO: If the user specifies filename
-    // "-" this check is bypassed, so maybe we don't need --filter? The message
-    // given here could say to use filename "-" to allow this.
-    if ((filename_count == 0) && !config.filter) {
-        die_help("Error: Please specify at least one filename or use --filter.");
+    // invoked with no filenames. This is a supported mode of operation, but to
+    // avoid confusion we require at least one "-" argument to be specified.
+    if (filename_count == 0) {
+        die_help("Error: Please give at least one filename; use input filename \"-\" for standard input.");
     }
     // TODO: If the output is binary we should probably also check an option (--filter again?) and refuse to proceed if so. But *maybe* output being stdout will be used to choose a text output option.
 
@@ -520,5 +509,7 @@ int main(int argc, char *argv[]) {
 // references" option to try (we'd never get it perfect, due to things like
 // calculated line numbers) to remove line numbers except where they're not
 // used.
+
+// TODO: Should I make sure all printf() etc output and --help fits in 80 cols or is wrapped nicely?
 
 // vi: colorcolumn=80
