@@ -23,5 +23,6 @@ struct s_config config = {
     0,      // LISTO
     false,  // format
     false,  // line_ref
+    false,  // variable_xref
     false,  // tokenise output
 };

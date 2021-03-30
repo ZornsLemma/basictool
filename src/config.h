@@ -22,6 +22,7 @@ struct s_config {
     int listo;
     bool format;
     bool line_ref;
+    bool variable_xref;
     bool tokenise_output;
 };
 

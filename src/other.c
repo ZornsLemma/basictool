@@ -27,6 +27,7 @@ enum {
     os_list_discard_command,
     os_format_discard_command,
     os_line_ref_discard_command,
+    os_variable_xref_discard_command,
     os_list,
     os_pack_discard_concatenate,
     os_pack_discard_blank,
@@ -234,6 +235,11 @@ void complete_output_line_handler(const char *line) {
 
         case os_line_ref_discard_command:
             check_pending_output("Table line references");
+            output_state = os_list;
+            break;
+
+        case os_variable_xref_discard_command:
+            check_pending_output("Variables Xref");
             output_state = os_list;
             break;
 
@@ -921,6 +927,19 @@ void save_line_ref(const char *filename) {
     assert(output_state == os_discard);
     output_state = os_line_ref_discard_command; output_state_file = file; // TODO!
     execute_osrdch("T"); // table line references
+    output_state = os_discard; output_state_file = 0;
+    check(fclose(file) == 0, "Error closing output");
+}
+
+void save_variable_xref(const char *filename) {
+    // TODO: FACTOR OUT COMMON HEAD/TAIL HERE?
+    FILE *file = fopen_wrapper(filename, "wb");
+    check(file != 0, "Can't open output");
+    execute_input_line("*BUTIL");
+    check_pending_output("Ready:");
+    assert(output_state == os_discard);
+    output_state = os_variable_xref_discard_command; output_state_file = file; // TODO!
+    execute_osrdch("V"); // variable xref
     output_state = os_discard; output_state_file = 0;
     check(fclose(file) == 0, "Error closing output");
 }

@@ -21,6 +21,7 @@ void save_basic(const char *filename); // TODO!
 void save_ascii_basic(const char *filename); // TODO!
 void save_formatted_basic(const char *filename); // TODO!
 void save_line_ref(const char *filename); // TODO!
+void save_variable_xref(const char *filename); // TODO!
 
 const char *filenames[2] = {0, 0};
 
@@ -48,6 +49,7 @@ enum option_id {
     oi_listo,
     oi_format,
     oi_line_ref,
+    oi_variable_xref,
     oi_tokenise,
     oi_ascii
 };
@@ -171,6 +173,11 @@ static struct cag_option options[] = {
       .access_letters = 0,
       .access_name = "line-ref",
       .description = "output table of line references" },
+
+    { .identifier = oi_variable_xref,
+      .access_letters = 0,
+      .access_name = "variable-xref",
+      .description = "output variable cross references" },
 
     { .identifier = oi_tokenise,
       .access_letters = "t",
@@ -412,6 +419,10 @@ int main(int argc, char *argv[]) {
                 config.line_ref = true;
                 break;
 
+            case oi_variable_xref:
+                config.variable_xref = true;
+                break;
+
             case oi_tokenise:
                 check_only_one_token_option(true);
                 // TODO: Should we require some kind of force option if this
@@ -477,6 +488,8 @@ int main(int argc, char *argv[]) {
         save_formatted_basic(filenames[1]);
     } else if (config.line_ref) {
         save_line_ref(filenames[1]);
+    } else if (config.variable_xref) {
+        save_variable_xref(filenames[1]);
     } else if (config.tokenise_output) {
         save_basic(filenames[1]); // TODO: rename save_tokenised_basic()
     } else {
