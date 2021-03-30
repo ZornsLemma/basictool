@@ -936,6 +936,21 @@ void pack(void) {
     //fprintf(stderr, "SFTODOHHH\n");
 }
 
+#if 0 // TODO: DELETE
+void unpack(void) {
+    // TODO: Factor out these first couple of lines of ABE invocation?
+    execute_input_line("*BUTIL");
+    //fprintf(stderr, "SFTODOLLL\n");
+    assert(output_state == os_discard);
+    check_pending_output("Ready:"); execute_osrdch("U"); // unpack
+    // TODO: FACTOR OUT THE FOLLOWING LINES?
+    check_pending_output("Ready:"); execute_osrdch("Q"); // quit
+    output_state = os_discard;
+    execute_input_line("OLD"); // TODO: Because ABE's *FX138 calls are treated as no-op
+    //fprintf(stderr, "SFTODOHHH\n");
+}
+#endif
+
 void renumber(void) {
     check_pending_output(">");
     char buffer[256];

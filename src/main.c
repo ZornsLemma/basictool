@@ -131,6 +131,11 @@ static struct cag_option options[] = {
       .access_name = "pack-concatenate-n",
       .description = "answer N to \"Concatenate?\" question when packing" },
 
+    // TODO: It might be nice to expose ABE's "unpack" option, but my
+    // experiments with it (on b-em, not this hacky emulator) suggest it's
+    // quite fiddly and may ask you to renumber lines several times. I will
+    // leave this for now.
+
     { .identifier = oi_renumber,
       .access_letters = "r",
       .access_name = "renumber",
