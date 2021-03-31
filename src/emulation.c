@@ -17,8 +17,8 @@ M6502_Memory mpu_memory;
 static M6502_Callbacks mpu_callbacks;
 static M6502 *mpu;
 
-// M6502_run() never returns, so we use this jmp_buf to return control when a
-// task has finished executing on the emulated CPU.
+// M6502_run() never returns, so we use this jmp_buf to return control when
+// the emulated machine is waiting for user input.
 static jmp_buf mpu_env;
 
 #define ROM_SIZE (16 * 1024)
@@ -317,7 +317,14 @@ static void set_abort_callback(uint16_t address) {
     //M6502_setCallback(mpu, write, address, callback_abort_write);
 }
 
-void emulation_init(void) { // TODO: RENAME
+static void mpu_run() {
+    if (setjmp(mpu_env) == 0) {
+        state = SFTODOIDLE;
+        M6502_run(mpu, callback_poll); // returns only via longjmp(mpu_env)
+    }
+}
+
+void emulation_init(void) {
     mpu = check_alloc(M6502_new(&mpu_registers, mpu_memory, &mpu_callbacks));
     M6502_reset(mpu);
     
@@ -395,6 +402,10 @@ void emulation_init(void) { // TODO: RENAME
     }
     vdu_variables[0x55] = 7; // screen mode
     vdu_variables[0x56] = 4; // memory map type: 1K mode
+
+    mpu_registers.s = 0xff;
+    mpu_registers.pc = enter_basic2(); // SFTODO: RENAME TO INDICATE DOESN'T ENTER DIRECTLY
+    mpu_run();
 }
 
 // TODO: MOVE
@@ -408,12 +419,7 @@ void execute_osrdch(const char *s) {
     // TODO: Following code fragment may be common to OSWORD 0 and can be factored out
     mpu->registers->pc = callback_return_via_rts(mpu);
     //fprintf(stderr, "SFTODOZX022 %d\n", c);
-    // SFTODO: WE SHOULD PROBABLY ALWAYS SET STATE TO SOMETHING WHEN WE DO M6502_RUN
-    if (setjmp(mpu_env) == 0) {
-        //fprintf(stderr, "SFTODORUN\n");
-        state = SFTODOIDLE;
-        M6502_run(mpu, callback_poll); // never returns
-    }
+    mpu_run();
     //fprintf(stderr, "SFTODOZXA22\n");
 } 
 
@@ -441,29 +447,6 @@ void execute_input_line(const char *line) {
     mpu_clear_carry(mpu); // input not terminated by Escape
     mpu->registers->pc = callback_return_via_rts(mpu);
     //fprintf(stderr, "SFTODOZX0\n");
-    if (setjmp(mpu_env) == 0) {
-        state = SFTODOIDLE;
-        M6502_run(mpu, callback_poll); // never returns
-    }
+    mpu_run();
     //fprintf(stderr, "SFTODOZXA\n");
 }
-
-void enter_basic(void) {
-    mpu_registers.a = 1; // language entry special value in A
-    mpu_registers.x = 0;
-    mpu_registers.y = 0;
-
-    const uint16_t code_address = 0x900;
-    uint8_t *p = &mpu_memory[code_address];
-    *p++ = 0xa2; *p++ = 12;                // LDX #12 TODO: MAGIC CONSTANT
-    *p++ = 0x86; *p++ = 0xf4;              // STX &F4
-    *p++ = 0x8e; *p++ = 0x30; *p++ = 0xfe; // STX &FE30
-    *p++ = 0x4c; *p++ = 0x00; *p++ = 0x80; // JMP &8000 (language entry)
-
-    mpu_registers.s  = 0xff;
-    mpu_registers.pc = code_address;
-    if (setjmp(mpu_env) == 0) {
-        M6502_run(mpu, callback_poll); // never returns
-    }
-}
-
