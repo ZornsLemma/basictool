@@ -48,7 +48,7 @@ static void mpu_dump(void) {
     fprintf(stderr, "6502 state: %s\n", buffer);
 }
 
-// TODO: COPY AND PASTE OF enter_basic()
+// TODO: Rename to get rid of '2' and to show it doesn't actually *enter* BASIC, just returns address to call to do so - prepare_basic_entry()??
 static uint16_t enter_basic2(void) {
     mpu_registers.a = 1; // language entry special value in A
     mpu_registers.x = 0;
@@ -309,7 +309,7 @@ static void callback_poll(M6502 *mpu) {
 static void set_abort_callback(uint16_t address) {
     M6502_setCallback(mpu, read,  address, callback_abort_read);
     // TODO: Get rid of write callback permanently?
-    //M6502_setCallback(mpu, write, address, callback_abort_write);
+    M6502_setCallback(mpu, write, address, callback_abort_write);
 }
 
 static void mpu_run() {
@@ -329,11 +329,11 @@ void emulation_init(void) {
     // so this loop excludes them.
     for (uint16_t address = 0xb0; address < 0x100; ++address) {
         switch (address) {
-            case 0xa8:
-            case 0xa9:
-            case 0xf2:
-            case 0xf3:
-            case 0xf4:
+            case 0xf2: // OS text pointer
+            case 0xf3: // OS text pointer
+            case 0xf4: // ROMSEL copy
+            case 0xfd: // error pointer
+            case 0xfe: // error pointer
                 // Supported as far as necessary, don't install a handler.
                 break;
 
@@ -346,8 +346,10 @@ void emulation_init(void) {
     // Trap access to unimplemented OS vectors.
     for (uint16_t address = 0x200; address < 0x236; ++address) {
         switch (address) {
-            case 0x20e:
-            case 0x20f:
+            case 0x202: // BRKV
+            case 0x203: // BRKV
+            case 0x20e: // WRCHV
+            case 0x20f: // WRCHV
                 // Supported as far as necessary, don't install a handler.
                 break;
             default:
