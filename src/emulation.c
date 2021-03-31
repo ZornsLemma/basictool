@@ -39,6 +39,13 @@ static const int transient_code = 0x900;
 // needs to JSR into the arbitrary ROM code, so it has its own space.
 static const int service_code = 0xb00;
 
+enum {
+    os_text_pointer = 0xf2,
+    romsel_copy = 0xf4,
+    brkv = 0x202,
+    wrchv = 0x20e
+};
+
 static void mpu_write_u16(uint16_t address, uint16_t data) {
     mpu_memory[address    ] = data & 0xff;
     mpu_memory[address + 1] = (data >> 8) & 0xff;
@@ -58,8 +65,9 @@ static void mpu_dump(void) {
     fprintf(stderr, "6502 state: %s\n", buffer);
 }
 
-// TODO: Rename to get rid of '2' and to show it doesn't actually *enter* BASIC, just returns address to call to do so - prepare_basic_entry()??
-static uint16_t enter_basic2(void) {
+// Prepare to enter BASIC, returning the address of code which will actually
+// enter it.
+static uint16_t enter_basic(void) {
     mpu_registers.a = 1; // language entry special value in A
     mpu_registers.x = 0;
     mpu_registers.y = 0;
@@ -67,7 +75,7 @@ static uint16_t enter_basic2(void) {
     const uint16_t code_address = transient_code;
     uint8_t *p = &mpu_memory[code_address];
     *p++ = 0xa2; *p++ = bank_basic;        // LDX #bank_basic
-    *p++ = 0x86; *p++ = 0xf4;              // STX &F4
+    *p++ = 0x86; *p++ = romsel_copy;       // STX romsel_copy
     *p++ = 0x8e; *p++ = 0x30; *p++ = 0xfe; // STX &FE30
     *p++ = 0x4c; *p++ = 0x00; *p++ = 0x80; // JMP &8000 (language entry)
 
@@ -186,8 +194,8 @@ static int callback_osbyte(M6502 *mpu, uint16_t address, uint8_t data) {
 
 static int callback_oscli(M6502 *mpu, uint16_t address, uint8_t data) {
     uint16_t yx = (mpu_registers.y << 8) | mpu_registers.x;
-    mpu_memory[0xf2] = mpu_registers.x;
-    mpu_memory[0xf3] = mpu_registers.y;
+    mpu_memory[os_text_pointer    ] = mpu_registers.x;
+    mpu_memory[os_text_pointer + 1] = mpu_registers.y;
     //fprintf(stderr, "SFTODOXCC %c%c%c\n", mpu_memory[yx], mpu_memory[yx+1], mpu_memory[yx+2]);
 
     // Because our ROMSEL implementation will treat it as an error to page in
@@ -217,16 +225,16 @@ static int callback_oscli(M6502 *mpu, uint16_t address, uint8_t data) {
     // in practice it's good enough.
     if (memcmp((char *) &mpu_memory[yx + mpu_registers.y], "BASIC", 5) == 0) {
         //fprintf(stderr, "SFTODO BASIC!\n");
-        return enter_basic2();
+        return enter_basic();
     }
 
     const uint16_t code_address = service_code;
     uint8_t *p = &mpu_memory[code_address];
                                            // .loop
-    *p++ = 0x86; *p++ = 0xf4;              // STX &F4
+    *p++ = 0x86; *p++ = romsel_copy;       // STX romsel_copy
     *p++ = 0x8e; *p++ = 0x30; *p++ = 0xfe; // STX &FE30
     *p++ = 0x20; *p++ = 0x03; *p++ = 0x80; // JSR &8003 (service entry)
-    *p++ = 0xa6; *p++ = 0xf4;              // LDX &F4
+    *p++ = 0xa6; *p++ = romsel_copy;       // LDX romsel_copy
     *p++ = 0xca;                           // DEX
     *p++ = 0x10; *p++ = 256 - 13;          // BPL loop
     *p++ = 0xc9; *p++ = 0;                 // CMP #0
@@ -319,7 +327,6 @@ static void callback_poll(M6502 *mpu) {
 
 static void set_abort_callback(uint16_t address) {
     M6502_setCallback(mpu, read,  address, callback_abort_read);
-    // TODO: Get rid of write callback permanently?
     M6502_setCallback(mpu, write, address, callback_abort_write);
 }
 
@@ -340,9 +347,9 @@ void emulation_init(void) {
     // don't contain OS state we need to emulate so this loop excludes them.
     for (uint16_t address = 0xb0; address < 0x100; ++address) {
         switch (address) {
-            case 0xf2: // OS text pointer
-            case 0xf3: // OS text pointer
-            case 0xf4: // ROMSEL copy
+            case os_text_pointer:
+            case os_text_pointer + 1:
+            case romsel_copy:
             case 0xfd: // error pointer
             case 0xfe: // error pointer
                 // Supported as far as necessary, don't install a handler.
@@ -357,10 +364,10 @@ void emulation_init(void) {
     // Trap access to unimplemented OS vectors.
     for (uint16_t address = 0x200; address < 0x236; ++address) {
         switch (address) {
-            case 0x202: // BRKV
-            case 0x203: // BRKV
-            case 0x20e: // WRCHV
-            case 0x20f: // WRCHV
+            case brkv:
+            case brkv + 1:
+            case wrchv:
+            case wrchv + 1:
                 // Supported as far as necessary, don't install a handler.
                 break;
             default:
@@ -384,7 +391,7 @@ void emulation_init(void) {
 
     // Install fake OS vectors. Because of the way our implementation works,
     // these vectors actually point to the official entry points.
-    mpu_write_u16(0x20e, 0xffee); // SFTODO: MAGIC CONSTANT IN A COUPLE OF PLACES
+    mpu_write_u16(wrchv, 0xffee); // SFTODO: MAGIC CONSTANT IN A COUPLE OF PLACES
 
     // Since we don't have an actual Escape handler, just ensure any read from
     // &ff always returns 0.
@@ -405,7 +412,7 @@ void emulation_init(void) {
     vdu_variables[0x56] = 4; // memory map type: 1K mode
 
     mpu_registers.s = 0xff;
-    mpu_registers.pc = enter_basic2(); // SFTODO: RENAME TO INDICATE DOESN'T ENTER DIRECTLY
+    mpu_registers.pc = enter_basic();
     mpu_run();
 }
 

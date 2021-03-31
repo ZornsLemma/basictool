@@ -4,6 +4,7 @@
 .POSIX:
 .SUFFIXES:
 # TODO: Enable optimisation?
+# TODO: Test with clang
 CC	= cc # TODO!?
 CFLAGS  = -g -Wall --std=c99
 LDFLAGS = -g
