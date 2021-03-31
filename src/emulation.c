@@ -163,7 +163,6 @@ static int callback_osbyte_read_vdu_variable(void) {
     return callback_return_via_rts(mpu);
 }
 
-// TODO: Not here (this has to follow std prototype), but get rid of pointless mpu argument on some functions?
 static int callback_osbyte(M6502 *mpu, uint16_t address, uint8_t data) {
     switch (mpu_registers.a) {
         case 0x03: // select output device
@@ -179,9 +178,13 @@ static int callback_osbyte(M6502 *mpu, uint16_t address, uint8_t data) {
         case 0x84: // read HIMEM
             return callback_osbyte_return_u16(himem);
         case 0x86: // read text cursor position
-            return callback_osbyte_return_u16(0); // TODO: MAGIC CONST, HACK
+            // We just return with X=Y=0; this is good enough in practice.
+            return callback_osbyte_return_u16(0);
         case 0x8a: // place character into buffer
-            // TODO: We probably shouldn't be treating this is a no-op but let's hack
+            // ABE uses this to type "OLD<return>" when re-entering BASIC. It
+            // might be nice to emulate this properly, but it also seems silly
+            // to complicate the I/O emulation further when we can simply
+            // do this explicitly.
             return callback_return_via_rts(); // treat as no-op
         case 0xa0:
             return callback_osbyte_read_vdu_variable();
@@ -410,8 +413,6 @@ void emulation_init(void) {
     mpu_run();
 }
 
-// TODO: MOVE
-// TODO: RENAME
 void execute_osrdch(const char *s) {
     assert(s != 0);
     // TODO: We could in principle handle a multiple character string by
@@ -427,7 +428,6 @@ void execute_osrdch(const char *s) {
     mpu_run();
 } 
 
-// TODO: MOVE
 void execute_input_line(const char *line) {
     assert(line != 0);
     check(mpu_state == ms_osword_input_line_pending,
@@ -442,6 +442,7 @@ void execute_input_line(const char *line) {
     // OSWORD 0 would echo the typed characters and move to a new line, so do
     // the same with our pending output.
     for (int i = 0; i < pending_length; ++i) {
+        // TODO: PROB RENAME pending_output_insert() - MAYBE driver_oswrch()?
         pending_output_insert(line[i]);
     }
     pending_output_insert(0xa); pending_output_insert(0xd);
