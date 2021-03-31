@@ -21,7 +21,6 @@
 
 extern const char *osrdch_queue; // TODO!
 void load_basic(const char *filename); // TODO!
-void init(void); // TODO!
 void make_service_call(void); // TODO!
 void enter_basic(void); // TODO!
 void pack(void); // TODO!
@@ -466,7 +465,8 @@ int main(int argc, char *argv[]) {
         die_help("Error: Please don't use more than one output type option.");
     }
 
-    init(); // TODO: RENAME AS IT'S MAINLY/ALL M6502 INIT
+    emulation_init(); // TODO: RENAME AS IT'S MAINLY/ALL M6502 INIT
+    // TODO: Should this call to enter_basic() be in driver.c or perhaps at end of emulation_init()?
     enter_basic(); // TODO: RENAME START_BASIC()? THO enter_basic2() DOES FEEL BETTER AS 'ENTER'...
     load_basic(filenames[0]); // TODO: rename load_basic_program()? tho symmetry with save would suggest no "_program"
     if (config.pack) {

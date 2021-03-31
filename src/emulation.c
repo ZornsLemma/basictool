@@ -12,14 +12,14 @@
 // directly. I should be consistent, but when choosing how to be consistent,
 // perhaps favour the shortest code?
 // TODO: SOME/ALL OF THESE SHOULD MAYBE BE STATIC?
-M6502_Registers mpu_registers;
+static M6502_Registers mpu_registers;
 M6502_Memory mpu_memory;
-M6502_Callbacks mpu_callbacks;
-M6502 *mpu;
+static M6502_Callbacks mpu_callbacks;
+static M6502 *mpu;
 
 // M6502_run() never returns, so we use this jmp_buf to return control when a
 // task has finished executing on the emulated CPU.
-jmp_buf mpu_env;
+static jmp_buf mpu_env;
 
 #define ROM_SIZE (16 * 1024)
 
@@ -29,7 +29,7 @@ int vdu_variables[257];
 // TODO: Should probably not check this via assert(), it *shouldn't* go wrong
 // if there are no program bugs, but it is quite likely some strange situations
 // can occur if given invalid user input and ABE or BASIC does something I am not expecting in response.
-enum {
+enum { // TODO: GIVE THESE A TWO CHAR-ISH PREFIX AS WITH OTHER ENUMS?
     SFTODOIDLE, // SFTODO: NOT "IDLE", RENAME THIS
     osword_input_line_pending,
     osrdch_pending,
@@ -317,7 +317,7 @@ static void set_abort_callback(uint16_t address) {
     //M6502_setCallback(mpu, write, address, callback_abort_write);
 }
 
-void init(void) { // TODO: RENAME
+void emulation_init(void) { // TODO: RENAME
     mpu = check_alloc(M6502_new(&mpu_registers, mpu_memory, &mpu_callbacks));
     M6502_reset(mpu);
     
