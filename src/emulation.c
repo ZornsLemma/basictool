@@ -9,9 +9,6 @@
 #include "roms.h"
 #include "utils.h"
 
-// TODO: I am quite inconsistent about mpu->foo vs just using these structure
-// directly. I should be consistent, but when choosing how to be consistent,
-// perhaps favour the shortest code?
 static M6502_Registers mpu_registers;
 M6502_Memory mpu_memory;
 static M6502_Callbacks mpu_callbacks;
@@ -59,7 +56,7 @@ uint16_t mpu_read_u16(uint16_t address) {
     return (mpu_memory[address + 1] << 8) | mpu_memory[address];
 }
 
-static void mpu_clear_carry(M6502 *mpu) {
+static void mpu_clear_carry() {
     mpu_registers.p &= ~(1<<0);
 }
 
@@ -107,7 +104,7 @@ NORETURN static int callback_abort_call(M6502 *mpu, uint16_t address, uint8_t da
     callback_abort("call", address, data);
 }
 
-static int callback_return_via_rts(M6502 *mpu) {
+static int callback_return_via_rts() {
     uint16_t address = mpu_read_u16(0x101 + mpu_registers.s);
     mpu_registers.s += 2;
     address += 1;
@@ -140,18 +137,18 @@ static int callback_osasci(M6502 *mpu, uint16_t address, uint8_t data) {
     }
 }
 
-static int callback_osbyte_return_x(M6502 *mpu, uint8_t x) {
+static int callback_osbyte_return_x(uint8_t x) {
     mpu_registers.x = x;
     return callback_return_via_rts(mpu);
 }
 
-static int callback_osbyte_return_u16(M6502 *mpu, uint16_t value) {
+static int callback_osbyte_return_u16(uint16_t value) {
     mpu_registers.x = value & 0xff;
     mpu_registers.y = (value >> 8) & 0xff;
     return callback_return_via_rts(mpu);
 }
 
-static int callback_osbyte_read_vdu_variable(M6502 *mpu) {
+static int callback_osbyte_read_vdu_variable(void) {
     int i = mpu_registers.x;
     if (vdu_variables[i] == -1) {
         mpu_dump();
@@ -176,18 +173,18 @@ static int callback_osbyte(M6502 *mpu, uint16_t address, uint8_t data) {
         case 0x7c: // clear Escape condition
             return callback_return_via_rts(mpu); // treat as no-op
         case 0x7e: // acknowledge Escape condition
-            return callback_osbyte_return_x(mpu, 0); // no Escape condition pending
+            return callback_osbyte_return_x(0); // no Escape condition pending
         case 0x83: // read OSHWM
-            return callback_osbyte_return_u16(mpu, page);
+            return callback_osbyte_return_u16(page);
         case 0x84: // read HIMEM
-            return callback_osbyte_return_u16(mpu, himem);
+            return callback_osbyte_return_u16(himem);
         case 0x86: // read text cursor position
-            return callback_osbyte_return_u16(mpu, 0); // TODO: MAGIC CONST, HACK
+            return callback_osbyte_return_u16(0); // TODO: MAGIC CONST, HACK
         case 0x8a: // place character into buffer
             // TODO: We probably shouldn't be treating this is a no-op but let's hack
-            return callback_return_via_rts(mpu); // treat as no-op
+            return callback_return_via_rts(); // treat as no-op
         case 0xa0:
-            return callback_osbyte_read_vdu_variable(mpu);
+            return callback_osbyte_read_vdu_variable();
         default:
             mpu_dump();
             die("Error: Unsupported OSBYTE");
@@ -248,12 +245,12 @@ static int callback_oscli(M6502 *mpu, uint16_t address, uint8_t data) {
     return code_address;
 }
 
-static int callback_osword_input_line(M6502 *mpu) {
+static int callback_osword_input_line(void) {
     mpu_state = ms_osword_input_line_pending;
     longjmp(mpu_env, 1);
 }
 
-static int callback_osword_read_io_memory(M6502 *mpu) {
+static int callback_osword_read_io_memory(void) {
     // We do this access via dynamically generated code so we don't bypass any
     // lib6502 callbacks.
     uint16_t yx = (mpu_registers.y << 8) | mpu_registers.x;
@@ -270,9 +267,9 @@ static int callback_osword_read_io_memory(M6502 *mpu) {
 static int callback_osword(M6502 *mpu, uint16_t address, uint8_t data) {
     switch (mpu_registers.a) {
         case 0x00: // input line
-            return callback_osword_input_line(mpu);
+            return callback_osword_input_line();
         case 0x05: // read I/O processor memory
-            return callback_osword_read_io_memory(mpu);
+            return callback_osword_read_io_memory();
         default:
             mpu_dump();
             die("Error: Unsupported OSWORD");
