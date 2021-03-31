@@ -25,6 +25,7 @@ enum {
     os_pack
 } output_state = os_discard;
 FILE *output_state_file = 0; // TODO: RENAME? REMOVE "STATE"?
+const char *output_state_filename = 0;
 
 char *pending_output = 0;
 size_t pending_output_length = 0;
@@ -47,13 +48,17 @@ static int max(int lhs, int rhs) {
 // TODO: For stdout to be useful, I need to be sure all verbose output etc is written to stderr - maybe not, it depends how you view the verbose output. A user might want to do "basictool input.txt --pack -vv output.tok > pack-output.txt"; if we output to stderr this redirection becomes fiddlier.
 FILE *fopen_wrapper(const char *pathname, const char *mode) {
     if (pathname == 0) {
-        assert(mode != 0);
-        if (strcmp(mode, "rb") == 0) {
+        assert((mode != 0) && (*mode != '\0'));
+        // We ignore the presence of a "b" in mode; I don't think there's a
+        // portable way to re-open stdin/stdout in binary mode. TODO: Should we
+        // generate an error if there's a "b"? But this is probably fine on
+        // Unix-like systems.
+        if (mode[0] == 'r') {
             return stdin;
-        } else if (strcmp(mode, "wb") == 0) {
+        } else if (mode[0] == 'w') {
             return stdout;
         } else {
-            die("Internal error: Invalid mode passed to fopen_wrapper()");
+            die("Internal error: Invalid mode \"%s\" passed to fopen_wrapper()", mode);
         }
     } else {
         return fopen(pathname, mode);
@@ -130,7 +135,9 @@ static void complete_output_line_handler(char *line) {
         case os_output_non_blank:
             assert(output_state_file != 0);
             if (*line != '\0') {
-                fprintf(output_state_file, "%s\n", line);
+                check(false || fprintf(output_state_file, "%s\n", line) >= 0,
+                      "Error: Error writing to output file \"%s\"",
+                      output_state_filename);
             }
             break;
 
@@ -229,7 +236,7 @@ static char *load_binary(const char *filename, size_t *length) {
 
 // TODO: COMMENT
 // TODO: Review this later, I think there are no missing corner cases (bearing in mind we deliberately put a CR at the end of the input to catch unterminated last lines) but a fresh look would be good
-char *get_line(char **data_ptr, size_t *length_ptr) {
+static char *get_line(char **data_ptr, size_t *length_ptr) {
     assert(data_ptr != 0);
     assert(length_ptr != 0);
     char *data = *data_ptr;
@@ -266,10 +273,8 @@ char *get_line(char **data_ptr, size_t *length_ptr) {
 // Enter the BASIC program text at data - using arbitrary line terminators -
 // a line at a time so BASIC will tokenise it for us.
 // TODO: PERHAPS CHANGE "type" TO SOMETHING ELSE, BE CONSISTENT
-void type_basic_program(char *data, size_t length) {
-    //fprintf(stderr, "SFTODOpQ\n");
+static void type_basic_program(char *data, size_t length) {
     execute_input_line("NEW");
-    //fprintf(stderr, "SFTODOQQ\n");
 
     // Ensure that the last line of the data is terminated by a carriage
     // return, taking advantage of the extra byte allocated by load_binary() to
@@ -280,8 +285,10 @@ void type_basic_program(char *data, size_t length) {
     // auto-assign line numbers; line numbers in the input are recognised and
     // used to advance the automatic line number, as long as they don't move
     // it backwards. This allows using line numbers on just a few select lines
-    // (e.g. DATA statements) if desired.
-    int basic_line_number = 1; // TODO: Allow this and increment to be specified on command line?
+    // (e.g. DATA statements) if desired. We don't allow control over the
+    // start value and increment here because we provide facilities to renumber
+    // any program before we output it, which has the same effect.
+    int basic_line_number = 1;
     int file_line_number = 1;
     for (char *line = 0; (line = get_line(&data, &length)) != 0; ++file_line_number) {
         error_line_number = file_line_number;
@@ -321,8 +328,7 @@ void type_basic_program(char *data, size_t length) {
         // Generate the fake input for BASIC and pass it over.
         const int buffer_size = 256;
         char buffer[buffer_size];
-        check(snprintf(buffer, buffer_size, "%d%s", basic_line_number, line) < buffer_size, "Line too long");
-        //fprintf(stderr, "SFTODOLINE!%s!\n", buffer);
+        check(snprintf(buffer, buffer_size, "%d%s", basic_line_number, line) < buffer_size, "Error: Line too long"); // TODO: WE NEED TO GIVE A LINE NUMBER
         execute_input_line(buffer);
 
         ++basic_line_number;
@@ -357,95 +363,75 @@ void load_basic(const char *filename) {
         type_basic_program(data, length);
         free(data);
     }
+}
 
+// TODO: RENAME THIS, AND RENAME FOPEN_WRAPPER()?
+static FILE *fopen_output_wrapper(const char *filename, const char *mode) {
+    FILE *file = fopen_wrapper(filename, mode);
+    check(file != 0, "Error: Can't open output file \"%s\"", filename);
+    output_state_file = file;
+    output_state_filename = filename;
+    return file;
+}
 
-
-
-
-#if 0 // SFTODO!
-    XXXX;
-    FILE *file = fopen_wrapper(filename, "rb");
-    check(file != 0, "Can't open input");
-    size_t length = fread(&mpu_memory[page], 1, himem - page, file);
-    check(!ferror(file), "Error reading input");
-    check(feof(file), "Input is too large");
-    fclose(file);
-    uint16_t top = page + length;
-    mpu_memory[BASIC_PAGE] = (page >> 8) & 0xff;
-    mpu_write_u16(BASIC_TOP, top);
-    mpu_write_u16(BASIC_LOMEM, top);
-    mpu_write_u16(BASIC_HEAP, top); // SFTODO!?
-    mpu_write_u16(BASIC_HIMEM, himem);
-    // TODO: Will need to set up some zp pointers to PAGE/TOP/whatever
-#if 1 // SFTODO
-    {
-    FILE *file = fopen("mem.tmp", "wb");
-    fwrite(mpu_memory, 1, 64 * 1024, file);
-    fclose(file);
-    }
-#endif
-#endif
+static void fclose_output(FILE *file, const char *filename) {
+    check(fclose(file) == 0, "Error: Error closing output file \"%s\"", filename);
+    output_state_file = 0;
+    output_state_filename = 0;
 }
 
 void save_basic(const char *filename) {
-    FILE *file = fopen_wrapper(filename, "wb");
-    check(file != 0, "Can't open output");
+    FILE *file = fopen_output_wrapper(filename, "wb");
     uint16_t top = mpu_read_u16(BASIC_TOP);
     size_t length = top - page;
     size_t bytes_written = fwrite(&mpu_memory[page], 1, length, file);
-    check(bytes_written == length, "Error writing output");
-    fclose(file);
+    check(bytes_written == length, "Error: Error writing to output file \"%s\"", filename);
+    fclose_output(file, filename);
 }
 
 void save_ascii_basic(const char *filename) {
-    FILE *file = fopen_wrapper(filename, "wb");
-    check(file != 0, "Can't open output");
+    FILE *file = fopen_output_wrapper(filename, "w");
     assert(output_state == os_discard);
     char buffer[256];
     sprintf(buffer, "LISTO %d", config.listo);
     execute_input_line(buffer);
-    output_state = os_list_discard_command; output_state_file = file;
+    output_state = os_list_discard_command;
     execute_input_line("LIST");
-    output_state = os_discard; output_state_file = 0;
-    check(fclose(file) == 0, "Error closing output");
+    output_state = os_discard;
+    fclose_output(file, filename);
+}
+
+static void execute_butil(void) {
+    execute_input_line("*BUTIL");
+    check_pending_output("Ready:");
+    assert(output_state == os_discard);
 }
 
 void save_formatted_basic(const char *filename) {
-    FILE *file = fopen_wrapper(filename, "wb");
-    check(file != 0, "Can't open output");
-    execute_input_line("*BUTIL");
-    check_pending_output("Ready:");
-    assert(output_state == os_discard);
-    output_state = os_format_discard_command; output_state_file = file; // TODO!
+    FILE *file = fopen_output_wrapper(filename, "w");
+    execute_butil();
+    output_state = os_format_discard_command;
     execute_osrdch("F"); // format
-    output_state = os_discard; output_state_file = 0;
-    check(fclose(file) == 0, "Error closing output");
+    output_state = os_discard;
+    fclose_output(file, filename);
 }
 
 void save_line_ref(const char *filename) {
-    // TODO: FACTOR OUT COMMON HEAD/TAIL HERE?
-    FILE *file = fopen_wrapper(filename, "wb");
-    check(file != 0, "Can't open output");
-    execute_input_line("*BUTIL");
-    check_pending_output("Ready:");
-    assert(output_state == os_discard);
-    output_state = os_line_ref_discard_command; output_state_file = file; // TODO!
+    FILE *file = fopen_output_wrapper(filename, "w");
+    execute_butil();
+    output_state = os_line_ref_discard_command;
     execute_osrdch("T"); // table line references
-    output_state = os_discard; output_state_file = 0;
-    check(fclose(file) == 0, "Error closing output");
+    output_state = os_discard;
+    fclose_output(file, filename);
 }
 
 void save_variable_xref(const char *filename) {
-    // TODO: FACTOR OUT COMMON HEAD/TAIL HERE?
-    FILE *file = fopen_wrapper(filename, "wb");
-    check(file != 0, "Can't open output");
-    execute_input_line("*BUTIL");
-    check_pending_output("Ready:");
-    assert(output_state == os_discard);
-    output_state = os_variable_xref_discard_command; output_state_file = file; // TODO!
+    FILE *file = fopen_output_wrapper(filename, "w");
+    execute_butil();
+    output_state = os_variable_xref_discard_command;
     execute_osrdch("V"); // variable xref
-    output_state = os_discard; output_state_file = 0;
-    check(fclose(file) == 0, "Error closing output");
+    output_state = os_discard;
+    fclose_output(file, filename);
 }
 
 static const char *no(bool no) {
