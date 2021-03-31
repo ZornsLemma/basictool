@@ -12,7 +12,6 @@
 // TODO: I am quite inconsistent about mpu->foo vs just using these structure
 // directly. I should be consistent, but when choosing how to be consistent,
 // perhaps favour the shortest code?
-// TODO: SOME/ALL OF THESE SHOULD MAYBE BE STATIC?
 static M6502_Registers mpu_registers;
 M6502_Memory mpu_memory;
 static M6502_Callbacks mpu_callbacks;
@@ -43,7 +42,9 @@ enum {
     os_text_pointer = 0xf2,
     romsel_copy = 0xf4,
     brkv = 0x202,
-    wrchv = 0x20e
+    wrchv = 0x20e,
+    fake_irq_handler = 0xf000,
+    oswrch = 0xffee
 };
 
 static void mpu_write_u16(uint16_t address, uint16_t data) {
@@ -107,12 +108,10 @@ static int callback_return_via_rts(M6502 *mpu) {
     uint16_t address = mpu_read_u16(0x101 + mpu->registers->s);
     mpu->registers->s += 2;
     address += 1;
-    //fprintf(stderr, "SFTODOXXX %04x\n", address);
     return address;
 }
 
 static int callback_osrdch(M6502 *mpu, uint16_t address, uint8_t data) {
-    //fprintf(stderr, "SFTODOSSA\n");
     mpu_state = ms_osrdch_pending;
     longjmp(mpu_env, 1);
 }
@@ -196,7 +195,6 @@ static int callback_oscli(M6502 *mpu, uint16_t address, uint8_t data) {
     uint16_t yx = (mpu_registers.y << 8) | mpu_registers.x;
     mpu_memory[os_text_pointer    ] = mpu_registers.x;
     mpu_memory[os_text_pointer + 1] = mpu_registers.y;
-    //fprintf(stderr, "SFTODOXCC %c%c%c\n", mpu_memory[yx], mpu_memory[yx+1], mpu_memory[yx+2]);
 
     // Because our ROMSEL implementation will treat it as an error to page in
     // an empty bank, the following code only works with ABE in banks 0 and 1.
@@ -224,7 +222,6 @@ static int callback_oscli(M6502 *mpu, uint16_t address, uint8_t data) {
     // This isn't case-insensitive and doesn't recognise abbreviations, but
     // in practice it's good enough.
     if (memcmp((char *) &mpu_memory[yx + mpu_registers.y], "BASIC", 5) == 0) {
-        //fprintf(stderr, "SFTODO BASIC!\n");
         return enter_basic();
     }
 
@@ -245,12 +242,10 @@ static int callback_oscli(M6502 *mpu, uint16_t address, uint8_t data) {
     *p++ = 0xfe;                           // error code
     strcpy((char *) p, "Bad command");     // error string and terminator
     
-    //fprintf(stderr, "SFTODO999\n");
     return code_address;
 }
 
 static int callback_osword_input_line(M6502 *mpu) {
-    //fprintf(stderr, "SFTODOXA2\n");
     mpu_state = ms_osword_input_line_pending;
     longjmp(mpu_env, 1);
 }
@@ -384,14 +379,14 @@ void emulation_init(void) {
     M6502_setCallback(mpu, call, 0xffe0, callback_osrdch);
     M6502_setCallback(mpu, call, 0xffe3, callback_osasci);
     M6502_setCallback(mpu, call, 0xffe7, callback_osnewl);
-    M6502_setCallback(mpu, call, 0xffee, callback_oswrch);
+    M6502_setCallback(mpu, call, oswrch, callback_oswrch);
     M6502_setCallback(mpu, call, 0xfff1, callback_osword);
     M6502_setCallback(mpu, call, 0xfff4, callback_osbyte);
     M6502_setCallback(mpu, call, 0xfff7, callback_oscli);
 
     // Install fake OS vectors. Because of the way our implementation works,
     // these vectors actually point to the official entry points.
-    mpu_write_u16(wrchv, 0xffee); // SFTODO: MAGIC CONSTANT IN A COUPLE OF PLACES
+    mpu_write_u16(wrchv, oswrch);
 
     // Since we don't have an actual Escape handler, just ensure any read from
     // &ff always returns 0.
@@ -401,8 +396,8 @@ void emulation_init(void) {
     M6502_setCallback(mpu, write, 0xfe30, callback_romsel_write);
 
     // Install interrupt handler so we can catch BRK.
-    M6502_setVector(mpu, IRQ, 0xf000); // SFTODO: Magic constant
-    M6502_setCallback(mpu, call, 0xf000, callback_irq);
+    M6502_setVector(mpu, IRQ, fake_irq_handler);
+    M6502_setCallback(mpu, call, fake_irq_handler, callback_irq);
 
     // Set up VDU variables.
     for (int i = 0; i < 256; ++i) {
@@ -426,16 +421,12 @@ void execute_osrdch(const char *s) {
     mpu_clear_carry(mpu); // no error
     // TODO: Following code fragment may be common to OSWORD 0 and can be factored out
     mpu->registers->pc = callback_return_via_rts(mpu);
-    //fprintf(stderr, "SFTODOZX022 %d\n", c);
     mpu_run();
-    //fprintf(stderr, "SFTODOZXA22\n");
 } 
 
 // TODO: MOVE
 void execute_input_line(const char *line) {
     check(mpu_state == ms_osword_input_line_pending, "Internal error: Emulated machine isn't waiting for OSWORD 0");
-    //fprintf(stderr, "SFTODOXA\n");
-    // TODO: We must respect the maximum line length
     uint16_t yx = (mpu->registers->y << 8) | mpu->registers->x;
     uint16_t buffer = mpu_read_u16(yx);
     uint8_t buffer_size = mpu_memory[yx + 2];
@@ -451,10 +442,8 @@ void execute_input_line(const char *line) {
     pending_output_insert(0xa); pending_output_insert(0xd);
 
     mpu_memory[buffer + pending_length] = 0xd;
-    mpu->registers->y = pending_length; // TODO HACK
+    mpu->registers->y = pending_length;
     mpu_clear_carry(mpu); // input not terminated by Escape
     mpu->registers->pc = callback_return_via_rts(mpu);
-    //fprintf(stderr, "SFTODOZX0\n");
     mpu_run();
-    //fprintf(stderr, "SFTODOZXA\n");
 }
