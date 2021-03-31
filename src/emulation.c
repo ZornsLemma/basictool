@@ -21,14 +21,8 @@ static M6502 *mpu;
 // the emulated machine is waiting for user input.
 static jmp_buf mpu_env;
 
-#define ROM_SIZE (16 * 1024)
-
 static int vdu_variables[257];
 
-// TODO: This probably needs expanding etc, I'm hacking right now
-// TODO: Should probably not check this via assert(), it *shouldn't* go wrong
-// if there are no program bugs, but it is quite likely some strange situations
-// can occur if given invalid user input and ABE or BASIC does something I am not expecting in response.
 static enum {
     ms_running,
     ms_osword_input_line_pending,
@@ -271,16 +265,17 @@ static int callback_read_escape_flag(M6502 *mpu, uint16_t address, uint8_t data)
 }
 
 static int callback_romsel_write(M6502 *mpu, uint16_t address, uint8_t data) {
+    const size_t rom_size = 16 * 1024;
     switch (data) {
         // TODO: The bank numbers should be named constants
         case 0:
-            memcpy(&mpu_memory[0x8000], rom_editor_a, ROM_SIZE);
+            memcpy(&mpu_memory[0x8000], rom_editor_a, rom_size);
             break;
         case 1:
-            memcpy(&mpu_memory[0x8000], rom_editor_b, ROM_SIZE);
+            memcpy(&mpu_memory[0x8000], rom_editor_b, rom_size);
             break;
         case 12: // same bank as on Master 128, but not really important
-            memcpy(&mpu_memory[0x8000], rom_basic, ROM_SIZE);
+            memcpy(&mpu_memory[0x8000], rom_basic, rom_size);
             break;
         default:
             check(false, "Invalid ROM bank selected");
@@ -412,7 +407,7 @@ void emulation_init(void) {
 // TODO: RENAME
 void execute_osrdch(const char *s) {
     assert(strlen(s) == 1);
-    assert(mpu_state == ms_osrdch_pending);
+    check(mpu_state == ms_osrdch_pending, "Internal error: emulated machine isn't waiting for OSRDCH");
     char c = s[0];
     mpu->registers->a = c;
     mpu_clear_carry(mpu); // no error
@@ -425,7 +420,7 @@ void execute_osrdch(const char *s) {
 
 // TODO: MOVE
 void execute_input_line(const char *line) {
-    assert(mpu_state == ms_osword_input_line_pending);
+    check(mpu_state == ms_osword_input_line_pending, "Internal error: emulated machine isn't waiting for OSWORD 0");
     //fprintf(stderr, "SFTODOXA\n");
     // TODO: We must respect the maximum line length
     uint16_t yx = (mpu->registers->y << 8) | mpu->registers->x;
