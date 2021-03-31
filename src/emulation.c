@@ -60,7 +60,7 @@ uint16_t mpu_read_u16(uint16_t address) {
 }
 
 static void mpu_clear_carry(M6502 *mpu) {
-    mpu->registers->p &= ~(1<<0);
+    mpu_registers.p &= ~(1<<0);
 }
 
 static void mpu_dump(void) {
@@ -108,8 +108,8 @@ NORETURN static int callback_abort_call(M6502 *mpu, uint16_t address, uint8_t da
 }
 
 static int callback_return_via_rts(M6502 *mpu) {
-    uint16_t address = mpu_read_u16(0x101 + mpu->registers->s);
-    mpu->registers->s += 2;
+    uint16_t address = mpu_read_u16(0x101 + mpu_registers.s);
+    mpu_registers.s += 2;
     address += 1;
     return address;
 }
@@ -120,7 +120,7 @@ static int callback_osrdch(M6502 *mpu, uint16_t address, uint8_t data) {
 }
 
 static int callback_oswrch(M6502 *mpu, uint16_t address, uint8_t data) {
-    int c = mpu->registers->a;
+    int c = mpu_registers.a;
     pending_output_insert(c);
     return callback_return_via_rts(mpu);
 }
@@ -132,7 +132,7 @@ static int callback_osnewl(M6502 *mpu, uint16_t address, uint8_t data) {
 }
 
 static int callback_osasci(M6502 *mpu, uint16_t address, uint8_t data) {
-    int c = mpu->registers->a;
+    int c = mpu_registers.a;
     if (c == 0xd) {
         return callback_osnewl(mpu, address, data);
     } else {
@@ -141,18 +141,18 @@ static int callback_osasci(M6502 *mpu, uint16_t address, uint8_t data) {
 }
 
 static int callback_osbyte_return_x(M6502 *mpu, uint8_t x) {
-    mpu->registers->x = x;
+    mpu_registers.x = x;
     return callback_return_via_rts(mpu);
 }
 
 static int callback_osbyte_return_u16(M6502 *mpu, uint16_t value) {
-    mpu->registers->x = value & 0xff;
-    mpu->registers->y = (value >> 8) & 0xff;
+    mpu_registers.x = value & 0xff;
+    mpu_registers.y = (value >> 8) & 0xff;
     return callback_return_via_rts(mpu);
 }
 
 static int callback_osbyte_read_vdu_variable(M6502 *mpu) {
-    int i = mpu->registers->x;
+    int i = mpu_registers.x;
     if (vdu_variables[i] == -1) {
         mpu_dump();
         die("Error: Unsupported VDU variable %d read", i);
@@ -161,14 +161,14 @@ static int callback_osbyte_read_vdu_variable(M6502 *mpu) {
         mpu_dump();
         die("Error: Unsupported VDU variable %d read", i + 1);
     }
-    mpu->registers->x = vdu_variables[i];
-    mpu->registers->y = vdu_variables[i + 1];
+    mpu_registers.x = vdu_variables[i];
+    mpu_registers.y = vdu_variables[i + 1];
     return callback_return_via_rts(mpu);
 }
 
 // TODO: Not here (this has to follow std prototype), but get rid of pointless mpu argument on some functions?
 static int callback_osbyte(M6502 *mpu, uint16_t address, uint8_t data) {
-    switch (mpu->registers->a) {
+    switch (mpu_registers.a) {
         case 0x03: // select output device
             return callback_return_via_rts(mpu); // treat as no-op
         case 0x0f: // flush buffers
@@ -256,7 +256,7 @@ static int callback_osword_input_line(M6502 *mpu) {
 static int callback_osword_read_io_memory(M6502 *mpu) {
     // We do this access via dynamically generated code so we don't bypass any
     // lib6502 callbacks.
-    uint16_t yx = (mpu->registers->y << 8) | mpu->registers->x;
+    uint16_t yx = (mpu_registers.y << 8) | mpu_registers.x;
     uint16_t source = mpu_read_u16(yx);
     uint16_t dest = yx + 4;
     const uint16_t code_address = transient_code;
@@ -268,7 +268,7 @@ static int callback_osword_read_io_memory(M6502 *mpu) {
 }
 
 static int callback_osword(M6502 *mpu, uint16_t address, uint8_t data) {
-    switch (mpu->registers->a) {
+    switch (mpu_registers.a) {
         case 0x00: // input line
             return callback_osword_input_line(mpu);
         case 0x05: // read I/O processor memory
@@ -306,14 +306,14 @@ static int callback_romsel_write(M6502 *mpu, uint16_t address, uint8_t data) {
 static int callback_irq(M6502 *mpu, uint16_t address, uint8_t data) {
     // The only possible cause of an interrupt on our emulated machine is a BRK
     // instruction.
-    uint16_t error_string_ptr = mpu_read_u16(0x102 + mpu->registers->s);
-    mpu->registers->s += 2; // not really necessary, as we're about to exit()
+    uint16_t error_string_ptr = mpu_read_u16(0x102 + mpu_registers.s);
+    mpu_registers.s += 2; // not really necessary, as we're about to exit()
     uint16_t error_num_address = error_string_ptr - 1;
     fprintf(stderr, "Error: ");
-    for (uint8_t c; (c = mpu->memory[error_string_ptr]) != '\0'; ++error_string_ptr) {
+    for (uint8_t c; (c = mpu_memory[error_string_ptr]) != '\0'; ++error_string_ptr) {
         fputc(c, stderr);
     }
-    uint8_t error_num = mpu->memory[error_num_address];
+    uint8_t error_num = mpu_memory[error_num_address];
     // TODO: We will need an ability to include a pseudo-line number if we're tokenising a BASIC program - but maybe not just here, maybe on other errors too (e.g. in die()?)
     fprintf(stderr, " (%d)\n", error_num);
     exit(EXIT_FAILURE);
@@ -424,9 +424,9 @@ void execute_osrdch(const char *s) {
           "Internal error: Attempt to return multiple characters from OSRDCH");
     check(mpu_state == ms_osrdch_pending,
           "Internal error: Emulated machine isn't waiting for OSRDCH");
-    mpu->registers->a = s[0];
+    mpu_registers.a = s[0];
     mpu_clear_carry(mpu); // no error
-    mpu->registers->pc = callback_return_via_rts(mpu);
+    mpu_registers.pc = callback_return_via_rts(mpu);
     mpu_run();
 } 
 
@@ -435,7 +435,7 @@ void execute_input_line(const char *line) {
     assert(line != 0);
     check(mpu_state == ms_osword_input_line_pending,
           "Internal error: Emulated machine isn't waiting for OSWORD 0");
-    uint16_t yx = (mpu->registers->y << 8) | mpu->registers->x;
+    uint16_t yx = (mpu_registers.y << 8) | mpu_registers.x;
     uint16_t buffer = mpu_read_u16(yx);
     uint8_t buffer_size = mpu_memory[yx + 2];
     size_t pending_length = strlen(line);
@@ -450,9 +450,9 @@ void execute_input_line(const char *line) {
     pending_output_insert(0xa); pending_output_insert(0xd);
 
     mpu_memory[buffer + pending_length] = 0xd;
-    mpu->registers->y = pending_length;
+    mpu_registers.y = pending_length;
     mpu_clear_carry(mpu); // input not terminated by Escape
-    mpu->registers->pc = callback_return_via_rts(mpu);
+    mpu_registers.pc = callback_return_via_rts(mpu);
     mpu_run();
 }
 
