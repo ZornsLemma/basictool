@@ -23,17 +23,17 @@ static jmp_buf mpu_env;
 
 #define ROM_SIZE (16 * 1024)
 
-int vdu_variables[257];
+static int vdu_variables[257];
 
 // TODO: This probably needs expanding etc, I'm hacking right now
 // TODO: Should probably not check this via assert(), it *shouldn't* go wrong
 // if there are no program bugs, but it is quite likely some strange situations
 // can occur if given invalid user input and ABE or BASIC does something I am not expecting in response.
-enum { // TODO: GIVE THESE A TWO CHAR-ISH PREFIX AS WITH OTHER ENUMS?
-    SFTODOIDLE, // SFTODO: NOT "IDLE", RENAME THIS
-    osword_input_line_pending,
-    osrdch_pending,
-} state = SFTODOIDLE; // SFTODO: 'state' IS TOO SHORT A NAME
+static enum {
+    ms_running,
+    ms_osword_input_line_pending,
+    ms_osrdch_pending,
+} mpu_state = ms_running;
 
 static void mpu_write_u16(uint16_t address, uint16_t data) {
     mpu_memory[address    ] = data & 0xff;
@@ -103,7 +103,7 @@ static int callback_return_via_rts(M6502 *mpu) {
 
 static int callback_osrdch(M6502 *mpu, uint16_t address, uint8_t data) {
     //fprintf(stderr, "SFTODOSSA\n");
-    state = osrdch_pending;
+    mpu_state = ms_osrdch_pending;
     longjmp(mpu_env, 1);
 }
 
@@ -236,7 +236,7 @@ static int callback_oscli(M6502 *mpu, uint16_t address, uint8_t data) {
 
 static int callback_osword_input_line(M6502 *mpu) {
     //fprintf(stderr, "SFTODOXA2\n");
-    state = osword_input_line_pending;
+    mpu_state = ms_osword_input_line_pending;
     longjmp(mpu_env, 1);
 }
 
@@ -319,7 +319,7 @@ static void set_abort_callback(uint16_t address) {
 
 static void mpu_run() {
     if (setjmp(mpu_env) == 0) {
-        state = SFTODOIDLE;
+        mpu_state = ms_running;
         M6502_run(mpu, callback_poll); // returns only via longjmp(mpu_env)
     }
 }
@@ -412,7 +412,7 @@ void emulation_init(void) {
 // TODO: RENAME
 void execute_osrdch(const char *s) {
     assert(strlen(s) == 1);
-    assert(state == osrdch_pending);
+    assert(mpu_state == ms_osrdch_pending);
     char c = s[0];
     mpu->registers->a = c;
     mpu_clear_carry(mpu); // no error
@@ -425,7 +425,7 @@ void execute_osrdch(const char *s) {
 
 // TODO: MOVE
 void execute_input_line(const char *line) {
-    assert(state == osword_input_line_pending);
+    assert(mpu_state == ms_osword_input_line_pending);
     //fprintf(stderr, "SFTODOXA\n");
     // TODO: We must respect the maximum line length
     uint16_t yx = (mpu->registers->y << 8) | mpu->registers->x;
