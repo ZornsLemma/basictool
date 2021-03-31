@@ -21,6 +21,9 @@ static M6502 *mpu;
 // the emulated machine is waiting for user input.
 static jmp_buf mpu_env;
 
+// We want vdu_variables[256] to be a valid reference, because our VDU variable
+// implementation will potentially access it and we don't want to invoke
+// undefined behaviour. (In practice this won't happen at present.)
 static int vdu_variables[257];
 
 static enum {
