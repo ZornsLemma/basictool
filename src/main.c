@@ -20,7 +20,6 @@
     } while (0)
 
 extern const char *osrdch_queue; // TODO!
-void die_help(const char *message); // TODO!
 void load_basic(const char *filename); // TODO!
 void init(void); // TODO!
 void make_service_call(void); // TODO!
@@ -196,6 +195,12 @@ static struct cag_option options[] = {
     // TODO: An option to set LISTO for text output (should probably imply text
     // output option)
 };
+
+// TODO: This should probably be printf-like, but check callers - they may not need it
+static void die_help(const char *message) {
+    die("%s\nTry \"%s --help\" for more information.", message, program_name);
+}
+
 
 // argv[0] will contain the program name, but if we're not being run from the
 // PATH it may contain a (potentially quite long) path prefix of some kind.

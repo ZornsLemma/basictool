@@ -36,8 +36,6 @@ size_t pending_output_buffer_size = 0;
 // selected places.
 int error_line_number = -1;
 
-extern const char *program_name; // TODO!
-
 // TODO: Support for HIBASIC might be nice (only for tokenising/detokenising;
 // ABE runs at &8000 so probably can't work with HIBASIC-sized programs), but
 // let's not worry about that yet.
@@ -46,12 +44,6 @@ extern const char *filenames[2]; // TODO!
 
 static int max(int lhs, int rhs) {
     return (lhs > rhs) ? lhs : rhs;
-}
-
-
-// TODO: This should probably be printf-like, but check callers - they may not need it
-void die_help(const char *message) {
-    die("%s\nTry \"%s --help\" for more information.", message, program_name);
 }
 
 // TODO: For stdout to be useful, I need to be sure all verbose output etc is written to stderr - maybe not, it depends how you view the verbose output. A user might want to do "basictool input.txt --pack -vv output.tok > pack-output.txt"; if we output to stderr this redirection becomes fiddlier.
