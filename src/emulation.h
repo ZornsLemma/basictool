@@ -8,8 +8,6 @@ static const uint16_t himem = 0x8000;
 
 M6502_Memory mpu_memory;
 
-extern void pending_output_insert(uint8_t data); // TODO!
-
 // TODO: TIDY/REORDER/COMMENT?
 void emulation_init(void);
 void execute_input_line(const char *line);

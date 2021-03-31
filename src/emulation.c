@@ -4,6 +4,7 @@
 #include <setjmp.h>
 #include <stdlib.h>
 #include <string.h>
+#include "driver.h"
 #include "lib6502.h"
 #include "roms.h"
 #include "utils.h"
@@ -56,7 +57,7 @@ static uint16_t enter_basic2(void) {
 
     const uint16_t code_address = 0x900;
     uint8_t *p = &mpu_memory[code_address];
-    *p++ = 0xa2; *p++ = 12;                // LDX #12 TODO: MAGIC CONSTANT
+    *p++ = 0xa2; *p++ = bank_basic;        // LDX #bank_basic
     *p++ = 0x86; *p++ = 0xf4;              // STX &F4
     *p++ = 0x8e; *p++ = 0x30; *p++ = 0xfe; // STX &FE30
     *p++ = 0x4c; *p++ = 0x00; *p++ = 0x80; // JMP &8000 (language entry)
@@ -86,10 +87,8 @@ NORETURN static int callback_abort_call(M6502 *mpu, uint16_t address, uint8_t da
 }
 
 static int callback_return_via_rts(M6502 *mpu) {
-    uint8_t low  = mpu->memory[0x101 + mpu->registers->s];
-    uint8_t high = mpu->memory[0x102 + mpu->registers->s];
+    uint16_t address = mpu_read_u16(0x101 + mpu->registers->s);
     mpu->registers->s += 2;
-    uint16_t address = (high << 8) | low;
     address += 1;
     //fprintf(stderr, "SFTODOXXX %04x\n", address);
     return address;
@@ -182,8 +181,13 @@ static int callback_oscli(M6502 *mpu, uint16_t address, uint8_t data) {
     mpu_memory[0xf3] = mpu_registers.y;
     //fprintf(stderr, "SFTODOXCC %c%c%c\n", mpu_memory[yx], mpu_memory[yx+1], mpu_memory[yx+2]);
 
+    // Because our ROMSEL implementation will treat it as an error to page in
+    // an empty bank, the following code only works with ABE in banks 0 and 1.
+    // This could be changed if necessary.
+    assert(bank_editor_a == 0);
+    assert(bank_editor_b == 1);
     mpu_registers.a = 4; // unrecognised * command
-    mpu_registers.x = 1; // current ROM bank TODO: MAGIC HACK, WE KNOW ABE IS BANKS 0 AND 1 AND THEY ARE THE ONLY BANKS WE NEED TO PASS SERVICE CALLS TO - IDEALLy WE'D RUN OVER ALL ROMS, THO BASIC HAS NO SERVICE ENTRY OF COURSE
+    mpu_registers.x = bank_editor_b; // first ROM bank to try
     mpu_registers.y = 0; // command tail offset
 
     // TODO: It would be possible to write all this in assembler and have it
@@ -265,20 +269,21 @@ static int callback_read_escape_flag(M6502 *mpu, uint16_t address, uint8_t data)
 }
 
 static int callback_romsel_write(M6502 *mpu, uint16_t address, uint8_t data) {
+    uint8_t *rom_start = &mpu_memory[0x8000];
     const size_t rom_size = 16 * 1024;
     switch (data) {
         // TODO: The bank numbers should be named constants
-        case 0:
-            memcpy(&mpu_memory[0x8000], rom_editor_a, rom_size);
+        case bank_editor_a:
+            memcpy(rom_start, rom_editor_a, rom_size);
             break;
-        case 1:
-            memcpy(&mpu_memory[0x8000], rom_editor_b, rom_size);
+        case bank_editor_b:
+            memcpy(rom_start, rom_editor_b, rom_size);
             break;
-        case 12: // same bank as on Master 128, but not really important
-            memcpy(&mpu_memory[0x8000], rom_basic, rom_size);
+        case bank_basic:
+            memcpy(rom_start, rom_basic, rom_size);
             break;
         default:
-            check(false, "Invalid ROM bank selected");
+            die("Internal error: Invalid ROM bank %d selected", data);
             break;
     }
     return 0; // return value ignored
@@ -288,10 +293,8 @@ static int callback_irq(M6502 *mpu, uint16_t address, uint8_t data) {
     // The only possible cause of an interrupt on our emulated machine is a BRK
     // instruction.
     // TODO: Copy and paste of code from callback_return_via_rts() - not quite
-    uint8_t low  = mpu->memory[0x102 + mpu->registers->s];
-    uint8_t high = mpu->memory[0x103 + mpu->registers->s];
-    mpu->registers->s += 2; // TODO not necessary, we won't return
-    uint16_t error_string_ptr = (high << 8) | low;
+    uint16_t error_string_ptr = mpu_read_u16(0x102 + mpu->registers->s);
+    mpu->registers->s += 2; // not really necessary, as we're about to exit()
     uint16_t error_num_address = error_string_ptr - 1;
     fprintf(stderr, "Error: ");
     for (uint8_t c; (c = mpu->memory[error_string_ptr]) != '\0'; ++error_string_ptr) {
@@ -323,10 +326,10 @@ void emulation_init(void) {
     mpu = check_alloc(M6502_new(&mpu_registers, mpu_memory, &mpu_callbacks));
     M6502_reset(mpu);
     
-    // Install handlers to abort on read or write of anywhere in OS workspace;
-    // this will catch anything we haven't explicitly implemented. Addresses
-    // 0x90-0xaf are used, but they don't contain OS state we need to emulate
-    // so this loop excludes them.
+    // Install handlers to abort on read or write of anywhere in OS workspace
+    // we haven't explicitly allowed; this makes it more obvious if the OS
+    // emulation needs to be extended. Addresses 0x90-0xaf are used, but they
+    // don't contain OS state we need to emulate so this loop excludes them.
     for (uint16_t address = 0xb0; address < 0x100; ++address) {
         switch (address) {
             case 0xf2: // OS text pointer
@@ -357,13 +360,6 @@ void emulation_init(void) {
                 break;
         }
     }
-#if 0 // SFTODO!? PROB GET RID OF THIS NOW I REALLY AM RUNNING BASIC
-    // TODO: If things aren't working, perhaps tighten this up - I'm assuming
-    // pages 5/6/7 don't contain interesting BASIC housekeeping data for ABE.
-    for (uint16_t address = 0x400; address < 0x500; ++address) {
-        set_abort_callback(address);
-    }
-#endif
 
     // Install handlers for OS entry points, using a default for unimplemented
     // ones.
@@ -380,7 +376,7 @@ void emulation_init(void) {
 
     // Install fake OS vectors. Because of the way our implementation works,
     // these vectors actually point to the official entry points.
-    mpu_write_u16(0x20e, 0xffee);
+    mpu_write_u16(0x20e, 0xffee); // SFTODO: MAGIC CONSTANT IN A COUPLE OF PLACES
 
     // Since we don't have an actual Escape handler, just ensure any read from
     // &ff always returns 0.
@@ -409,7 +405,7 @@ void emulation_init(void) {
 // TODO: RENAME
 void execute_osrdch(const char *s) {
     assert(strlen(s) == 1);
-    check(mpu_state == ms_osrdch_pending, "Internal error: emulated machine isn't waiting for OSRDCH");
+    check(mpu_state == ms_osrdch_pending, "Internal error: Emulated machine isn't waiting for OSRDCH");
     char c = s[0];
     mpu->registers->a = c;
     mpu_clear_carry(mpu); // no error
@@ -422,14 +418,14 @@ void execute_osrdch(const char *s) {
 
 // TODO: MOVE
 void execute_input_line(const char *line) {
-    check(mpu_state == ms_osword_input_line_pending, "Internal error: emulated machine isn't waiting for OSWORD 0");
+    check(mpu_state == ms_osword_input_line_pending, "Internal error: Emulated machine isn't waiting for OSWORD 0");
     //fprintf(stderr, "SFTODOXA\n");
     // TODO: We must respect the maximum line length
     uint16_t yx = (mpu->registers->y << 8) | mpu->registers->x;
     uint16_t buffer = mpu_read_u16(yx);
     uint8_t buffer_size = mpu_memory[yx + 2];
     size_t pending_length = strlen(line);
-    check(pending_length < buffer_size, "Line too long"); // TODO: PROPER ERROR ETC - BUT WE DO WANT TO TREAT THIS AS AN ERROR, NOT TRUNCATE - WE MAY ULTIMATELY WANT TO BE GIVING A LINE NUMBER FROM INPUT IF WE'RE TOKENISING BASIC VIA THIS
+    check(pending_length < buffer_size, "Error: Line too long"); // TODO: PROPER ERROR ETC - BUT WE DO WANT TO TREAT THIS AS AN ERROR, NOT TRUNCATE - WE MAY ULTIMATELY WANT TO BE GIVING A LINE NUMBER FROM INPUT IF WE'RE TOKENISING BASIC VIA THIS
     memcpy(&mpu_memory[buffer], line, pending_length);
 
     // OSWORD 0 would echo the typed characters and move to a new line, so do
