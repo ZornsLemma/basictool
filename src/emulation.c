@@ -306,7 +306,6 @@ static int callback_romsel_write(M6502 *mpu, uint16_t address, uint8_t data) {
 static int callback_irq(M6502 *mpu, uint16_t address, uint8_t data) {
     // The only possible cause of an interrupt on our emulated machine is a BRK
     // instruction.
-    // TODO: Copy and paste of code from callback_return_via_rts() - not quite
     uint16_t error_string_ptr = mpu_read_u16(0x102 + mpu->registers->s);
     mpu->registers->s += 2; // not really necessary, as we're about to exit()
     uint16_t error_num_address = error_string_ptr - 1;
@@ -417,19 +416,25 @@ void emulation_init(void) {
 // TODO: MOVE
 // TODO: RENAME
 void execute_osrdch(const char *s) {
-    assert(strlen(s) == 1);
-    check(mpu_state == ms_osrdch_pending, "Internal error: Emulated machine isn't waiting for OSRDCH");
-    char c = s[0];
-    mpu->registers->a = c;
+    assert(s != 0);
+    // TODO: We could in principle handle a multiple character string by
+    // returning the values automatically over multiple OSRDCH calls, but we
+    // don't need this yet.
+    check(strlen(s) == 1,
+          "Internal error: Attempt to return multiple characters from OSRDCH");
+    check(mpu_state == ms_osrdch_pending,
+          "Internal error: Emulated machine isn't waiting for OSRDCH");
+    mpu->registers->a = s[0];
     mpu_clear_carry(mpu); // no error
-    // TODO: Following code fragment may be common to OSWORD 0 and can be factored out
     mpu->registers->pc = callback_return_via_rts(mpu);
     mpu_run();
 } 
 
 // TODO: MOVE
 void execute_input_line(const char *line) {
-    check(mpu_state == ms_osword_input_line_pending, "Internal error: Emulated machine isn't waiting for OSWORD 0");
+    assert(line != 0);
+    check(mpu_state == ms_osword_input_line_pending,
+          "Internal error: Emulated machine isn't waiting for OSWORD 0");
     uint16_t yx = (mpu->registers->y << 8) | mpu->registers->x;
     uint16_t buffer = mpu_read_u16(yx);
     uint8_t buffer_size = mpu_memory[yx + 2];
@@ -450,3 +455,7 @@ void execute_input_line(const char *line) {
     mpu->registers->pc = callback_return_via_rts(mpu);
     mpu_run();
 }
+
+// TODO: Bit OTT but be good to be consistent about full stop vs no full stop at end of all error messages, or at least *think* about whether we want one or not on each case rather than it being a bit ad-hoc
+
+// vi: colorcolumn=80
