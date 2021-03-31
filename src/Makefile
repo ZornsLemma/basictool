@@ -50,10 +50,10 @@ depend:
 bintoinc.o: bintoinc.c
 cargs.o: cargs.c cargs.h
 config.o: config.c config.h
-emulation.o: emulation.c emulation.h lib6502.h roms.h utils.h
-lib6502.o: lib6502.c lib6502.h
-main.o: main.c cargs.h config.h roms.h utils.h
 driver.o: driver.c config.h emulation.h lib6502.h utils.h
+emulation.o: emulation.c emulation.h lib6502.h driver.h roms.h utils.h
+lib6502.o: lib6502.c lib6502.h
+main.o: main.c cargs.h config.h emulation.h lib6502.h roms.h utils.h
 roms.o: roms.c roms.h zz-editor-a.c zz-editor-b.c zz-basic.c
 utils.o: utils.c utils.h
 zz-basic.o: zz-basic.c

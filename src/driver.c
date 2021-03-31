@@ -1,4 +1,5 @@
 // TODO: This file is a temporary collection of stuff as I refactor, there shouldn't ultimately be a file called other.c!
+// TODO: Make sure all local fns are static
 
 #include <assert.h>
 #include <stdarg.h>
@@ -8,7 +9,6 @@
 #include <string.h>
 #include "config.h"
 #include "emulation.h"
-//TODO DELETE #include "roms.h"
 #include "utils.h"
 
 #define BASIC_TOP (0x12)
@@ -19,7 +19,7 @@ enum {
     os_format_discard_command,
     os_line_ref_discard_command,
     os_variable_xref_discard_command,
-    os_list,
+    os_output_non_blank,
     os_pack_discard_concatenate,
     os_pack_discard_blank,
     os_pack
@@ -39,8 +39,6 @@ int error_line_number = -1;
 // TODO: Support for HIBASIC might be nice (only for tokenising/detokenising;
 // ABE runs at &8000 so probably can't work with HIBASIC-sized programs), but
 // let's not worry about that yet.
-
-extern const char *filenames[2]; // TODO!
 
 static int max(int lhs, int rhs) {
     return (lhs > rhs) ? lhs : rhs;
@@ -69,8 +67,20 @@ bool is_in_pending_output(const char *s) {
     return strstr(pending_output, s) != 0;
 }
 
-char *make_printable(const char *s) {
-    return (char *) s; // TODO: total hack, implement properly - this should escape control characters, e.g. as \xnn - it can just malloc space for the result - or maybe we could take a non-const char argument and just replace with spaces, that might actually be better
+// Replace any non-ASCII characters in 's' with '.'; this is mainly useful in
+// avoiding mode 7 colour codes appearing as random characters.
+static char *make_printable(char *s) {
+    for (char *p = s; *p != '\0'; ++p) {
+        // We could use isprint() here, but I don't really want to make any
+        // assumptions about the current locale - as 's' originated within
+        // the emulated machine, we are really dealling with Acorn ASCII here
+        // regardless.
+        int c = (unsigned char) *p; // avoid sign extension if char is signed
+        if ((c < ' ') || (c > '~')) {
+            *s = '.';
+        }
+    }
+    return s;
 }
 
 void check_pending_output(const char *s) {
@@ -83,7 +93,7 @@ void check_pending_output(const char *s) {
 }
 
 
-void complete_output_line_handler(const char *line) {
+static void complete_output_line_handler(char *line) {
 #if 0 // TODO
     if (true) { // SFTODO CONFIG FOR "SHOW ALL OUTPUT"
         fprintf(stderr, "SFTODOHQQ:%d:%s\n", output_state, line);
@@ -95,29 +105,30 @@ void complete_output_line_handler(const char *line) {
 
         case os_list_discard_command:
             check_pending_output(">LIST");
-            output_state = os_list;
+            // LIST output doesn't contain any blank lines (there's always at
+            // least a line number) so this won't lose anything.
+            output_state = os_output_non_blank;
             break;
 
         case os_format_discard_command:
             check_pending_output("Format listing");
-            output_state = os_list;
+            // Format output doesn't contain any blank lines (there's always at
+            // least a line number) so this won't lose anything.
+            output_state = os_output_non_blank;
             break;
 
         case os_line_ref_discard_command:
             check_pending_output("Table line references");
-            output_state = os_list;
+            output_state = os_output_non_blank;
             break;
 
         case os_variable_xref_discard_command:
             check_pending_output("Variables Xref");
-            output_state = os_list;
+            output_state = os_output_non_blank;
             break;
 
-        case os_list: // TODO: RENAME os_list_or_format?
+        case os_output_non_blank:
             assert(output_state_file != 0);
-            // Neither LIST output nor ABE "format" output can include blank
-            // lines, except at the end (in the case of ABE "format"), so we
-            // can safely discard them.
             if (*line != '\0') {
                 fprintf(output_state_file, "%s\n", line);
             }
@@ -129,20 +140,18 @@ void complete_output_line_handler(const char *line) {
             break;
 
         case os_pack_discard_blank:
-            check(*pending_output == '\0', "Error: Expected to see a blank line"); // TODO: SHOULD SAY GOT XXX - NEED CHECK TO BE PRINTF-IFIED
+            check(*pending_output == '\0', "Internal error: Expected to see a blank line"); // TODO: SHOULD SAY GOT XXX - NEED CHECK TO BE PRINTF-IFIED
             output_state = os_pack;
             break;
 
         case os_pack:
-            // TODO: This needs to respect verbosity
             if (config.verbose >= 1) {
                 bool is_bytes_saved = is_in_pending_output("Bytes saved");
                 if (is_bytes_saved || (config.verbose >= 2)) {
                     // TODO: We could maybe force alignment of the columns
                     // in the verbose>=2 output
                     // TODO: Should this go to stderr or stdout?
-                    // TODO: Sanitise output? It should be fairly ASCII tho...
-                    fprintf(stderr, "%s\n", line);
+                    fprintf(stderr, "%s\n", make_printable(line));
                 }
                 if (is_bytes_saved) {
                     output_state = os_discard;
@@ -156,6 +165,7 @@ void complete_output_line_handler(const char *line) {
     }
 }
 
+// TODO: Review this code fresh to make sure it doesn't have memory leaks or write past bounds etc
 void pending_output_insert(uint8_t data) {
     // We just discard NULs in the output; they aren't important for anything
     // we are emulating here.
@@ -163,7 +173,14 @@ void pending_output_insert(uint8_t data) {
         return;
     }
 
-    // SFTODO EXPERIMENTAL HACK
+    // ABE's "pack" repeatedly emits "TOP=&xxxx<cr>" as it crunches the
+    // program, so we want to distill that down to the final output by only
+    // preserving the final version of the line. We could potentially just
+    // reset the stored line to empty in this case, but then we'd be relying on
+    // code outputting LFCR at the end of each line rather than CRLF. This
+    // would probably work, but it feels a bit brittle, so instead we model CR
+    // moving the cursor non-destructively back to the start of the current
+    // line.
     if (data == 13) {
         pending_output_cursor_x = 0;
         return;
@@ -193,7 +210,7 @@ void pending_output_insert(uint8_t data) {
 
 // Read a file into a malloc()-ed block of memory. The pointer to the
 // malloc()-ed block is returned and *length is set to the length.
-char *load_binary(const char *filename, size_t *length) {
+static char *load_binary(const char *filename, size_t *length) {
     assert(length != 0);
     FILE *file = fopen_wrapper(filename, "rb");
     check(file != 0, "Can't open input");
