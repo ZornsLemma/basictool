@@ -30,6 +30,15 @@ static enum {
     ms_osrdch_pending,
 } mpu_state = ms_running;
 
+// We copy transient bits of machine code to transient_code for execution; such
+// code must not make a subroutine call to anything which could in turn overwrite
+// transient_code, as the code following the JSR would then be overwritten when
+// it returned.
+static const int transient_code = 0x900;
+// The code to invoke the service handler can't live at transient_code as it
+// needs to JSR into the arbitrary ROM code, so it has its own space.
+static const int service_code = 0xb00;
+
 static void mpu_write_u16(uint16_t address, uint16_t data) {
     mpu_memory[address    ] = data & 0xff;
     mpu_memory[address + 1] = (data >> 8) & 0xff;
@@ -55,7 +64,7 @@ static uint16_t enter_basic2(void) {
     mpu_registers.x = 0;
     mpu_registers.y = 0;
 
-    const uint16_t code_address = 0x900;
+    const uint16_t code_address = transient_code;
     uint8_t *p = &mpu_memory[code_address];
     *p++ = 0xa2; *p++ = bank_basic;        // LDX #bank_basic
     *p++ = 0x86; *p++ = 0xf4;              // STX &F4
@@ -190,12 +199,12 @@ static int callback_oscli(M6502 *mpu, uint16_t address, uint8_t data) {
     mpu_registers.x = bank_editor_b; // first ROM bank to try
     mpu_registers.y = 0; // command tail offset
 
-    // TODO: It would be possible to write all this in assembler and have it
-    // pre-built into a "mini OS" which we load at 0xc000 or 0xf000 or something.
-    // However, we'd then need an assembler as part of the build process. We
-    // could hand-assemble it like this, but do it once on startup, but then
-    // we'd have to write more code (e.g. this "*" skipped loop) in hand-
-    // assembled code, which would be painful.
+    // It's tempting to implement a "mini OS" in assembler which would replace
+    // the following mixture of C and machine code, as well as other fragments
+    // scattered around this file. However, I don't want to create a build
+    // dependency on a 6502 assembler and hand-assembling is tedious and
+    // error-prone, so this approach minimises the amount of hand-assembled
+    // code.
 
     // Skip leading "*" on the command; this is essential to have it recognised
     // properly (as that's what the real OS does).
@@ -211,7 +220,7 @@ static int callback_oscli(M6502 *mpu, uint16_t address, uint8_t data) {
         return enter_basic2();
     }
 
-    const uint16_t code_address = 0xb00; // TODO: HACK - OTHER BITS OF HACKERY CAN OVERWRITE THIS WHILE WE'RE PART WAY THROUGH EXECUTING *BUTIL IF WE USE 0x900 - NO, THAT DOESN'T HELP, MAYBE THIS WOULD BE FINE, BUT LET'S LEAVE IT AT B00 FOR NOW
+    const uint16_t code_address = service_code;
     uint8_t *p = &mpu_memory[code_address];
                                            // .loop
     *p++ = 0x86; *p++ = 0xf4;              // STX &F4
@@ -241,7 +250,7 @@ static int callback_osword_input_line(M6502 *mpu) {
 static int callback_osword_read_io_memory(M6502 *mpu) {
     // So we don't bypass any lib6502 callbacks, we do this access via a
     // dynamically generated code stub.
-    const uint16_t code_address = 0x900;
+    const uint16_t code_address = transient_code;
     uint8_t *p = &mpu_memory[code_address];
     uint16_t yx = (mpu->registers->y << 8) | mpu->registers->x;
     uint16_t source = mpu_read_u16(yx);
