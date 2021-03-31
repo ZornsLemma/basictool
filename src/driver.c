@@ -147,7 +147,9 @@ static void complete_output_line_handler(char *line) {
             break;
 
         case os_pack_discard_blank:
-            check(*pending_output == '\0', "Internal error: Expected to see a blank line"); // TODO: SHOULD SAY GOT XXX - NEED CHECK TO BE PRINTF-IFIED
+            check(*pending_output == '\0',
+                  "Error: Expected to see a blank line of output, got \"%s\"",
+                  make_printable(line));
             output_state = os_pack;
             break;
 
@@ -439,9 +441,8 @@ static const char *no(bool no) {
 }
 
 void pack(void) {
-    execute_input_line("*BUTIL");
-    //fprintf(stderr, "SFTODOLLL\n");
-    check_pending_output("Ready:"); execute_osrdch("P"); // pack
+    execute_butil();
+    execute_osrdch("P"); // pack
     check_pending_output("REMs?");
     execute_osrdch(no(config.pack_rems_n));
     check_pending_output("Spaces?");
@@ -460,29 +461,16 @@ void pack(void) {
     execute_osrdch(no(config.pack_concatenate_n));
     check_pending_output("Ready:"); execute_osrdch("Q"); // quit
     output_state = os_discard;
-    execute_input_line("OLD"); // TODO: Because ABE's *FX138 calls are treated as no-op
-    //fprintf(stderr, "SFTODOHHH\n");
+    // Because *FX138 is implemented as a no-op, ABE's attempt to execute "OLD"
+    // won't happen, so do it ourselves.
+    execute_input_line("OLD");
 }
-
-#if 0 // TODO: DELETE
-void unpack(void) {
-    // TODO: Factor out these first couple of lines of ABE invocation?
-    execute_input_line("*BUTIL");
-    //fprintf(stderr, "SFTODOLLL\n");
-    assert(output_state == os_discard);
-    check_pending_output("Ready:"); execute_osrdch("U"); // unpack
-    // TODO: FACTOR OUT THE FOLLOWING LINES?
-    check_pending_output("Ready:"); execute_osrdch("Q"); // quit
-    output_state = os_discard;
-    execute_input_line("OLD"); // TODO: Because ABE's *FX138 calls are treated as no-op
-    //fprintf(stderr, "SFTODOHHH\n");
-}
-#endif
 
 void renumber(void) {
     check_pending_output(">");
     char buffer[256];
-    sprintf(buffer, "RENUMBER %d,%d", config.renumber_start, config.renumber_step);
+    sprintf(buffer, "RENUMBER %d,%d", config.renumber_start,
+            config.renumber_step);
     execute_input_line(buffer);
 }
 
@@ -504,7 +492,5 @@ void renumber(void) {
 // verbose does not control whether we show all output from emulated machine for debugging, that's some separate --debug-foo option
 
 // TODO: I'm being very casual about mixing char/uint8_t/int. It *may* be wise to use char for input/output - that is relatively pure ASCII, although some care is needed as there might be non-ASCII chars mixed in. For cases where I'm dealing with tokenised BASIC or raw 6502 memory not containing (near) ASCII, unsigned char might be a better bet. But think about it.
-
-// TODO: Add option to RENUMBER the program before "saving" it?
 
 // vi: colorcolumn=80
