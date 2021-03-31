@@ -213,15 +213,15 @@ void pending_output_insert(uint8_t data) {
 static char *load_binary(const char *filename, size_t *length) {
     assert(length != 0);
     FILE *file = fopen_wrapper(filename, "rb");
-    check(file != 0, "Can't open input");
+    check(file != 0, "Error: Can't open input file \"%s\"", filename);
     // Since we're dealing with BASIC programs on a 32K-ish machine, we don't
     // need to handle arbitrarily large files.
     const int max_size = 64 * 1024;
     char *data = check_alloc(malloc(max_size));
     *length = fread(data, 1, max_size, file);
-    check(!ferror(file), "Error reading input");
-    check(feof(file), "Input is too large");
-    check(fclose(file) == 0, "Error closing input");
+    check(!ferror(file), "Error: Error reading from input file \"%s\"", filename);
+    check(feof(file), "Error: Input file \"%s\" is too large", filename);
+    check(fclose(file) == 0, "Error: Error closing input file \"%s\"", filename);
     // We allocate an extra byte so we can easily guarantee that the last line
     // ends with a line terminator when reading non-tokenised input.
     return check_alloc(realloc(data, (*length) + 1));

@@ -4,19 +4,24 @@
 #include <stdlib.h>
 
 // TODO: Entirely experimental function, not yet used
-void die(const char *fmt, ...) {
-    va_list ap;
-    va_start(ap, fmt);
+NORETURN static void die_internal(const char *fmt, va_list ap) {
     vfprintf(stderr, fmt, ap);
-    va_end(ap);
     fputc('\n', stderr);
     exit(EXIT_FAILURE);
 }
 
+void die(const char *fmt, ...) {
+    va_list ap;
+    va_start(ap, fmt);
+    die_internal(fmt, ap);
+}
+
 // TODO: I should probably extend check to be printf-like and make all callers use this where helpful
-void check(bool b, const char *s) {
+void check(bool b, const char *fmt, ...) {
     if (!b) {
-        die("%s", s);
+        va_list ap;
+        va_start(ap, fmt);
+        die_internal(fmt, ap);
     }
 }
 

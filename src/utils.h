@@ -18,8 +18,8 @@
 // - exit(EXIT_FAILURE) will be called afterwards
 void die(const char *fmt, ...) PRINTFLIKE(1, 2) NORETURN;
 
-// If b is false, call die("%s", s).
-void check(bool b, const char *s);
+// If b is false, call die(s, ...).
+void check(bool b, const char *fmt, ...) PRINTFLIKE(2, 3);
 
 // TODO: COMMENT
 void *check_alloc(void *p);

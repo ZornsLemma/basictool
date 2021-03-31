@@ -25,7 +25,6 @@ void load_basic(const char *filename); // TODO!
 void make_service_call(void); // TODO!
 void pack(void); // TODO!
 void renumber(void); // TODO!
-void check(bool b, const char *s); // TODO!
 void save_basic(const char *filename); // TODO!
 void save_ascii_basic(const char *filename); // TODO!
 void save_formatted_basic(const char *filename); // TODO!
