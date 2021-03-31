@@ -21,4 +21,7 @@ void die(const char *fmt, ...) PRINTFLIKE(1, 2) NORETURN;
 // If b is false, call die("%s", s).
 void check(bool b, const char *s);
 
+// TODO: COMMENT
+void *check_alloc(void *p);
+
 #endif
