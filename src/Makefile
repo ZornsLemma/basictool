@@ -13,18 +13,18 @@ BASIC   = ../roms/basic4.rom
 
 all: ../basictool
 
-BASICTOOLOBJS  = main.o config.o emulation.o data.o other.o utils.o lib6502.o cargs.o
+BASICTOOLOBJS  = main.o config.o emulation.o other.o roms.o utils.o lib6502.o cargs.o
 ../basictool: $(BASICTOOLOBJS)
 	$(CC) $(LDFLAGS) -o $@ $(BASICTOOLOBJS)
 
-rom-editor-a.c: bintoinc $(EDITORA)
-	./bintoinc $(EDITORA) > rom-editor-a.c
+zz-editor-a.c: bintoinc $(EDITORA)
+	./bintoinc $(EDITORA) > zz-editor-a.c
 
-rom-editor-b.c: bintoinc $(EDITORB)
-	./bintoinc $(EDITORB) > rom-editor-b.c
+zz-editor-b.c: bintoinc $(EDITORB)
+	./bintoinc $(EDITORB) > zz-editor-b.c
 
-rom-basic.c: bintoinc $(BASIC)
-	./bintoinc $(BASIC) > rom-basic.c
+zz-basic.c: bintoinc $(BASIC)
+	./bintoinc $(BASIC) > zz-basic.c
 
 BINTOINCOBJS = bintoinc.o
 bintoinc: $(BINTOINCOBJS)
@@ -32,8 +32,7 @@ bintoinc: $(BINTOINCOBJS)
 
 clean:
 	# TODO: Make sure this includes everything
-	# TODO: Rename the auto-generated files zz-*? I'd feel happier deleting them then
-	rm -f ../basictool bintoinc depend.txt *.o # TODO: rom-*.c
+	rm -f ../basictool bintoinc depend.txt *.o zz-*.c
 
 depend:
 	# This is just a convenience for generating the dependencies, which
@@ -50,12 +49,12 @@ depend:
 bintoinc.o: bintoinc.c
 cargs.o: cargs.c cargs.h
 config.o: config.c config.h
-data.o: data.c data.h rom-editor-a.c rom-editor-b.c rom-basic.c
-foo.o: foo.c cargs.h
+emulation.o: emulation.c emulation.h lib6502.h roms.h utils.h
 lib6502.o: lib6502.c lib6502.h
-main.o: main.c cargs.h config.h data.h utils.h
-other.o: other.c config.h data.h lib6502.h utils.h
-rom-basic.o: rom-basic.c
-rom-editor-a.o: rom-editor-a.c
-rom-editor-b.o: rom-editor-b.c
+main.o: main.c cargs.h config.h roms.h utils.h
+other.o: other.c config.h emulation.h lib6502.h utils.h
+roms.o: roms.c roms.h zz-editor-a.c zz-editor-b.c zz-basic.c
 utils.o: utils.c utils.h
+zz-basic.o: zz-basic.c
+zz-editor-a.o: zz-editor-a.c
+zz-editor-b.o: zz-editor-b.c

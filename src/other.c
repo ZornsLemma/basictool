@@ -7,8 +7,8 @@
 #include <stdlib.h>
 #include <string.h>
 #include "config.h"
-#include "data.h"
 #include "emulation.h"
+//TODO DELETE #include "roms.h"
 #include "utils.h"
 
 #define BASIC_TOP (0x12)

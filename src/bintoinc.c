@@ -12,6 +12,7 @@ int main(int argc, char *argv[]) {
         fprintf(stderr, "Error opening %s\n", argv[1]);
         exit(EXIT_FAILURE);
     }
+    printf("// AUTO-GENERATED FILE - DO NOT EDIT\n\n");
     int c;
     int i = 0;
     while ((c = getc(file)) != EOF) {

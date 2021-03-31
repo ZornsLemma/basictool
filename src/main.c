@@ -4,7 +4,7 @@
 #include <string.h>
 #include "cargs.h"
 #include "config.h"
-#include "data.h"
+#include "roms.h"
 #include "utils.h"
 
 #define VERSION "0.01"

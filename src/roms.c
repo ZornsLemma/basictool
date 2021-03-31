@@ -1,13 +1,13 @@
-#include "data.h"
+#include "roms.h"
 
 const uint8_t rom_editor_a[] = {
-#include "rom-editor-a.c"
+#include "zz-editor-a.c"
 };
 
 const uint8_t rom_editor_b[] = {
-#include "rom-editor-b.c"
+#include "zz-editor-b.c"
 };
 
 const uint8_t rom_basic[] = {
-#include "rom-basic.c"
+#include "zz-basic.c"
 };

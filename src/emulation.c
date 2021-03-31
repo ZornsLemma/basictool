@@ -4,8 +4,8 @@
 #include <setjmp.h>
 #include <stdlib.h>
 #include <string.h>
-#include "data.h"
 #include "lib6502.h"
+#include "roms.h"
 #include "utils.h"
 
 // TODO: I am quite inconsistent about mpu->foo vs just using these structure
