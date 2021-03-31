@@ -13,7 +13,7 @@ BASIC   = ../roms/basic4.rom
 
 all: ../basictool
 
-BASICTOOLOBJS  = main.o config.o emulation.o other.o roms.o utils.o lib6502.o cargs.o
+BASICTOOLOBJS  = main.o config.o emulation.o driver.o roms.o utils.o lib6502.o cargs.o
 ../basictool: $(BASICTOOLOBJS)
 	$(CC) $(LDFLAGS) -o $@ $(BASICTOOLOBJS)
 
@@ -52,7 +52,7 @@ config.o: config.c config.h
 emulation.o: emulation.c emulation.h lib6502.h roms.h utils.h
 lib6502.o: lib6502.c lib6502.h
 main.o: main.c cargs.h config.h roms.h utils.h
-other.o: other.c config.h emulation.h lib6502.h utils.h
+driver.o: driver.c config.h emulation.h lib6502.h utils.h
 roms.o: roms.c roms.h zz-editor-a.c zz-editor-b.c zz-basic.c
 utils.o: utils.c utils.h
 zz-basic.o: zz-basic.c
