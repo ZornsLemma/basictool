@@ -210,7 +210,7 @@ static int callback_oscli(M6502 *mpu, uint16_t address, uint8_t data) {
     // properly (as that's what the real OS does).
     while (mpu_memory[yx + mpu_registers.y] == '*') {
         ++mpu_registers.y;
-        check(mpu_registers.y <= 255, "Too many * on OSCLI"); // unlikely!
+        check(mpu_registers.y != 0, "Too many * on OSCLI"); // unlikely!
     }
 
     // This isn't case-insensitive and doesn't recognise abbreviations, but
