@@ -215,7 +215,7 @@ static int callback_oscli(M6502 *mpu, uint16_t address, uint8_t data) {
 
     // This isn't case-insensitive and doesn't recognise abbreviations, but
     // in practice it's good enough.
-    if (memcmp(&mpu_memory[yx + mpu_registers.y], "BASIC", 5) == 0) {
+    if (memcmp((char *) &mpu_memory[yx + mpu_registers.y], "BASIC", 5) == 0) {
         //fprintf(stderr, "SFTODO BASIC!\n");
         return enter_basic2();
     }
@@ -235,7 +235,7 @@ static int callback_oscli(M6502 *mpu, uint16_t address, uint8_t data) {
                                            // .skip_rts
     *p++ = 0x00;                           // BRK
     *p++ = 0xfe;                           // error code
-    strcpy(p, "Bad command");              // error string and terminator
+    strcpy((char *) p, "Bad command");     // error string and terminator
     
     //fprintf(stderr, "SFTODO999\n");
     return code_address;

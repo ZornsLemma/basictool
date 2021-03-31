@@ -4,6 +4,7 @@
 #include <string.h>
 #include "cargs.h"
 #include "config.h"
+#include "emulation.h"
 #include "roms.h"
 #include "utils.h"
 
