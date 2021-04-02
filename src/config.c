@@ -20,7 +20,7 @@ struct s_config config = {
     false,  // renumber
     10,     // renumber start
     10,     // renumber step
-    0,      // LISTO
+    -1,     // LISTO
     false,  // format
     false,  // line_ref
     false,  // variable_xref

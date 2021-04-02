@@ -18,6 +18,10 @@ void print_error_filename_prefix(void) {
     }
 }
 
+void warn(const char *s) {
+    fprintf(stderr, "Warning: %s\n", s);
+}
+
 // TODO: Entirely experimental function, not yet used
 NORETURN static void die_internal(const char *fmt, va_list ap) {
     print_error_filename_prefix();

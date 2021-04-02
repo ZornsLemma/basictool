@@ -19,6 +19,10 @@ extern int error_line_number;
 // TODO: COMMENT IF KEEP
 void print_error_filename_prefix(void);
 
+// TODO: COMMENT
+// TODO: PRINTF-ISE IF NEEDED
+void warn(const char *s);
+
 // TODO: Entirely experimental function, not yet used
 // Like fprintf(stderr, fmt, ...) except:
 // - a newline will automatically be appended

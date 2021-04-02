@@ -213,9 +213,6 @@ static struct cag_option options[] = {
       .access_letters = 0,
       .access_name = "variable-xref",
       .description = "output variable cross references" },
-
-    // TODO: An option to set LISTO for text output (should probably imply text
-    // output option)
 };
 
 // TODO: This should probably be printf-like, but check callers - they may not need it
@@ -487,6 +484,17 @@ int main(int argc, char *argv[]) {
     } else if (output_options > 1) {
         die_help("Error: Please don't use more than one output type option.");
     }
+
+    if (config.listo == -1) {
+        config.listo = 0;
+    } else {
+        if (!config.ascii_output) {
+            warn("--listo only has an effect with the --ascii output type");
+        }
+    }
+    
+
+    // TODO: Are there additional warnings we could usefully give?
 
     emulation_init(); // TODO: RENAME AS IT'S MAINLY/ALL M6502 INIT
     load_basic(filenames[0]); // TODO: rename load_basic_program()? tho symmetry with save would suggest no "_program"
