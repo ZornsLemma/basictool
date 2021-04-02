@@ -24,10 +24,11 @@ enum {
     os_format_discard_command,
     os_line_ref_discard_command,
     os_variable_xref_discard_command,
+    os_variable_xref_output,
     os_output_non_blank,
     os_pack_discard_concatenate,
     os_pack_discard_blank,
-    os_pack
+    os_pack_output
 } output_state = os_discard;
 
 // FILE pointer used for "valuable" output we've picked out from the emulated
@@ -126,8 +127,13 @@ static void check_is_in_pending_output(const char *s) {
         make_printable(pending_output));
 }
 
-// TODO COMMENT
-static void print_aligned(const char *s) {
+static void putc_wrapper(int c, FILE *file) {
+    check(putc(c, file) != EOF, "Error: Error writing to output file \"%s\"",
+          filenames[1]);
+}
+
+// Write 's' to 'file', adjusting the spaces so the columns line up nicely.
+static void print_aligned(FILE *file, const char *s) {
     static const int logical_column_x[] = {0, 50};
     bool spaces_pending = false;
     int logical_column = 0;
@@ -136,25 +142,30 @@ static void print_aligned(const char *s) {
         if (c == ' ') {
             spaces_pending = true;
         } else if (!spaces_pending) {
-            putc(c, stderr); ++x;
+            putc_wrapper(c, file); ++x;
         } else {
             assert(spaces_pending);
-            int align_to_x =
-                (logical_column < CAG_ARRAY_SIZE(logical_column_x)) ?
-                logical_column_x[logical_column] : 0;
-            if ((x >= align_to_x) && (align_to_x != 0)) {
-                putc(' ', stderr); ++x;
+
+            int align_to_x;
+            if (logical_column < CAG_ARRAY_SIZE(logical_column_x)) {
+                align_to_x = logical_column_x[logical_column];
+            } else {
+                align_to_x = logical_column_x[1] + 6 * (logical_column - 1);
+            }
+
+            if (x >= align_to_x) {
+                putc_wrapper(' ', file); ++x;
             } else {
                 while (x < align_to_x) {
-                    putc(' ', stderr); ++x;
+                    putc_wrapper(' ', file); ++x;
                 }
             }
             spaces_pending = false;
             ++logical_column;
-            putc(c, stderr); ++x;
+            putc_wrapper(c, file); ++x;
         }
     }
-    putc('\n', stderr);
+    putc_wrapper('\n', file);
 }
 
 // This is called by driver_oswrch() when a complete line of output has been
@@ -186,7 +197,18 @@ static void complete_output_line_handler() {
 
         case os_variable_xref_discard_command:
             check_is_in_pending_output("Variables Xref");
-            output_state = os_output_non_blank;
+            output_state = os_variable_xref_output;
+            break;
+
+        case os_variable_xref_output:
+            assert(output_file != 0);
+            if (*pending_output != '\0') {
+                make_printable(pending_output);
+                // TODO: It might be nice if the line numbers in this output
+                // were right-aligned in their columns, but I'm not going to
+                // worry about that yet.
+                print_aligned(output_file, pending_output);
+            }
             break;
 
         case os_output_non_blank:
@@ -207,17 +229,17 @@ static void complete_output_line_handler() {
             check(*pending_output == '\0',
                   "Internal error: Expected to see a blank line of output, got \"%s\"",
                   make_printable(pending_output));
-            output_state = os_pack;
+            output_state = os_pack_output;
             break;
 
-        case os_pack: {
+        case os_pack_output: {
             bool is_bytes_saved = is_in_pending_output("Bytes saved");
             if (config.verbose >= 1) {
                 if (is_bytes_saved) {
                     fprintf(stderr, "%s\n", make_printable(pending_output));
                 } else if (config.verbose >= 2) {
                     make_printable(pending_output);
-                    print_aligned(pending_output);
+                    print_aligned(stderr, pending_output);
                 }
             }
             if (is_bytes_saved) {
