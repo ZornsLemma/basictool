@@ -375,6 +375,7 @@ static FILE *fopen_output_wrapper(const char *filename, const char *mode) {
     FILE *file = fopen_wrapper(filename, mode);
     check(file != 0, "Error: Can't open output file \"%s\"", filename);
     output_state_file = file;
+    // SFTODO: This will go wrong if we get an error writing to stdout
     output_state_filename = filename;
     return file;
 }
