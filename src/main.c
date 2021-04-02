@@ -1,3 +1,4 @@
+#include "main.h"
 #include <assert.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -33,7 +34,7 @@ void save_variable_xref(const char *filename); // TODO!
 
 const char *filenames[2] = {0, 0};
 
-const char *program_name = 0;
+static const char *program_name = 0;
 
 enum option_id {
     oi_help,

@@ -2,6 +2,7 @@
 #define UTILS_H
 
 #include <stdbool.h>
+#include "main.h"
 
 #ifdef __GNUC__
 #define PRINTFLIKE(string_index, first_to_check) \
@@ -11,6 +12,12 @@
 #define PRINTFLIKE(string_index, first_to_check)
 #define NORETURN
 #endif
+
+// TODO: COMMENT IF KEEP
+extern int error_line_number;
+
+// TODO: COMMENT IF KEEP
+void print_error_filename_prefix(void);
 
 // TODO: Entirely experimental function, not yet used
 // Like fprintf(stderr, fmt, ...) except:

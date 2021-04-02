@@ -32,11 +32,6 @@ size_t pending_output_length = 0;
 size_t pending_output_cursor_x = 0;
 size_t pending_output_buffer_size = 0;
 
-// TODO: Ideally we would include this in *any* error message if it's not -1,
-// but it may be OK if it's a lot cleaner/easier to just do it in carefully
-// selected places.
-int error_line_number = -1;
-
 // TODO: Support for HIBASIC might be nice (only for tokenising/detokenising;
 // ABE runs at &8000 so probably can't work with HIBASIC-sized programs), but
 // let's not worry about that yet.
@@ -330,7 +325,7 @@ static void type_basic_program(char *data, size_t length) {
         // Generate the fake input for BASIC and pass it over.
         const int buffer_size = 256;
         char buffer[buffer_size];
-        check(snprintf(buffer, buffer_size, "%d%s", basic_line_number, line) < buffer_size, "Error: Line too long"); // TODO: WE NEED TO GIVE A LINE NUMBER
+        check(snprintf(buffer, buffer_size, "%d%s", basic_line_number, line) < buffer_size, "Error: Line too long");
         execute_input_line(buffer);
 
         ++basic_line_number;

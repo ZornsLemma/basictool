@@ -309,6 +309,7 @@ static int callback_irq(M6502 *mpu, uint16_t address, uint8_t data) {
     uint16_t error_string_ptr = mpu_read_u16(0x102 + mpu_registers.s);
     mpu_registers.s += 2; // not really necessary, as we're about to exit()
     uint16_t error_num_address = error_string_ptr - 1;
+    print_error_filename_prefix();
     fprintf(stderr, "Error: ");
     for (uint8_t c; (c = mpu_memory[error_string_ptr]) != '\0'; ++error_string_ptr) {
         fputc(c, stderr);
@@ -436,7 +437,7 @@ void execute_input_line(const char *line) {
     uint16_t buffer = mpu_read_u16(yx);
     uint8_t buffer_size = mpu_memory[yx + 2];
     size_t pending_length = strlen(line);
-    check(pending_length < buffer_size, "Error: Line too long"); // TODO: PROPER ERROR ETC - BUT WE DO WANT TO TREAT THIS AS AN ERROR, NOT TRUNCATE - WE MAY ULTIMATELY WANT TO BE GIVING A LINE NUMBER FROM INPUT IF WE'RE TOKENISING BASIC VIA THIS
+    check(pending_length < buffer_size, "Error: Line too long");
     memcpy(&mpu_memory[buffer], line, pending_length);
 
     // OSWORD 0 would echo the typed characters and move to a new line, so do
@@ -455,5 +456,7 @@ void execute_input_line(const char *line) {
 }
 
 // TODO: Bit OTT but be good to be consistent about full stop vs no full stop at end of all error messages, or at least *think* about whether we want one or not on each case rather than it being a bit ad-hoc
+
+// TODO: gcc error messages are "all lower case", e.g. "foo.c:42: error: your code sucks", since I'm copying gcc format for line number-related error messages, maybe I should use this style more/everywhere?
 
 // vi: colorcolumn=80
