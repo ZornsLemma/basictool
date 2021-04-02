@@ -148,12 +148,12 @@ static int callback_osbyte_read_vdu_variable(void) {
     uint8_t i = mpu_registers.x;
     if (vdu_variables[i] == -1) {
         mpu_dump();
-        die("Error: Unsupported VDU variable %d read", i);
+        die("Internal error: Unsupported VDU variable %d read", i);
     }
     uint8_t j = i + 1; // use uint8_t intermediate so we wrap around (unlikely)
     if (vdu_variables[j] == -1) {
         mpu_dump();
-        die("Error: Unsupported VDU variable %d read", j);
+        die("Internal error: Unsupported VDU variable %d read", j);
     }
     mpu_registers.x = vdu_variables[i];
     mpu_registers.y = vdu_variables[j];
@@ -193,6 +193,11 @@ static int callback_osbyte(M6502 *mpu, uint16_t address, uint8_t data) {
 
 static int callback_oscli(M6502 *mpu, uint16_t address, uint8_t data) {
     uint16_t yx = (mpu_registers.y << 8) | mpu_registers.x;
+    // The following case is never going to happen in practice, so let's just
+    // explicitly check for it then we don't have to worry about wrapping or
+    // accessing past the end of mpu_memory in the following code.
+    check(yx <= 0xff00, "Internal error: command tail is too near top of memory");
+
     mpu_memory[os_text_pointer    ] = mpu_registers.x;
     mpu_memory[os_text_pointer + 1] = mpu_registers.y;
 
@@ -212,11 +217,12 @@ static int callback_oscli(M6502 *mpu, uint16_t address, uint8_t data) {
     // error-prone, so this approach minimises the amount of hand-assembled
     // code.
 
-    // Skip leading "*" on the command; this is essential to have it recognised
-    // properly (as that's what the real OS does).
+    // Skip leading "*"s on the command; this is essential to have it
+    // recognised properly (as that's what the real OS does).
     while (mpu_memory[yx + mpu_registers.y] == '*') {
         ++mpu_registers.y;
-        check(mpu_registers.y != 0, "Internal error: Too many *s on OSCLI"); // unlikely!
+        // Y is very unlikely to wrap wround, but be paranoid.
+        check(mpu_registers.y != 0, "Internal error: Too many *s on OSCLI");
     }
 
     // This isn't case-insensitive and doesn't recognise abbreviations, but
