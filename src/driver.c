@@ -253,31 +253,33 @@ static void complete_output_line_handler() {
     }
 }
 
-// TODO!?!?!
-// Given a line of BASIC at *lineptr, check to see if it has a line number at
-// the start. If it doesn't, return basic_line_number. If it does, return that
-// line number and advance *lineptr to skip the line number.
-static int get_line_number(char **lineptr, int basic_line_number) {
+// Return the line number to use for the line of BASIC at *lineptr; this will
+// be the number at the start of *lineptr if there is one, line_number if there
+// isn't. *lineptr is advanced to skip over the line number, if any.
+static int get_line_number(char **lineptr, int line_number) {
     assert(lineptr != 0);
     char *line = *lineptr;
     assert(line != 0);
 
-    size_t leading_space_length = strspn(line, " \t");
-    char *line_number_start = line + leading_space_length;
-    size_t line_number_length = strspn(line_number_start, "0123456789");
-    if (line_number_length > 0) {
-        const int buffer_size = 10;
-        char buffer[buffer_size];
-        check(line_number_length < buffer_size, "Line number too big");
-        memcpy(buffer, line_number_start, line_number_length);
-        buffer[line_number_length] = '\0';
-        int user_line_number = atoi(buffer);
-        check(user_line_number >= basic_line_number, "Line number %d is less than previous line number %d", user_line_number, basic_line_number - 1);
-        basic_line_number = user_line_number;
-        line = line_number_start + line_number_length;
-        *lineptr = line;
+    char *number_start = line + strspn(line, " \t");
+    size_t number_length = strspn(number_start, "0123456789");
+    if (number_length > 0) {
+        // There is a line number; temporarily NUL-terminate it so we can call
+        // atoi() with it.
+        char saved_c = number_start[number_length];
+        number_start[number_length] = '\0';
+        int user_line_number = atoi(number_start);
+        number_start[number_length] = saved_c;
+
+        check(user_line_number >= line_number,
+              "Line number %d is less than previous line number %d",
+              user_line_number, line_number - 1);
+        line_number = user_line_number;
+        *lineptr = number_start + number_length;
     }
-    return basic_line_number;
+
+    check(line_number <= 32767, "Line number %d is too large", line_number);
+    return line_number;
 }
 
 // Given untokenised ASCII BASIC program text loaded in binary mode using
