@@ -261,14 +261,19 @@ static int get_line_number(char **lineptr, int line_number) {
     char *line = *lineptr;
     assert(line != 0);
 
+    const int max_line_number = 32767;
     char *number_start = line + strspn(line, " \t");
     size_t number_length = strspn(number_start, "0123456789");
     if (number_length > 0) {
         // There is a line number; temporarily NUL-terminate it so we can call
-        // atoi() with it.
+        // strtol() on it.
         char saved_c = number_start[number_length];
         number_start[number_length] = '\0';
-        int user_line_number = atoi(number_start);
+        char *end;
+        long l = strtol(number_start, &end, 10);
+        check((*end == '\0') && (l <= max_line_number),
+              "Line number %s is too large", number_start);
+        int user_line_number = (int) l;
         number_start[number_length] = saved_c;
 
         check(user_line_number >= line_number,
@@ -278,7 +283,8 @@ static int get_line_number(char **lineptr, int line_number) {
         *lineptr = number_start + number_length;
     }
 
-    check(line_number <= 32767, "Line number %d is too large", line_number);
+    check(line_number <= max_line_number, "Line number %d is too large",
+          line_number);
     return line_number;
 }
 
