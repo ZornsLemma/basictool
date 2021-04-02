@@ -11,8 +11,8 @@
 
 #define BASIC_TOP (0x12)
 
-// C-style string maintained by pending_output_insert() to reflect the current
-// line of output from the emulated machine.
+// C-style string maintained by driver_oswrch() to reflect the current line of
+// output from the emulated machine.
 static char *pending_output = 0;
 
 // Simple state machine used to decide how to handle each line of output from
@@ -58,7 +58,7 @@ static char *make_printable(char *s) {
 // and pending_output is set to an empty string ready for the next line.
 // TODO: Review this code fresh to make sure it doesn't have memory leaks or write past bounds etc
 // TODO: Call the argument 'c'?
-void pending_output_insert(uint8_t data) {
+void driver_oswrch(uint8_t data) {
     static size_t pending_output_length = 0;
     static size_t pending_output_cursor_x = 0;
     static size_t pending_output_buffer_size = 0;
@@ -126,9 +126,9 @@ static void check_is_in_pending_output(const char *s) {
         make_printable(pending_output));
 }
 
-// This is called by pending_output_insert() when a complete line of output has
-// been printed by the emulated machine. It implements a very basic state
-// machine to discard noise and write valuable output to output_file.
+// This is called by driver_oswrch() when a complete line of output has been
+// printed by the emulated machine. It implements a very basic state machine to
+// discard noise and write valuable output to output_file.
 static void complete_output_line_handler() {
     switch (output_state) {
         case os_discard:

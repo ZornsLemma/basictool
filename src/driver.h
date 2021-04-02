@@ -4,7 +4,7 @@
 #include <stdint.h>
 
 // The emulation layer effectively forwards calls to OSWRCH onto this function.
-extern void pending_output_insert(uint8_t data);
+extern void driver_oswrch(uint8_t data);
 
 // Load a BASIC program from 'filename' into the emulated machine's memory,
 // tokenising it if necessary. We will auto-detect whether or not the program

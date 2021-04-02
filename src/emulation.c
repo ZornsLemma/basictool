@@ -118,13 +118,13 @@ static int callback_osrdch(M6502 *mpu, uint16_t address, uint8_t data) {
 
 static int callback_oswrch(M6502 *mpu, uint16_t address, uint8_t data) {
     int c = mpu_registers.a;
-    pending_output_insert(c);
+    driver_oswrch(c);
     return callback_return_via_rts(mpu);
 }
 
 static int callback_osnewl(M6502 *mpu, uint16_t address, uint8_t data) {
-    pending_output_insert(0xa);
-    pending_output_insert(0xd);
+    driver_oswrch(0xa);
+    driver_oswrch(0xd);
     return callback_return_via_rts(mpu);
 }
 
@@ -441,12 +441,11 @@ void execute_input_line(const char *line) {
     memcpy(&mpu_memory[buffer], line, pending_length);
 
     // OSWORD 0 would echo the typed characters and move to a new line, so do
-    // the same with our pending output.
+    // the same.
     for (int i = 0; i < pending_length; ++i) {
-        // TODO: PROB RENAME pending_output_insert() - MAYBE driver_oswrch()?
-        pending_output_insert(line[i]);
+        driver_oswrch(line[i]);
     }
-    pending_output_insert(0xa); pending_output_insert(0xd);
+    driver_oswrch(0xa); driver_oswrch(0xd);
 
     mpu_memory[buffer + pending_length] = 0xd;
     mpu_registers.y = pending_length;
