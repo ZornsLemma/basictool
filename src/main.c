@@ -268,7 +268,7 @@ static int print_to_nul_and_count(const uint8_t *data, int offset, int *width) {
 static void show_roms(void) {
     const uint8_t *roms[] = {
         rom_basic,
-        rom_editor_a
+        rom_editor_b
     };
 
     printf(
