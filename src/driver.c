@@ -82,7 +82,7 @@ static char *make_printable(char *s) {
         // regardless.
         int c = (unsigned char) *p; // avoid sign extension if char is signed
         if ((c < ' ') || (c > '~')) {
-            *s = '.';
+            *p = '.';
         }
     }
     return s;
