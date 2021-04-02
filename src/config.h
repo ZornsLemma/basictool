@@ -23,8 +23,8 @@ struct s_config {
     bool format;
     bool line_ref;
     bool variable_xref;
-    bool tokenise_output; // TODO: Rename "output_tokenised"?
-    bool ascii_output; // TODO: Rename "output_ascii"?
+    bool output_tokenised;
+    bool output_ascii;
 };
 
 extern struct s_config config;

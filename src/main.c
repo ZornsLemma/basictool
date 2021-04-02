@@ -444,11 +444,11 @@ int main(int argc, char *argv[]) {
                 // is set and we're writing to stdout? But stdout could be a
                 // file, should we get unportable and check if stdout is a
                 // terminal as well?
-                config.tokenise_output = true;
+                config.output_tokenised = true;
                 break;
 
             case oi_ascii:
-                config.ascii_output = true;
+                config.output_ascii = true;
                 break;
         }
     }
@@ -477,10 +477,10 @@ int main(int argc, char *argv[]) {
     COUNT_BOOL(output_options, config.format);
     COUNT_BOOL(output_options, config.line_ref);
     COUNT_BOOL(output_options, config.variable_xref);
-    COUNT_BOOL(output_options, config.tokenise_output);
-    COUNT_BOOL(output_options, config.ascii_output);
+    COUNT_BOOL(output_options, config.output_tokenised);
+    COUNT_BOOL(output_options, config.output_ascii);
     if (output_options == 0) {
-        config.ascii_output = true;
+        config.output_ascii = true;
     } else if (output_options > 1) {
         die_help("Error: Please don't use more than one output type option.");
     }
@@ -488,7 +488,7 @@ int main(int argc, char *argv[]) {
     if (config.listo == -1) {
         config.listo = 0;
     } else {
-        if (!config.ascii_output) {
+        if (!config.output_ascii) {
             warn("--listo only has an effect with the --ascii output type");
         }
     }
@@ -509,10 +509,10 @@ int main(int argc, char *argv[]) {
         save_line_ref(filenames[1]);
     } else if (config.variable_xref) {
         save_variable_xref(filenames[1]);
-    } else if (config.tokenise_output) {
+    } else if (config.output_tokenised) {
         save_tokenised_basic(filenames[1]);
     } else {
-        assert(config.ascii_output);
+        assert(config.output_ascii);
         save_ascii_basic(filenames[1]);
     }
 }
