@@ -4,7 +4,7 @@
 #include <stdint.h>
 
 // The emulation layer effectively forwards calls to OSWRCH onto this function.
-extern void pending_output_insert(uint8_t data); // TODO!
+extern void pending_output_insert(uint8_t data);
 
 // Load a BASIC program from 'filename' into the emulated machine's memory,
 // tokenising it if necessary. We will auto-detect whether or not the program
@@ -12,21 +12,33 @@ extern void pending_output_insert(uint8_t data); // TODO!
 // it's tokenised.
 void load_basic(const char *filename);
 
-// TODO: COMMENT ON ALL FOLLOWING
-void pack(void); // TODO!
-void renumber(void); // TODO!
+// Pack the BASIC program in the emulated machine's memory using ABE's "Pack"
+// command.
+void pack(void);
+
+// Renumber the BASIC program in the emulated machine's memory using BASIC's
+// RENUMBER command, with arguments taken from 'config'.
+void renumber(void);
 
 // Save the BASIC program in the emulated machine's memory to 'filename' in
 // tokenised format.
-void save_tokenised_basic(const char *filename); // TODO!
+void save_tokenised_basic(const char *filename);
 
 // Save the BASIC program in the emulated machine's memory to 'filename' in
 // ASCII format, using LISTO option config.listo to control formatting.
-void save_ascii_basic(const char *filename); // TODO!
+void save_ascii_basic(const char *filename);
 
-void save_formatted_basic(const char *filename); // TODO!
-void save_line_ref(const char *filename); // TODO!
-void save_variable_xref(const char *filename); // TODO!
+// Save the BASIC program in the emulated machine's memory to 'filename' in
+// ASCII format, using ABE's "format" option to print it.
+void save_formatted_basic(const char *filename);
+
+// Save the output of ABE's "Table line references" command on the BASIC
+// program in the emulated machine's memory to 'filename'.
+void save_line_ref(const char *filename);
+
+// Save the output of ABE's "Variables Xref" command on the BASIC
+// program in the emulated machine's memory to 'filename'.
+void save_variable_xref(const char *filename);
 
 // vi: colorcolumn=80
 

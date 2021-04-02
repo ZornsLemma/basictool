@@ -493,7 +493,6 @@ int main(int argc, char *argv[]) {
         }
     }
     
-
     // TODO: Are there additional warnings we could usefully give?
 
     emulation_init(); // TODO: RENAME AS IT'S MAINLY/ALL M6502 INIT
