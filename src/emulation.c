@@ -18,10 +18,7 @@ static M6502 *mpu;
 // the emulated machine is waiting for user input.
 static jmp_buf mpu_env;
 
-// We want vdu_variables[256] to be a valid reference, because our VDU variable
-// implementation will potentially access it and we don't want to invoke
-// undefined behaviour. (In practice this won't happen at present.)
-static int vdu_variables[257];
+static int vdu_variables[256];
 
 static enum {
     ms_running,
@@ -103,9 +100,9 @@ NORETURN static int callback_abort_call(M6502 *mpu, uint16_t address, uint8_t da
     callback_abort("call", address, data);
 }
 
-// Pull an RTS-style address (i.e. target-1) from the emulated machine's stack
-// and return the target address.
-static int pull_rts_target() {
+// Pull an RTS-style return address (i.e. target-1) from the emulated machine's
+// stack and return the target address.
+static int pull_rts_target(void) {
     uint16_t address = mpu_read_u16(0x101 + mpu_registers.s);
     mpu_registers.s += 2;
     address += 1;
@@ -119,13 +116,13 @@ static int callback_osrdch(M6502 *mpu, uint16_t address, uint8_t data) {
 
 static int callback_oswrch(M6502 *mpu, uint16_t address, uint8_t data) {
     driver_oswrch(mpu_registers.a);
-    return pull_rts_target(mpu);
+    return pull_rts_target();
 }
 
 static int callback_osnewl(M6502 *mpu, uint16_t address, uint8_t data) {
     driver_oswrch(lf);
     driver_oswrch(cr);
-    return pull_rts_target(mpu);
+    return pull_rts_target();
 }
 
 static int callback_osasci(M6502 *mpu, uint16_t address, uint8_t data) {
@@ -138,38 +135,39 @@ static int callback_osasci(M6502 *mpu, uint16_t address, uint8_t data) {
 
 static int callback_osbyte_return_x(uint8_t x) {
     mpu_registers.x = x;
-    return pull_rts_target(mpu);
+    return pull_rts_target();
 }
 
 static int callback_osbyte_return_u16(uint16_t value) {
     mpu_registers.x = value & 0xff;
     mpu_registers.y = (value >> 8) & 0xff;
-    return pull_rts_target(mpu);
+    return pull_rts_target();
 }
 
 static int callback_osbyte_read_vdu_variable(void) {
-    int i = mpu_registers.x;
+    uint8_t i = mpu_registers.x;
     if (vdu_variables[i] == -1) {
         mpu_dump();
         die("Error: Unsupported VDU variable %d read", i);
     }
-    if (vdu_variables[i + 1] == -1) {
+    uint8_t j = i + 1; // use uint8_t intermediate so we wrap around (unlikely)
+    if (vdu_variables[j] == -1) {
         mpu_dump();
-        die("Error: Unsupported VDU variable %d read", i + 1);
+        die("Error: Unsupported VDU variable %d read", j);
     }
     mpu_registers.x = vdu_variables[i];
-    mpu_registers.y = vdu_variables[i + 1];
-    return pull_rts_target(mpu);
+    mpu_registers.y = vdu_variables[j];
+    return pull_rts_target();
 }
 
 static int callback_osbyte(M6502 *mpu, uint16_t address, uint8_t data) {
     switch (mpu_registers.a) {
         case 0x03: // select output device
-            return pull_rts_target(mpu); // treat as no-op
+            return pull_rts_target(); // treat as no-op
         case 0x0f: // flush buffers
-            return pull_rts_target(mpu); // treat as no-op
+            return pull_rts_target(); // treat as no-op
         case 0x7c: // clear Escape condition
-            return pull_rts_target(mpu); // treat as no-op
+            return pull_rts_target(); // treat as no-op
         case 0x7e: // acknowledge Escape condition
             return callback_osbyte_return_x(0); // no Escape condition pending
         case 0x83: // read OSHWM
@@ -180,10 +178,10 @@ static int callback_osbyte(M6502 *mpu, uint16_t address, uint8_t data) {
             // We just return with X=Y=0; this is good enough in practice.
             return callback_osbyte_return_u16(0);
         case 0x8a: // place character into buffer
-            // ABE uses this to type "OLD<return>" when re-entering BASIC. It
-            // might be nice to emulate this properly, but it also seems silly
-            // to complicate the I/O emulation further when we can simply
-            // do this explicitly.
+            // ABE uses this to type "OLD<cr>" when re-entering BASIC. It might
+            // be nice to emulate this properly, but it also seems silly to
+            // complicate the I/O emulation further when we can simply do this
+            // explicitly.
             return pull_rts_target(); // treat as no-op
         case 0xa0:
             return callback_osbyte_read_vdu_variable();
@@ -423,7 +421,7 @@ void execute_osrdch(const char *s) {
           "Internal error: Emulated machine isn't waiting for OSRDCH");
     mpu_registers.a = s[0];
     mpu_clear_carry(mpu); // no error
-    mpu_registers.pc = pull_rts_target(mpu);
+    mpu_registers.pc = pull_rts_target();
     mpu_run();
 } 
 
@@ -448,7 +446,7 @@ void execute_input_line(const char *line) {
     mpu_memory[buffer + pending_length] = cr;
     mpu_registers.y = pending_length;
     mpu_clear_carry(mpu); // input not terminated by Escape
-    mpu_registers.pc = pull_rts_target(mpu);
+    mpu_registers.pc = pull_rts_target();
     mpu_run();
 }
 
