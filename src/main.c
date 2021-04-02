@@ -18,6 +18,8 @@
 // TODO: Support for HIBASIC might be nice (only for tokenising/detokenising;
 // ABE runs at &8000 so probably can't work with HIBASIC-sized programs), but
 // let's not worry about that yet.
+//
+// TODO: Check I've implemented --verbose everywhere it's useful
 
 #include "main.h"
 #include <assert.h>

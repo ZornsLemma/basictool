@@ -33,12 +33,7 @@ enum {
 // machine's output using the state machine.
 static FILE *output_file = 0;
 
-// TODO: Output should ultimately be gated via a -v option, perhaps with some
-// sort of (optional but default) filtering to tidy it up
-
-static bool is_in_pending_output(const char *s) {
-    return strstr(pending_output, s) != 0;
-}
+static void complete_output_line_handler();
 
 // Replace any non-ASCII characters in 's' with '.'; this is mainly useful in
 // avoiding mode 7 colour codes appearing as random characters.
@@ -56,88 +51,13 @@ static char *make_printable(char *s) {
     return s;
 }
 
-static void check_pending_output(const char *s) {
-    if (is_in_pending_output(s)) {
-        return;
-    }
-    // TODO: Perhaps suggest use of the debug output help option in this message? (On a new line after the existing message)
-    die("Error: Expected to see output containing '%s', got '%s'", s,
-        make_printable(pending_output));
-}
-
-
-static void complete_output_line_handler(char *line) {
-    switch (output_state) {
-        case os_discard:
-            break;
-
-        case os_list_discard_command:
-            check_pending_output(">LIST");
-            // LIST output doesn't contain any blank lines (there's always at
-            // least a line number) so this won't lose anything.
-            output_state = os_output_non_blank;
-            break;
-
-        case os_format_discard_command:
-            check_pending_output("Format listing");
-            // Format output doesn't contain any blank lines (there's always at
-            // least a line number) so this won't lose anything.
-            output_state = os_output_non_blank;
-            break;
-
-        case os_line_ref_discard_command:
-            check_pending_output("Table line references");
-            output_state = os_output_non_blank;
-            break;
-
-        case os_variable_xref_discard_command:
-            check_pending_output("Variables Xref");
-            output_state = os_output_non_blank;
-            break;
-
-        case os_output_non_blank:
-            assert(output_file != 0);
-            if (*line != '\0') {
-                check(fprintf(output_file, "%s\n", line) >= 0,
-                      "Error: Error writing to output file \"%s\"",
-                      filenames[1]);
-            }
-            break;
-
-        case os_pack_discard_concatenate:
-            check_pending_output("Concatenate?");
-            output_state = os_pack_discard_blank;
-            break;
-
-        case os_pack_discard_blank:
-            check(*pending_output == '\0',
-                  "Error: Expected to see a blank line of output, got \"%s\"",
-                  make_printable(line));
-            output_state = os_pack;
-            break;
-
-        case os_pack:
-            if (config.verbose >= 1) {
-                bool is_bytes_saved = is_in_pending_output("Bytes saved");
-                if (is_bytes_saved || (config.verbose >= 2)) {
-                    // TODO: We could maybe force alignment of the columns
-                    // in the verbose>=2 output
-                    // TODO: Should this go to stderr or stdout?
-                    fprintf(stderr, "%s\n", make_printable(line));
-                }
-                if (is_bytes_saved) {
-                    output_state = os_discard;
-                }
-            }
-            break;
-
-        default:
-            assert(false);
-            break;
-    }
-}
-
+// The low-level emulation code calls this function every time the emulated
+// machine calls OSWRCH. It performs very basic terminal emulation to maintain
+// a copy of the current line of output as a C string in pending_output.
+// Whenever a line feed is written, complete_output_line_handler() is called
+// and pending_output is set to an empty string ready for the next line.
 // TODO: Review this code fresh to make sure it doesn't have memory leaks or write past bounds etc
+// TODO: Call the argument 'c'?
 void pending_output_insert(uint8_t data) {
     static size_t pending_output_length = 0;
     static size_t pending_output_cursor_x = 0;
@@ -170,7 +90,7 @@ void pending_output_insert(uint8_t data) {
             fprintf(stderr, "bbc:%s\n", s);
             free(s);
         }
-        complete_output_line_handler(pending_output);
+        complete_output_line_handler();
         pending_output_length = pending_output_cursor_x = 0;
         pending_output[0] = '\0';
         return;
@@ -190,6 +110,94 @@ void pending_output_insert(uint8_t data) {
     pending_output_cursor_x += 1;
     pending_output_length = max(pending_output_cursor_x, pending_output_length);
     assert(strlen(pending_output) == pending_output_length);
+}
+
+static bool is_in_pending_output(const char *s) {
+    return strstr(pending_output, s) != 0;
+}
+
+static void check_is_in_pending_output(const char *s) {
+    if (is_in_pending_output(s)) {
+        return;
+    }
+    // TODO: Perhaps suggest use of the debug output help option in this message? (On a new line after the existing message)
+    // TODO: Make this "Internal error"?
+    die("Error: Expected to see output containing '%s', got '%s'", s,
+        make_printable(pending_output));
+}
+
+// This is called by pending_output_insert() when a complete line of output has
+// been printed by the emulated machine. It implements a very basic state
+// machine to discard noise and write valuable output to output_file.
+static void complete_output_line_handler() {
+    switch (output_state) {
+        case os_discard:
+            break;
+
+        case os_list_discard_command:
+            check_is_in_pending_output(">LIST");
+            // LIST output doesn't contain any blank lines (there's always at
+            // least a line number) so this won't lose anything.
+            output_state = os_output_non_blank;
+            break;
+
+        case os_format_discard_command:
+            check_is_in_pending_output("Format listing");
+            // Format output doesn't contain any blank lines (there's always at
+            // least a line number) so this won't lose anything.
+            output_state = os_output_non_blank;
+            break;
+
+        case os_line_ref_discard_command:
+            check_is_in_pending_output("Table line references");
+            output_state = os_output_non_blank;
+            break;
+
+        case os_variable_xref_discard_command:
+            check_is_in_pending_output("Variables Xref");
+            output_state = os_output_non_blank;
+            break;
+
+        case os_output_non_blank:
+            assert(output_file != 0);
+            if (*pending_output != '\0') {
+                check(fprintf(output_file, "%s\n", pending_output) >= 0,
+                      "Error: Error writing to output file \"%s\"",
+                      filenames[1]);
+            }
+            break;
+
+        case os_pack_discard_concatenate:
+            check_is_in_pending_output("Concatenate?");
+            output_state = os_pack_discard_blank;
+            break;
+
+        case os_pack_discard_blank:
+            check(*pending_output == '\0',
+                  "Error: Expected to see a blank line of output, got \"%s\"",
+                  make_printable(pending_output));
+            output_state = os_pack;
+            break;
+
+        case os_pack:
+            if (config.verbose >= 1) {
+                bool is_bytes_saved = is_in_pending_output("Bytes saved");
+                if (is_bytes_saved || (config.verbose >= 2)) {
+                    // TODO: We could maybe force alignment of the columns
+                    // in the verbose>=2 output
+                    // TODO: Should this go to stderr or stdout?
+                    fprintf(stderr, "%s\n", make_printable(pending_output));
+                }
+                if (is_bytes_saved) {
+                    output_state = os_discard;
+                }
+            }
+            break;
+
+        default:
+            assert(false);
+            break;
+    }
 }
 
 // Read a file into a malloc()-ed block of memory. The pointer to the
@@ -369,7 +377,7 @@ void save_ascii_basic(const char *filename) {
 
 static void execute_butil(void) {
     execute_input_line("*BUTIL");
-    check_pending_output("Ready:");
+    check_is_in_pending_output("Ready:");
     assert(output_state == os_discard);
 }
 
@@ -407,23 +415,23 @@ static const char *no(bool no) {
 void pack(void) {
     execute_butil();
     execute_osrdch("P"); // pack
-    check_pending_output("REMs?");
+    check_is_in_pending_output("REMs?");
     execute_osrdch(no(config.pack_rems_n));
-    check_pending_output("Spaces?");
+    check_is_in_pending_output("Spaces?");
     execute_osrdch(no(config.pack_spaces_n));
-    check_pending_output("Comments?");
+    check_is_in_pending_output("Comments?");
     execute_osrdch(no(config.pack_comments_n));
-    check_pending_output("Variables?");
+    check_is_in_pending_output("Variables?");
     execute_osrdch(no(config.pack_variables_n));
     if (!config.pack_variables_n) {
-        check_pending_output("Use unused singles?");
+        check_is_in_pending_output("Use unused singles?");
         execute_osrdch(no(config.pack_singles_n));
     }
-    check_pending_output("Concatenate?");
+    check_is_in_pending_output("Concatenate?");
     assert(output_state == os_discard);
     output_state = os_pack_discard_concatenate;
     execute_osrdch(no(config.pack_concatenate_n));
-    check_pending_output("Ready:"); execute_osrdch("Q"); // quit
+    check_is_in_pending_output("Ready:"); execute_osrdch("Q"); // quit
     output_state = os_discard;
     // Because *FX138 is implemented as a no-op, ABE's attempt to execute "OLD"
     // won't happen, so do it ourselves.
@@ -431,7 +439,7 @@ void pack(void) {
 }
 
 void renumber(void) {
-    check_pending_output(">");
+    check_is_in_pending_output(">");
     char buffer[256];
     sprintf(buffer, "RENUMBER %d,%d", config.renumber_start,
             config.renumber_step);
