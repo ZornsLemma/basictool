@@ -268,7 +268,7 @@ static void show_roms(void) {
     printf(
 "This program uses the BBC BASIC and Advanced BASIC Editor ROMs to operate on\n"
 "BBC BASIC programs. The ROM headers contain the following details:\n"
-)   ;
+        );
 
     for (int i = 0; i < CAG_ARRAY_SIZE(roms); ++i) {
         printf("    ");
@@ -320,18 +320,20 @@ int main(int argc, char *argv[]) {
                 // This occurs for unsupported options entered by the user,
                 // not just options we've told cargs about but forgotten to
                 // implement, so fall through to --help.
+                // TODO: OR USE die_help() AND PRINT THE UNSUPPORTED OPTION?
             case oi_help:
-                printf("%s " VERSION "\n", program_name);
-                printf("Usage: %s [OPTION]... INPUTFILE [OUTPUTFILE]\n", program_name);
-                printf("INPUTFILE should be ASCII or tokenised BBC BASIC.\n");
-                printf("(A filename of \"-\" indicates standard input/output.)\n\n");
-                        // TODO FORMATTING OF CODE
                 printf(
+"%s " VERSION "\n"
+"Usage: %s [OPTION]... INPUTFILE [OUTPUTFILE]\n"
+"INPUTFILE should be ASCII or tokenised BBC BASIC.\n"
+"(A filename of \"-\" indicates standard input/output.)\n"
+"\n"
 "Tokenise, de-tokenise, pack and analyse BBC BASIC programs.\n"
 "\n"
 "This program is really a specialised BBC Micro emulator which uses the BBC\n"
 "BASIC and Advanced BASIC Editor ROMs to operate on BBC BASIC programs. Use\n"
-"--roms to see more information about these ROMs.\n\n");
+"--roms to see more information about these ROMs.\n\n",
+                    program_name, program_name);
                 cag_option_print(options, CAG_ARRAY_SIZE(options), stdout);
                 return EXIT_SUCCESS;
 
@@ -454,16 +456,17 @@ int main(int argc, char *argv[]) {
     for (i = context.index; (i < argc) && (filename_count < max_filenames);
          ++i, ++filename_count) {
         filenames[filename_count] = context.argv[i];
-        //fprintf(stderr, "SFTODOFILE %i %s\n", filename_count, filename);
     }
     if (i != argc) {
-        die_help("Error: Please use a maximum of one input filename and one output filename.");
+        die_help("Error: Please use a maximum of one input filename and one "
+                 "output filename.");
     }
     // Don't just sit waiting for input on stdin and writing to stdout if we're
     // invoked with no filenames. This is a supported mode of operation, but to
     // avoid confusion we require at least one "-" argument to be specified.
     if (filename_count == 0) {
-        die_help("Error: Please give at least one filename; use input filename \"-\" for standard input.");
+        die_help("Error: Please give at least one filename; use input "
+                 "filename \"-\" for standard input.");
     }
     // TODO: If the output is binary we should probably also check an option (--filter again?) and refuse to proceed if so. But *maybe* output being stdout will be used to choose a text output option.
 
@@ -489,7 +492,7 @@ int main(int argc, char *argv[]) {
     
     // TODO: Are there additional warnings we could usefully give?
 
-    emulation_init(); // TODO: RENAME AS IT'S MAINLY/ALL M6502 INIT
+    emulation_init();
     load_basic(filenames[0]); // TODO: rename load_basic_program()? tho symmetry with save would suggest no "_program"
     if (config.pack) {
         pack();
