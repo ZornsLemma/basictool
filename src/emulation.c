@@ -118,7 +118,7 @@ static int callback_osrdch(M6502 *mpu, uint16_t address, uint8_t data) {
 }
 
 static int callback_oswrch(M6502 *mpu, uint16_t address, uint8_t data) {
-    driver_oswrch(data);
+    driver_oswrch(mpu_registers.a);
     return pull_rts_target(mpu);
 }
 
