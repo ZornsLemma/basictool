@@ -14,4 +14,6 @@ extern const uint8_t rom_editor_a[];
 extern const uint8_t rom_editor_b[];
 extern const uint8_t rom_basic[];
 
+// vi: colorcolumn=80
+
 #endif

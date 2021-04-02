@@ -11,3 +11,5 @@ const uint8_t rom_editor_b[] = {
 const uint8_t rom_basic[] = {
 #include "zz-basic.c"
 };
+
+// vi: colorcolumn=80
