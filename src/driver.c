@@ -297,67 +297,10 @@ void load_basic(const char *filename) {
     }
 }
 
-// Convenience function to close an output file, reporting any errors via die()
-// and setting output_file back to null if that's the file being closed.
-static void fclose_output(FILE *file, const char *filename) {
-    check(fclose(file) == 0, "Error: Error closing output file \"%s\"", filename);
-    if (file == output_file) {
-        output_file = 0;
-    }
-}
-
-void save_tokenised_basic(const char *filename) {
-    FILE *file = fopen_wrapper(filename, "wb");
-    uint16_t top = mpu_read_u16(BASIC_TOP);
-    size_t length = top - page;
-    size_t bytes_written = fwrite(&mpu_memory[page], 1, length, file);
-    check(bytes_written == length, "Error: Error writing to output file \"%s\"", filename);
-    fclose_output(file, filename);
-}
-
-void save_ascii_basic(const char *filename) {
-    output_file = fopen_wrapper(filename, "w");
-    assert(output_state == os_discard);
-    char buffer[256];
-    sprintf(buffer, "LISTO %d", config.listo);
-    execute_input_line(buffer);
-    output_state = os_list_discard_command;
-    execute_input_line("LIST");
-    output_state = os_discard;
-    fclose_output(output_file, filename);
-}
-
 static void execute_butil(void) {
     execute_input_line("*BUTIL");
     check_is_in_pending_output("Ready:");
     assert(output_state == os_discard);
-}
-
-void save_formatted_basic(const char *filename) {
-    output_file = fopen_wrapper(filename, "w");
-    execute_butil();
-    output_state = os_format_discard_command;
-    execute_osrdch("F"); // format
-    output_state = os_discard;
-    fclose_output(output_file, filename);
-}
-
-void save_line_ref(const char *filename) {
-    output_file = fopen_wrapper(filename, "w");
-    execute_butil();
-    output_state = os_line_ref_discard_command;
-    execute_osrdch("T"); // table line references
-    output_state = os_discard;
-    fclose_output(output_file, filename);
-}
-
-void save_variable_xref(const char *filename) {
-    output_file = fopen_wrapper(filename, "w");
-    execute_butil();
-    output_state = os_variable_xref_discard_command;
-    execute_osrdch("V"); // variable xref
-    output_state = os_discard;
-    fclose_output(output_file, filename);
 }
 
 static const char *no(bool no) {
@@ -396,6 +339,64 @@ void renumber(void) {
     sprintf(buffer, "RENUMBER %d,%d", config.renumber_start,
             config.renumber_step);
     execute_input_line(buffer);
+}
+
+
+// Convenience function to close an output file, reporting any errors via die()
+// and setting output_file back to null if that's the file being closed.
+static void fclose_output(FILE *file, const char *filename) {
+    check(fclose(file) == 0, "Error: Error closing output file \"%s\"", filename);
+    if (file == output_file) {
+        output_file = 0;
+    }
+}
+
+void save_tokenised_basic(const char *filename) {
+    FILE *file = fopen_wrapper(filename, "wb");
+    uint16_t top = mpu_read_u16(BASIC_TOP);
+    size_t length = top - page;
+    size_t bytes_written = fwrite(&mpu_memory[page], 1, length, file);
+    check(bytes_written == length, "Error: Error writing to output file \"%s\"", filename);
+    fclose_output(file, filename);
+}
+
+void save_ascii_basic(const char *filename) {
+    output_file = fopen_wrapper(filename, "w");
+    assert(output_state == os_discard);
+    char buffer[256];
+    sprintf(buffer, "LISTO %d", config.listo);
+    execute_input_line(buffer);
+    output_state = os_list_discard_command;
+    execute_input_line("LIST");
+    output_state = os_discard;
+    fclose_output(output_file, filename);
+}
+
+void save_formatted_basic(const char *filename) {
+    output_file = fopen_wrapper(filename, "w");
+    execute_butil();
+    output_state = os_format_discard_command;
+    execute_osrdch("F"); // format
+    output_state = os_discard;
+    fclose_output(output_file, filename);
+}
+
+void save_line_ref(const char *filename) {
+    output_file = fopen_wrapper(filename, "w");
+    execute_butil();
+    output_state = os_line_ref_discard_command;
+    execute_osrdch("T"); // table line references
+    output_state = os_discard;
+    fclose_output(output_file, filename);
+}
+
+void save_variable_xref(const char *filename) {
+    output_file = fopen_wrapper(filename, "w");
+    execute_butil();
+    output_state = os_variable_xref_discard_command;
+    execute_osrdch("V"); // variable xref
+    output_state = os_discard;
+    fclose_output(output_file, filename);
 }
 
 // TODO: Don't forget to install and test a BRKV handler - wouldn't surprise me if ABE could throw an error if progam is malformed, and of course BASIC could (if only a "line too long" error)
