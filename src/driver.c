@@ -205,9 +205,6 @@ static void complete_output_line_handler() {
             assert(output_file != 0);
             if (*pending_output != '\0') {
                 make_printable(pending_output);
-                // TODO: It might be nice if the line numbers in this output
-                // were right-aligned in their columns, but I'm not going to
-                // worry about that yet.
                 print_aligned(output_file, pending_output);
             }
             break;
@@ -336,7 +333,10 @@ void load_basic(const char *filename) {
         // tokenised BASIC program will end with <cr><ff>.
         tokenised = ((length >= 2) && (data[length - 2] == '\x0d') && (data[length - 1] == '\xff'));
     }
-    // TODO: Print "tokenised" at suitably high verbosity level
+    if (config.verbose >= 1) {
+        info("Input auto-detected as %s BASIC",
+             tokenised ? "tokenised" : "ASCII text (non-tokenised)");
+    }
 
     if (tokenised) {
         // Copy the data directly into the emulated machine's memory.

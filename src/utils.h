@@ -20,6 +20,9 @@ extern int error_line_number;
 void print_error_filename_prefix(void);
 
 // TODO: COMMENT
+void info(const char *fmt, ...) PRINTFLIKE(1, 2);
+
+// TODO: COMMENT
 // TODO: PRINTF-ISE IF NEEDED
 void warn(const char *s);
 

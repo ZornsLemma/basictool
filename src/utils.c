@@ -18,6 +18,15 @@ void print_error_filename_prefix(void) {
     }
 }
 
+void info(const char *fmt, ...) {
+    fprintf(stderr, "Info: ");
+    va_list ap;
+    va_start(ap, fmt);
+    vfprintf(stderr, fmt, ap);
+    va_end(ap);
+    putc('\n', stderr);
+}
+
 void warn(const char *s) {
     fprintf(stderr, "Warning: %s\n", s);
 }
