@@ -44,7 +44,6 @@ static char *ourstrdup(const char *s) {
     return t;
 }
 
-// TODO: For stdout to be useful, I need to be sure all verbose output etc is written to stderr - maybe not, it depends how you view the verbose output. A user might want to do "basictool input.txt --pack -vv output.tok > pack-output.txt"; if we output to stderr this redirection becomes fiddlier.
 static FILE *fopen_wrapper(const char *pathname, const char *mode) {
     assert(pathname != 0);
     if (strcmp(pathname, "-") == 0) {
