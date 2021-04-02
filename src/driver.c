@@ -263,7 +263,7 @@ static void type_basic_program(char *data, size_t length) {
     // Ensure that the last line of the data is terminated by a carriage
     // return, taking advantage of the extra byte allocated by load_binary() to
     // know this is safe.
-    data[length] = 0x0d;
+    data[length] = cr;
 
     // As with beebasm's PUTBASIC, line numbers are optional on the input. We
     // auto-assign line numbers; line numbers in the input are recognised and

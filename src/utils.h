@@ -13,6 +13,20 @@
 #define NORETURN
 #endif
 
+// Constants for carriage return (CR) and line feed (LF). These are short
+// names but we use them a lot so let's just pollute the global namespace
+// with them.
+//
+// We could probably just use '\r' and '\n' because we're already
+// assuming the C environment uses ASCII, but let's be paranoid - I could
+// vaguely imagine an ASCII C environment where '\r' is 10 and '\n' is
+// 13 because it makes writing to native text files with CR line edings
+// via the C library less of a special case. (The draft C99 standard
+// (http://www.open-std.org/jtc1/sc22/wg14/www/docs/n1256.pdf) says the value
+// of these escape sequences is implementation-defined; see section 5.2.2.3.)
+static const char cr = 13;
+static const char lf = 10;
+
 // TODO: COMMENT IF KEEP
 extern int error_line_number;
 

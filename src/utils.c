@@ -128,7 +128,7 @@ char *get_line(char **data_ptr, size_t *length_ptr) {
 
     // Find the end of the line.
     char *eol = data;
-    while ((*eol != 0x0d) && (*eol != 0x0a)) {
+    while ((*eol != cr) && (*eol != lf)) {
         ++eol; --length;
     }
     assert(length > 0);
@@ -140,7 +140,7 @@ char *get_line(char **data_ptr, size_t *length_ptr) {
     char *next_line = eol;
     if (length > 0) {
         ++next_line;
-        const char opposite_terminator = (terminator == 0x0d) ? 0x0a: 0x0d;
+        const char opposite_terminator = (terminator == cr) ? lf: cr;
         if (*next_line == opposite_terminator) {
             ++next_line; --length;
         }

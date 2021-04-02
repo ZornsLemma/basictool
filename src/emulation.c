@@ -103,7 +103,9 @@ NORETURN static int callback_abort_call(M6502 *mpu, uint16_t address, uint8_t da
     callback_abort("call", address, data);
 }
 
-static int callback_return_via_rts() {
+// Pull an RTS-style address (i.e. target-1) from the emulated machine's stack
+// and return the target address.
+static int pull_rts_target() {
     uint16_t address = mpu_read_u16(0x101 + mpu_registers.s);
     mpu_registers.s += 2;
     address += 1;
@@ -116,20 +118,18 @@ static int callback_osrdch(M6502 *mpu, uint16_t address, uint8_t data) {
 }
 
 static int callback_oswrch(M6502 *mpu, uint16_t address, uint8_t data) {
-    int c = mpu_registers.a;
-    driver_oswrch(c);
-    return callback_return_via_rts(mpu);
+    driver_oswrch(data);
+    return pull_rts_target(mpu);
 }
 
 static int callback_osnewl(M6502 *mpu, uint16_t address, uint8_t data) {
-    driver_oswrch(0xa);
-    driver_oswrch(0xd);
-    return callback_return_via_rts(mpu);
+    driver_oswrch(lf);
+    driver_oswrch(cr);
+    return pull_rts_target(mpu);
 }
 
 static int callback_osasci(M6502 *mpu, uint16_t address, uint8_t data) {
-    int c = mpu_registers.a;
-    if (c == 0xd) {
+    if (mpu_registers.a == cr) {
         return callback_osnewl(mpu, address, data);
     } else {
         return callback_oswrch(mpu, address, data);
@@ -138,13 +138,13 @@ static int callback_osasci(M6502 *mpu, uint16_t address, uint8_t data) {
 
 static int callback_osbyte_return_x(uint8_t x) {
     mpu_registers.x = x;
-    return callback_return_via_rts(mpu);
+    return pull_rts_target(mpu);
 }
 
 static int callback_osbyte_return_u16(uint16_t value) {
     mpu_registers.x = value & 0xff;
     mpu_registers.y = (value >> 8) & 0xff;
-    return callback_return_via_rts(mpu);
+    return pull_rts_target(mpu);
 }
 
 static int callback_osbyte_read_vdu_variable(void) {
@@ -159,17 +159,17 @@ static int callback_osbyte_read_vdu_variable(void) {
     }
     mpu_registers.x = vdu_variables[i];
     mpu_registers.y = vdu_variables[i + 1];
-    return callback_return_via_rts(mpu);
+    return pull_rts_target(mpu);
 }
 
 static int callback_osbyte(M6502 *mpu, uint16_t address, uint8_t data) {
     switch (mpu_registers.a) {
         case 0x03: // select output device
-            return callback_return_via_rts(mpu); // treat as no-op
+            return pull_rts_target(mpu); // treat as no-op
         case 0x0f: // flush buffers
-            return callback_return_via_rts(mpu); // treat as no-op
+            return pull_rts_target(mpu); // treat as no-op
         case 0x7c: // clear Escape condition
-            return callback_return_via_rts(mpu); // treat as no-op
+            return pull_rts_target(mpu); // treat as no-op
         case 0x7e: // acknowledge Escape condition
             return callback_osbyte_return_x(0); // no Escape condition pending
         case 0x83: // read OSHWM
@@ -184,7 +184,7 @@ static int callback_osbyte(M6502 *mpu, uint16_t address, uint8_t data) {
             // might be nice to emulate this properly, but it also seems silly
             // to complicate the I/O emulation further when we can simply
             // do this explicitly.
-            return callback_return_via_rts(); // treat as no-op
+            return pull_rts_target(); // treat as no-op
         case 0xa0:
             return callback_osbyte_read_vdu_variable();
         default:
@@ -423,7 +423,7 @@ void execute_osrdch(const char *s) {
           "Internal error: Emulated machine isn't waiting for OSRDCH");
     mpu_registers.a = s[0];
     mpu_clear_carry(mpu); // no error
-    mpu_registers.pc = callback_return_via_rts(mpu);
+    mpu_registers.pc = pull_rts_target(mpu);
     mpu_run();
 } 
 
@@ -443,12 +443,12 @@ void execute_input_line(const char *line) {
     for (int i = 0; i < pending_length; ++i) {
         driver_oswrch(line[i]);
     }
-    driver_oswrch(0xa); driver_oswrch(0xd);
+    driver_oswrch(lf); driver_oswrch(cr);
 
-    mpu_memory[buffer + pending_length] = 0xd;
+    mpu_memory[buffer + pending_length] = cr;
     mpu_registers.y = pending_length;
     mpu_clear_carry(mpu); // input not terminated by Escape
-    mpu_registers.pc = callback_return_via_rts(mpu);
+    mpu_registers.pc = pull_rts_target(mpu);
     mpu_run();
 }
 
