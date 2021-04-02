@@ -24,7 +24,13 @@
 // TODO: It might be nice to expose ABE's "unpack" option, but my experiments
 // with it (on b-em, not this hacky emulator) suggest it's quite fiddly and may
 // ask you to renumber lines several times. I will leave this for now.
-
+//
+// TODO: It might be nice to offer an option to strip line numbers on
+// non-tokenised output. However, that would break programs which need to use
+// line numbers, so it might be nice to do that in conjunction with the ABE
+// "table line references" option to try (we'd never get it perfect, due to
+// things like calculated line numbers) to remove line numbers except where
+// they're not used.
 
 #include "main.h"
 #include <assert.h>
@@ -449,7 +455,6 @@ int main(int argc, char *argv[]) {
         }
     }
 
-    //printf("config.verbose %d\n", config.verbose); // TODO: RESPECT THIS!
     int filename_count = 0;
     const int max_filenames = CAG_ARRAY_SIZE(filenames);
     int i;
@@ -489,11 +494,9 @@ int main(int argc, char *argv[]) {
             warn("--listo only has an effect with the --ascii output type");
         }
     }
-    
-    // TODO: Are there additional warnings we could usefully give?
 
     emulation_init();
-    load_basic(filenames[0]); // TODO: rename load_basic_program()? tho symmetry with save would suggest no "_program"
+    load_basic(filenames[0]);
     if (config.pack) {
         pack();
     }
@@ -513,14 +516,6 @@ int main(int argc, char *argv[]) {
         save_ascii_basic(filenames[1]);
     }
 }
-// TODO: I should check return value of fclose() everywhere
-
-// TODO: It might be nice to offer option to strip line numbers on non-tokenised
-// output. However, that would break programs which need to use line numbers,
-// so it might be nice to do that in conjunction with the ABE "table line
-// references" option to try (we'd never get it perfect, due to things like
-// calculated line numbers) to remove line numbers except where they're not
-// used.
 
 // TODO: Should I make sure all printf() etc output and --help fits in 80 cols or is wrapped nicely?
 
