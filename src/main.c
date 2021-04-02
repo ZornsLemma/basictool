@@ -291,7 +291,6 @@ static void show_roms(void) {
         putchar('\n');
     }
 
-// TODO SHOW ROM HEADERS
     printf(
 "\nThe BASIC editor and utilities were originally published separately by\n"
 "Altra. The Advanced BASIC Editor ROMs used here are (C) Baildon Electronics.\n"
@@ -305,7 +304,9 @@ static long parse_long_argument(const char *name, const char *value, int min, in
     }
     char *endptr;
     long result = strtol(value, &endptr, 10);
-    check(*endptr == '\0' && (result >= min) && (result <= max), "Error: invalid integer"); // SFTODO: USE 'name' AND 'value' IN THIS MESSAGE AND MIN AND MAX
+    if ((*endptr != '\0') || (result < min) || (result > max)) {
+        die_help("Error: invalid %s value \"%s\"", name, value);
+    }
     return result;
 }
 
