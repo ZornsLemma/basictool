@@ -200,9 +200,10 @@ static void complete_output_line_handler() {
     }
 }
 
-
-// Enter the BASIC program text at data - using arbitrary line terminators -
-// a line at a time so BASIC will tokenise it for us.
+// Given untokenised ASCII BASIC program text loaded in binary mode using
+// load_binary() at 'data' of length 'length', use get_line() to iterate
+// through it line-by-line and type it into the emulated machine so BASIC will
+// tokenise it for us.
 // TODO: PERHAPS CHANGE "type" TO SOMETHING ELSE, BE CONSISTENT
 static void type_basic_program(char *data, size_t length) {
     execute_input_line("NEW");
@@ -296,12 +297,16 @@ void load_basic(const char *filename) {
     }
 }
 
+// Convenience function to close an output file, reporting any errors via die()
+// and setting output_file back to null if that's the file being closed.
 static void fclose_output(FILE *file, const char *filename) {
     check(fclose(file) == 0, "Error: Error closing output file \"%s\"", filename);
-    output_file = 0;
+    if (file == output_file) {
+        output_file = 0;
+    }
 }
 
-void save_basic(const char *filename) {
+void save_tokenised_basic(const char *filename) {
     FILE *file = fopen_wrapper(filename, "wb");
     uint16_t top = mpu_read_u16(BASIC_TOP);
     size_t length = top - page;
@@ -319,7 +324,7 @@ void save_ascii_basic(const char *filename) {
     output_state = os_list_discard_command;
     execute_input_line("LIST");
     output_state = os_discard;
-    fclose_output(output_file, filename); output_file = 0;
+    fclose_output(output_file, filename);
 }
 
 static void execute_butil(void) {
@@ -334,7 +339,7 @@ void save_formatted_basic(const char *filename) {
     output_state = os_format_discard_command;
     execute_osrdch("F"); // format
     output_state = os_discard;
-    fclose_output(output_file, filename); output_file = 0;
+    fclose_output(output_file, filename);
 }
 
 void save_line_ref(const char *filename) {
@@ -343,7 +348,7 @@ void save_line_ref(const char *filename) {
     output_state = os_line_ref_discard_command;
     execute_osrdch("T"); // table line references
     output_state = os_discard;
-    fclose_output(output_file, filename); output_file = 0;
+    fclose_output(output_file, filename);
 }
 
 void save_variable_xref(const char *filename) {
@@ -352,7 +357,7 @@ void save_variable_xref(const char *filename) {
     output_state = os_variable_xref_discard_command;
     execute_osrdch("V"); // variable xref
     output_state = os_discard;
-    fclose_output(output_file, filename); output_file = 0;
+    fclose_output(output_file, filename);
 }
 
 static const char *no(bool no) {

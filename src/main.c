@@ -503,7 +503,7 @@ int main(int argc, char *argv[]) {
     } else if (config.variable_xref) {
         save_variable_xref(filenames[1]);
     } else if (config.tokenise_output) {
-        save_basic(filenames[1]); // TODO: rename save_tokenised_basic()
+        save_tokenised_basic(filenames[1]);
     } else {
         assert(config.ascii_output);
         save_ascii_basic(filenames[1]);
