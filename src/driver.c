@@ -137,7 +137,8 @@ static void print_aligned(FILE *file, const char *s) {
     static const int logical_column_x[] = {0, 50};
     bool spaces_pending = false;
     int logical_column = 0;
-    for (int x = 0; *s != '\0'; ++s) {
+    int x = 0;
+    for (; *s != '\0'; ++s) {
         char c = *s;
         if (c == ' ') {
             spaces_pending = true;
