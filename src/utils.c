@@ -109,21 +109,25 @@ char *load_binary(const char *filename, size_t *length) {
     // Since we're dealing with BASIC programs on a 32K-ish machine, we don't
     // need to handle arbitrarily large files.
     const int max_size = 64 * 1024;
-    char *data = check_alloc(malloc(max_size));
+    // We secretly allocate an extra byte for get_line() to use in case the
+    // last line of a text file doesn't have a terminator.
+    char *data = check_alloc(malloc(max_size + 1));
     *length = fread(data, 1, max_size, file);
-    check(!ferror(file), "Error: Error reading from input file \"%s\"", filename);
+    check(!ferror(file), "Error: Error reading from input file \"%s\"",
+          filename);
     check(feof(file), "Error: Input file \"%s\" is too large", filename);
-    check(fclose(file) == 0, "Error: Error closing input file \"%s\"", filename);
-    // We allocate an extra byte so we can easily guarantee that the last line
-    // ends with a line terminator when reading non-tokenised input.
-    return check_alloc(realloc(data, (*length) + 1));
+    check(fclose(file) == 0, "Error: Error closing input file \"%s\"",
+          filename);
+    return data;
 }
 
-// TODO: Review this later, I think there are no missing corner cases (bearing in mind we deliberately put a CR at the end of the input to catch unterminated last lines) but a fresh look would be good
+// TODO: Review this later, I think there are no missing corner cases (now!)
+// but a fresh look would be good
 char *get_line(char **data_ptr, size_t *length_ptr) {
     assert(data_ptr != 0);
     assert(length_ptr != 0);
     char *data = *data_ptr;
+    assert(data != 0);
     size_t length = *length_ptr;
 
     if (length == 0) {
@@ -131,25 +135,39 @@ char *get_line(char **data_ptr, size_t *length_ptr) {
     }
 
     // Find the end of the line.
-    char *eol = data;
-    while ((*eol != cr) && (*eol != lf)) {
-        ++eol; --length;
+    char *p = data;
+    while ((length > 0) && (*p != cr) && (*p != lf)) {
+        ++p; --length;
     }
-    assert(length > 0);
-    char terminator = *eol;
-    *eol = '\0'; --length;
-
-    // If there is a next character and it's the opposite terminator, skip it.
-    // This allows us to handle CR, LF, LFCR or CRLF-terminated lines.
-    char *next_line = eol;
-    if (length > 0) {
-        ++next_line;
-        const char opposite_terminator = (terminator == cr) ? lf: cr;
-        if (*next_line == opposite_terminator) {
-            ++next_line; --length;
+    if (length <= 1) {
+        if (length == 0) {
+            // The last line of text isn't terminated, so we need to write a
+            // NUL after the last character. This would write past the end of
+            // the buffer, but luckily load_binary() allocated a secret extra
+            // byte for exactly this eventuality.
+            ++p;
+        } else {
+            assert((*p == cr) || (*p == lf));
         }
+        *p = '\0';
+        *data_ptr = p; // doesn't really matter as length is now 0
+        *length_ptr = 0;
+        return data;
     }
-    *data_ptr = next_line;
+
+    char terminator = *p;
+    *p = '\0';
+    ++p; --length;
+    assert(length > 0);
+
+    // If the next character is the opposite terminator, skip it. This allows
+    // us to handle CR, LF, LFCR or CRLF-terminated lines.
+    const char opposite_terminator = (terminator == cr) ? lf: cr;
+    if (*p == opposite_terminator) {
+        ++p; --length;
+    }
+
+    *data_ptr = p;
     *length_ptr = length;
     return data;
 }
