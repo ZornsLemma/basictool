@@ -436,7 +436,11 @@ void execute_input_line(const char *line) {
     check(mpu_state == ms_osword_input_line_pending,
           "Internal error: Emulated machine isn't waiting for OSWORD 0");
     uint16_t yx = (mpu_registers.y << 8) | mpu_registers.x;
+    check(yx <= 0xff00,
+          "Internal error: OSWORD 0 block is too near top of memory");
     uint16_t buffer = mpu_read_u16(yx);
+    check(buffer <= 0xff00,
+          "Internal error: OSWORD 0 buffer is too near top of memory");
     uint8_t buffer_size = mpu_memory[yx + 2];
     size_t pending_length = strlen(line);
     check(pending_length < buffer_size, "Error: Line too long");
