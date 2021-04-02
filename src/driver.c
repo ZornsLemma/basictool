@@ -253,6 +253,33 @@ static void complete_output_line_handler() {
     }
 }
 
+// TODO!?!?!
+// Given a line of BASIC at *lineptr, check to see if it has a line number at
+// the start. If it doesn't, return basic_line_number. If it does, return that
+// line number and advance *lineptr to skip the line number.
+static int get_line_number(char **lineptr, int basic_line_number) {
+    assert(lineptr != 0);
+    char *line = *lineptr;
+    assert(line != 0);
+
+    size_t leading_space_length = strspn(line, " \t");
+    char *line_number_start = line + leading_space_length;
+    size_t line_number_length = strspn(line_number_start, "0123456789");
+    if (line_number_length > 0) {
+        const int buffer_size = 10;
+        char buffer[buffer_size];
+        check(line_number_length < buffer_size, "Line number too big");
+        memcpy(buffer, line_number_start, line_number_length);
+        buffer[line_number_length] = '\0';
+        int user_line_number = atoi(buffer);
+        check(user_line_number >= basic_line_number, "Line number %d is less than previous line number %d", user_line_number, basic_line_number - 1);
+        basic_line_number = user_line_number;
+        line = line_number_start + line_number_length;
+        *lineptr = line;
+    }
+    return basic_line_number;
+}
+
 // Given untokenised ASCII BASIC program text loaded in binary mode using
 // load_binary() at 'data' of length 'length', use get_line() to iterate
 // through it line-by-line and type it into the emulated machine so BASIC will
@@ -273,23 +300,7 @@ static void type_basic_program(char *data, size_t length) {
     for (char *line = 0; (line = get_line(&data, &length)) != 0; ++file_line_number) {
         error_line_number = file_line_number;
 
-        // Check for a user-specified line number; if we find one we set
-        // basic_line_number to the user-specified value and adjust line to
-        // skip over the line number.
-        size_t leading_space_length = strspn(line, " \t");
-        char *line_number_start = line + leading_space_length;
-        size_t line_number_length = strspn(line_number_start, "0123456789");
-        if (line_number_length > 0) {
-            const int buffer_size = 10; // TODO: DUPLICATION OF NAMES WITH OUTER SCOPE
-            char buffer[buffer_size];
-            check(line_number_length < buffer_size, "Line number too big");
-            memcpy(buffer, line_number_start, line_number_length);
-            buffer[line_number_length] = '\0';
-            int user_line_number = atoi(buffer);
-            check(user_line_number >= basic_line_number, "Line number %d is less than previous line number %d", user_line_number, basic_line_number - 1);
-            basic_line_number = user_line_number;
-            line = line_number_start + line_number_length;
-        }
+        basic_line_number = get_line_number(&line, basic_line_number);
         // We now have the line number to use in basic_line_number and the line
         // with no line number at 'line'.
 
