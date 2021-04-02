@@ -10,6 +10,12 @@
 
 #define BASIC_TOP (0x12)
 
+// C-style string maintained by pending_output_insert() to reflect the current
+// line of output from the emulated machine.
+static char *pending_output = 0;
+
+// Simple state machine used to decide how to handle each line of output from
+// the emulated machine.
 enum {
     os_discard,
     os_list_discard_command,
@@ -21,16 +27,10 @@ enum {
     os_pack_discard_blank,
     os_pack
 } output_state = os_discard;
-static FILE *output_state_file = 0; // TODO: RENAME? REMOVE "STATE"?
 
-static char *pending_output = 0;
-static size_t pending_output_length = 0;
-static size_t pending_output_cursor_x = 0;
-static size_t pending_output_buffer_size = 0;
-
-// TODO: Support for HIBASIC might be nice (only for tokenising/detokenising;
-// ABE runs at &8000 so probably can't work with HIBASIC-sized programs), but
-// let's not worry about that yet.
+// FILE pointer used for "valuable" output we've picked out from the emulated
+// machine's output using the state machine.
+static FILE *output_file = 0;
 
 static int max(int lhs, int rhs) {
     return (lhs > rhs) ? lhs : rhs;
@@ -44,23 +44,35 @@ static char *ourstrdup(const char *s) {
     return t;
 }
 
+// A wrapper for fopen() which automatically converts "-" to stdin/stdout and
+// calls die() if any errors occur, so the return value can't be null.
 static FILE *fopen_wrapper(const char *pathname, const char *mode) {
     assert(pathname != 0);
+    assert(mode != 0);
+
+    bool read;
+    switch (mode[0]) {
+        case 'r':
+            read = true;
+            break;
+        case 'w':
+            read = false;
+            break;
+        default:
+            die("Internal error: Invalid mode \"%s\" passed to fopen_wrapper()", mode);
+            break;
+    }
+
     if (strcmp(pathname, "-") == 0) {
-        assert((mode != 0) && (*mode != '\0'));
         // We ignore the presence of a "b" in mode; I don't think there's a
         // portable way to re-open stdin/stdout in binary mode. TODO: Should we
         // generate an error if there's a "b"? But this is probably fine on
         // Unix-like systems.
-        if (mode[0] == 'r') {
-            return stdin;
-        } else if (mode[0] == 'w') {
-            return stdout;
-        } else {
-            die("Internal error: Invalid mode \"%s\" passed to fopen_wrapper()", mode);
-        }
+        return read ? stdin : stdout;
     } else {
-        return fopen(pathname, mode);
+        FILE *file = fopen(pathname, mode);
+        check(file != 0, "Error: Can't open %s file \"%s\"", read ? "input" : "output", pathname);
+        return file;
     }
 }
 
@@ -127,9 +139,9 @@ static void complete_output_line_handler(char *line) {
             break;
 
         case os_output_non_blank:
-            assert(output_state_file != 0);
+            assert(output_file != 0);
             if (*line != '\0') {
-                check(fprintf(output_state_file, "%s\n", line) >= 0,
+                check(fprintf(output_file, "%s\n", line) >= 0,
                       "Error: Error writing to output file \"%s\"",
                       filenames[1]);
             }
@@ -170,6 +182,10 @@ static void complete_output_line_handler(char *line) {
 
 // TODO: Review this code fresh to make sure it doesn't have memory leaks or write past bounds etc
 void pending_output_insert(uint8_t data) {
+    static size_t pending_output_length = 0;
+    static size_t pending_output_cursor_x = 0;
+    static size_t pending_output_buffer_size = 0;
+
     // We just discard NULs in the output; they aren't important for anything
     // we are emulating here.
     if (data == '\0') {
@@ -224,7 +240,6 @@ void pending_output_insert(uint8_t data) {
 static char *load_binary(const char *filename, size_t *length) {
     assert(length != 0);
     FILE *file = fopen_wrapper(filename, "rb");
-    check(file != 0, "Error: Can't open input file \"%s\"", filename);
     // Since we're dealing with BASIC programs on a 32K-ish machine, we don't
     // need to handle arbitrarily large files.
     const int max_size = 64 * 1024;
@@ -369,21 +384,13 @@ void load_basic(const char *filename) {
     }
 }
 
-// TODO: RENAME THIS, AND RENAME FOPEN_WRAPPER()?
-static FILE *fopen_output_wrapper(const char *filename, const char *mode) {
-    FILE *file = fopen_wrapper(filename, mode);
-    check(file != 0, "Error: Can't open output file \"%s\"", filename);
-    output_state_file = file;
-    return file;
-}
-
 static void fclose_output(FILE *file, const char *filename) {
     check(fclose(file) == 0, "Error: Error closing output file \"%s\"", filename);
-    output_state_file = 0;
+    output_file = 0;
 }
 
 void save_basic(const char *filename) {
-    FILE *file = fopen_output_wrapper(filename, "wb");
+    FILE *file = fopen_wrapper(filename, "wb");
     uint16_t top = mpu_read_u16(BASIC_TOP);
     size_t length = top - page;
     size_t bytes_written = fwrite(&mpu_memory[page], 1, length, file);
@@ -392,7 +399,7 @@ void save_basic(const char *filename) {
 }
 
 void save_ascii_basic(const char *filename) {
-    FILE *file = fopen_output_wrapper(filename, "w");
+    output_file = fopen_wrapper(filename, "w");
     assert(output_state == os_discard);
     char buffer[256];
     sprintf(buffer, "LISTO %d", config.listo);
@@ -400,7 +407,7 @@ void save_ascii_basic(const char *filename) {
     output_state = os_list_discard_command;
     execute_input_line("LIST");
     output_state = os_discard;
-    fclose_output(file, filename);
+    fclose_output(output_file, filename); output_file = 0;
 }
 
 static void execute_butil(void) {
@@ -410,30 +417,30 @@ static void execute_butil(void) {
 }
 
 void save_formatted_basic(const char *filename) {
-    FILE *file = fopen_output_wrapper(filename, "w");
+    output_file = fopen_wrapper(filename, "w");
     execute_butil();
     output_state = os_format_discard_command;
     execute_osrdch("F"); // format
     output_state = os_discard;
-    fclose_output(file, filename);
+    fclose_output(output_file, filename); output_file = 0;
 }
 
 void save_line_ref(const char *filename) {
-    FILE *file = fopen_output_wrapper(filename, "w");
+    output_file = fopen_wrapper(filename, "w");
     execute_butil();
     output_state = os_line_ref_discard_command;
     execute_osrdch("T"); // table line references
     output_state = os_discard;
-    fclose_output(file, filename);
+    fclose_output(output_file, filename); output_file = 0;
 }
 
 void save_variable_xref(const char *filename) {
-    FILE *file = fopen_output_wrapper(filename, "w");
+    output_file = fopen_wrapper(filename, "w");
     execute_butil();
     output_state = os_variable_xref_discard_command;
     execute_osrdch("V"); // variable xref
     output_state = os_discard;
-    fclose_output(file, filename);
+    fclose_output(output_file, filename); output_file = 0;
 }
 
 static const char *no(bool no) {

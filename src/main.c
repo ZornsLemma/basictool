@@ -13,6 +13,12 @@
 // - Errors are written to stderr, again so they don't get redirected when the
 //   user might only have intended to redirect the output BASIC program.
 
+// A collection of general TODOs:
+//
+// TODO: Support for HIBASIC might be nice (only for tokenising/detokenising;
+// ABE runs at &8000 so probably can't work with HIBASIC-sized programs), but
+// let's not worry about that yet.
+
 #include "main.h"
 #include <assert.h>
 #include <stdio.h>
