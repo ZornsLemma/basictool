@@ -454,22 +454,13 @@ void save_variable_xref(const char *filename) {
     fclose_output(output_file, filename);
 }
 
-// TODO: Don't forget to install and test a BRKV handler - wouldn't surprise me if ABE could throw an error if progam is malformed, and of course BASIC could (if only a "line too long" error)
-
 // TODO: Test with invalid input - we don't want to be hanging if we can avoid it
 
 // TODO: Formatting of error messages is very inconsistent, e.g. use of Error: prefix - this is better now, but well worth reviewing later
 
-// TODO: Should create a test suite, which should include input text files with different line terminators and unterminated last lines
+// TODO: Should create a test suite, which should include input text files with different line terminators and unterminated last lines - I should probably bundle the test files up in a .tar.gz so git can't mangle the line endings, although this is perhaps a bit error prone (I edit a test file and it is corrupted) - perhaps the test suite should "echo" the line-ending sensitive tests to create them on the fly, then I can use git for everything else
 
 // TODO: Should probably test under something like valgrind
-
-// TODO: verbose thoughts
-// - level 0 - no output unless something goes wrong, although if output is to stdout of course the BASIC program is shown
-// - level 1 - pack shows bytes saved, no more
-// - level 2 - pack shows all output
-// - so in general verbose is defined on a per-op basis, and has no effect on the tokenise/detokenise stages
-// verbose does not control whether we show all output from emulated machine for debugging, that's some separate --debug-foo option
 
 // TODO: I'm being very casual about mixing char/uint8_t/int. It *may* be wise to use char for input/output - that is relatively pure ASCII, although some care is needed as there might be non-ASCII chars mixed in. For cases where I'm dealing with tokenised BASIC or raw 6502 memory not containing (near) ASCII, unsigned char might be a better bet. But think about it.
 
