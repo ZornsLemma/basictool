@@ -85,4 +85,56 @@ FILE *fopen_wrapper(const char *pathname, const char *mode) {
         return file;
     }
 }
+
+char *load_binary(const char *filename, size_t *length) {
+    assert(length != 0);
+    FILE *file = fopen_wrapper(filename, "rb");
+    // Since we're dealing with BASIC programs on a 32K-ish machine, we don't
+    // need to handle arbitrarily large files.
+    const int max_size = 64 * 1024;
+    char *data = check_alloc(malloc(max_size));
+    *length = fread(data, 1, max_size, file);
+    check(!ferror(file), "Error: Error reading from input file \"%s\"", filename);
+    check(feof(file), "Error: Input file \"%s\" is too large", filename);
+    check(fclose(file) == 0, "Error: Error closing input file \"%s\"", filename);
+    // We allocate an extra byte so we can easily guarantee that the last line
+    // ends with a line terminator when reading non-tokenised input.
+    return check_alloc(realloc(data, (*length) + 1));
+}
+
+// TODO: Review this later, I think there are no missing corner cases (bearing in mind we deliberately put a CR at the end of the input to catch unterminated last lines) but a fresh look would be good
+char *get_line(char **data_ptr, size_t *length_ptr) {
+    assert(data_ptr != 0);
+    assert(length_ptr != 0);
+    char *data = *data_ptr;
+    size_t length = *length_ptr;
+
+    if (length == 0) {
+        return 0;
+    }
+
+    // Find the end of the line.
+    char *eol = data;
+    while ((*eol != 0x0d) && (*eol != 0x0a)) {
+        ++eol; --length;
+    }
+    assert(length > 0);
+    char terminator = *eol;
+    *eol = '\0'; --length;
+
+    // If there is a next character and it's the opposite terminator, skip it.
+    // This allows us to handle CR, LF, LFCR or CRLF-terminated lines.
+    char *next_line = eol;
+    if (length > 0) {
+        ++next_line;
+        const char opposite_terminator = (terminator == 0x0d) ? 0x0a: 0x0d;
+        if (*next_line == opposite_terminator) {
+            ++next_line; --length;
+        }
+    }
+    *data_ptr = next_line;
+    *length_ptr = length;
+    return data;
+}
+
 // vi: colorcolumn=80

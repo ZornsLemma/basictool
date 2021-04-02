@@ -42,6 +42,13 @@ char *ourstrdup(const char *s);
 // calls die() if any errors occur, so the return value can't be null.
 FILE *fopen_wrapper(const char *pathname, const char *mode);
 
+// Read a binary file into a malloc()-ed block of memory. The pointer to
+// the malloc()-ed block is returned and *length is set to the length.
+char *load_binary(const char *filename, size_t *length);
+
+// TODO: COMMENT
+char *get_line(char **data_ptr, size_t *length_ptr);
+
 // vi: colorcolumn=80
 
 #endif
