@@ -47,6 +47,9 @@ void warn(const char *s);
 // - exit(EXIT_FAILURE) will be called afterwards
 void die(const char *fmt, ...) PRINTFLIKE(1, 2) NORETURN;
 
+// Like die(), but appending a line advising the user to try --help.
+void die_help(const char *fmt, ...) PRINTFLIKE(1, 2) NORETURN;
+
 // If b is false, call die(s, ...).
 void check(bool b, const char *fmt, ...) PRINTFLIKE(2, 3);
 

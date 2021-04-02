@@ -28,18 +28,27 @@ void warn(const char *s) {
     fprintf(stderr, "Warning: %s\n", s);
 }
 
-NORETURN static void die_internal(const char *fmt, va_list ap) {
+static void die_internal(const char *fmt, va_list ap) {
     print_error_filename_prefix();
     vfprintf(stderr, fmt, ap);
     putc('\n', stderr);
-    exit(EXIT_FAILURE);
 }
 
 void die(const char *fmt, ...) {
     va_list ap;
     va_start(ap, fmt);
     die_internal(fmt, ap);
+    exit(EXIT_FAILURE);
 }
+
+void die_help(const char *fmt, ...) {
+    va_list ap;
+    va_start(ap, fmt);
+    die_internal(fmt, ap);
+    fprintf(stderr, "Try \"%s --help\" for more information.\n", program_name);
+    exit(EXIT_FAILURE);
+}
+
 
 // TODO: I should probably extend check to be printf-like and make all callers use this where helpful
 void check(bool b, const char *fmt, ...) {
@@ -47,6 +56,7 @@ void check(bool b, const char *fmt, ...) {
         va_list ap;
         va_start(ap, fmt);
         die_internal(fmt, ap);
+        exit(EXIT_FAILURE);
     }
 }
 

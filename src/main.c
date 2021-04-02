@@ -48,9 +48,8 @@
 extern const char *osrdch_queue; // TODO!
 void make_service_call(void); // TODO!
 
+const char *program_name = 0;
 const char *filenames[2] = {"-", "-"};
-
-static const char *program_name = 0;
 
 enum option_id {
     oi_help,
@@ -215,12 +214,6 @@ static struct cag_option options[] = {
       .description = "output variable cross references" },
 };
 
-// TODO: This should probably be printf-like, but check callers - they may not need it
-static void die_help(const char *message) {
-    die("%s\nTry \"%s --help\" for more information.", message, program_name);
-}
-
-
 // argv[0] will contain the program name, but if we're not being run from the
 // PATH it may contain a (potentially quite long) path prefix of some kind.
 // parse_program_name() makes a reasonably cross-platform stab at getting the
@@ -307,7 +300,9 @@ static void show_roms(void) {
 }
 
 static long parse_long_argument(const char *name, const char *value, int min, int max) {
-    check((value != 0) && (*value != '\0'), "Error: missing value"); // SFTODO: USE 'name' WITH A PRINTF-LIKE CHECK FUNCTION, OR RERWITE AS AN EXPLICIT IF AND USE DIE (OR MAYBE A PRINTF LIKE DIE_HELP);
+    if ((value == 0) || (*value == '\0')) {
+        die_help("Error: missing value for %s", name);
+    }
     char *endptr;
     long result = strtol(value, &endptr, 10);
     check(*endptr == '\0' && (result >= min) && (result <= max), "Error: invalid integer"); // SFTODO: USE 'name' AND 'value' IN THIS MESSAGE AND MIN AND MAX
