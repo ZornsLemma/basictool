@@ -120,9 +120,8 @@ static void check_is_in_pending_output(const char *s) {
     if (is_in_pending_output(s)) {
         return;
     }
-    // TODO: Perhaps suggest use of the debug output help option in this message? (On a new line after the existing message)
-    // TODO: Make this "Internal error"?
-    die("Error: Expected to see output containing '%s', got '%s'", s,
+    die("Internal error: Expected to see output containing '%s', got '%s'\n"
+        "Try using --show-all-output to see what's going on.", s,
         make_printable(pending_output));
 }
 
