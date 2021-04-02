@@ -4,6 +4,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include "cargs.h"
 #include "config.h"
 #include "emulation.h"
 #include "main.h"
@@ -125,6 +126,37 @@ static void check_is_in_pending_output(const char *s) {
         make_printable(pending_output));
 }
 
+// TODO COMMENT
+static void print_aligned(const char *s) {
+    static const int logical_column_x[] = {0, 50};
+    bool spaces_pending = false;
+    int logical_column = 0;
+    for (int x = 0; *s != '\0'; ++s) {
+        char c = *s;
+        if (c == ' ') {
+            spaces_pending = true;
+        } else if (!spaces_pending) {
+            putc(c, stderr); ++x;
+        } else {
+            assert(spaces_pending);
+            int align_to_x =
+                (logical_column < CAG_ARRAY_SIZE(logical_column_x)) ?
+                logical_column_x[logical_column] : 0;
+            if ((x >= align_to_x) && (align_to_x != 0)) {
+                putc(' ', stderr); ++x;
+            } else {
+                while (x < align_to_x) {
+                    putc(' ', stderr); ++x;
+                }
+            }
+            spaces_pending = false;
+            ++logical_column;
+            putc(c, stderr); ++x;
+        }
+    }
+    putc('\n', stderr);
+}
+
 // This is called by driver_oswrch() when a complete line of output has been
 // printed by the emulated machine. It implements a very basic state machine to
 // discard noise and write valuable output to output_file.
@@ -178,20 +210,21 @@ static void complete_output_line_handler() {
             output_state = os_pack;
             break;
 
-        case os_pack:
+        case os_pack: {
+            bool is_bytes_saved = is_in_pending_output("Bytes saved");
             if (config.verbose >= 1) {
-                bool is_bytes_saved = is_in_pending_output("Bytes saved");
-                if (is_bytes_saved || (config.verbose >= 2)) {
-                    // TODO: We could maybe force alignment of the columns
-                    // in the verbose>=2 output
-                    // TODO: Should this go to stderr or stdout?
-                    fprintf(stderr, "%s\n", make_printable(pending_output));
-                }
                 if (is_bytes_saved) {
-                    output_state = os_discard;
+                    fprintf(stderr, "%s\n", make_printable(pending_output));
+                } else if (config.verbose >= 2) {
+                    make_printable(pending_output);
+                    print_aligned(pending_output);
                 }
             }
+            if (is_bytes_saved) {
+                output_state = os_discard;
+            }
             break;
+        }
 
         default:
             assert(false);

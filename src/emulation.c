@@ -312,7 +312,7 @@ static int callback_irq(M6502 *mpu, uint16_t address, uint8_t data) {
     print_error_filename_prefix();
     fprintf(stderr, "Error: ");
     for (uint8_t c; (c = mpu_memory[error_string_ptr]) != '\0'; ++error_string_ptr) {
-        fputc(c, stderr);
+        putc(c, stderr);
     }
     uint8_t error_num = mpu_memory[error_num_address];
     // TODO: We will need an ability to include a pseudo-line number if we're tokenising a BASIC program - but maybe not just here, maybe on other errors too (e.g. in die()?)

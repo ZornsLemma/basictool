@@ -26,7 +26,7 @@ void warn(const char *s) {
 NORETURN static void die_internal(const char *fmt, va_list ap) {
     print_error_filename_prefix();
     vfprintf(stderr, fmt, ap);
-    fputc('\n', stderr);
+    putc('\n', stderr);
     exit(EXIT_FAILURE);
 }
 
