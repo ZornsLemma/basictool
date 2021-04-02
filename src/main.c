@@ -45,9 +45,6 @@
        } \
     } while (0)
 
-extern const char *osrdch_queue; // TODO!
-void make_service_call(void); // TODO!
-
 const char *program_name = 0;
 const char *filenames[2] = {"-", "-"};
 
