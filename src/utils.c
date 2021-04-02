@@ -6,9 +6,6 @@
 #include <string.h>
 #include "main.h"
 
-// TODO: Ideally we would include this in *any* error message if it's not -1,
-// but it may be OK if it's a lot cleaner/easier to just do it in carefully
-// selected places.
 int error_line_number = -1;
 
 void print_error_filename_prefix(void) {
@@ -31,7 +28,6 @@ void warn(const char *s) {
     fprintf(stderr, "Warning: %s\n", s);
 }
 
-// TODO: Entirely experimental function, not yet used
 NORETURN static void die_internal(const char *fmt, va_list ap) {
     print_error_filename_prefix();
     vfprintf(stderr, fmt, ap);

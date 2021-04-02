@@ -290,7 +290,7 @@ static void type_basic_program(char *data, size_t length) {
             memcpy(buffer, line_number_start, line_number_length);
             buffer[line_number_length] = '\0';
             int user_line_number = atoi(buffer);
-            check(user_line_number >= basic_line_number, "Line number too low");
+            check(user_line_number >= basic_line_number, "Line number %d is less than previous line number %d", user_line_number, basic_line_number - 1);
             basic_line_number = user_line_number;
             line = line_number_start + line_number_length;
         }
