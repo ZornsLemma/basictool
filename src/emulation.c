@@ -417,10 +417,10 @@ void emulation_init(void) {
 }
 
 void execute_osrdch(const char *s) {
+    // We could in principle handle a multiple character string by returning
+    // the values automatically over multiple OSRDCH calls, but we don't need
+    // this at the moment.
     assert(s != 0);
-    // TODO: We could in principle handle a multiple character string by
-    // returning the values automatically over multiple OSRDCH calls, but we
-    // don't need this yet.
     check(strlen(s) == 1,
           "Internal error: Attempt to return multiple characters from OSRDCH");
     check(mpu_state == ms_osrdch_pending,
