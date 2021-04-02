@@ -17,6 +17,7 @@
 extern int error_line_number;
 
 // TODO: COMMENT IF KEEP
+// TODO: RENAME TO MAKE CLEAR IT INCLUDES LINE NUMBER?
 void print_error_filename_prefix(void);
 
 // TODO: COMMENT

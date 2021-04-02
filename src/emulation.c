@@ -30,12 +30,11 @@ static enum {
 } mpu_state = ms_running;
 
 // We copy transient bits of machine code to transient_code for execution; such
-// code must not make a subroutine call to anything which could in turn overwrite
-// transient_code, as the code following the JSR would then be overwritten when
-// it returned.
+// code must not JSR to anything which could in turn overwrite transient_code,
+// as the code following the JSR might have been overwritten when it returned.
 static const int transient_code = 0x900;
-// The code to invoke the service handler can't live at transient_code as it
-// needs to JSR into the arbitrary ROM code, so it has its own space.
+// The code to invoke the ROM service handler can't live at transient_code as
+// it needs to JSR into arbitrary ROM code, so it has its own space.
 static const int service_code = 0xb00;
 
 enum {
@@ -315,7 +314,6 @@ static int callback_irq(M6502 *mpu, uint16_t address, uint8_t data) {
         putc(c, stderr);
     }
     uint8_t error_num = mpu_memory[error_num_address];
-    // TODO: We will need an ability to include a pseudo-line number if we're tokenising a BASIC program - but maybe not just here, maybe on other errors too (e.g. in die()?)
     fprintf(stderr, " (%d)\n", error_num);
     exit(EXIT_FAILURE);
 }
