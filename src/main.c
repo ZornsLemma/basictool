@@ -1,3 +1,18 @@
+// A general note on the use of stdout and stderr in this code:
+//
+// - --help and --roms write to stdout, since producing that output is their
+//   main function. (No one is likely to care either way about this.)
+//
+// - If no output filename is provided, the final version of the BASIC program
+//   is written to stdout. This seems reasonable and is useful if this tool
+//   is being used in a pipeline.
+//
+// - Given the previous point, output from --verbose and --show-all-output is
+//   written to stderr so it doesn't get mixed in with the BASIC program.
+//
+// - Errors are written to stderr, again so they don't get redirected when the
+//   user might only have intended to redirect the output BASIC program.
+
 #include "main.h"
 #include <assert.h>
 #include <stdio.h>
@@ -33,6 +48,7 @@ enum option_id {
     oi_help,
     oi_roms,
     oi_verbose,
+    oi_show_all_output,
     oi_input_tokenised,
     oi_keep_spaces,
     oi_keep_spaces_start,
@@ -55,6 +71,7 @@ enum option_id {
     oi_ascii
 };
 
+// TODO: should probably be more consisting about omitting words like "the" in the help descriptions
 static struct cag_option options[] = {
     { .identifier = oi_help,
       .access_letters = "h",
@@ -70,6 +87,11 @@ static struct cag_option options[] = {
       .access_letters = "v",
       .access_name = "verbose",
       .description = "increase verbosity (can be repeated)" },
+
+    { .identifier = oi_show_all_output,
+      .access_letters = 0,
+      .access_name = "show-all-output",
+      .description = "show all output from emulated machine" },
 
     { .identifier = oi_input_tokenised,
       .access_letters = 0,
@@ -320,6 +342,10 @@ int main(int argc, char *argv[]) {
 
             case oi_verbose:
                 ++config.verbose;
+                break;
+
+            case oi_show_all_output:
+                config.show_all_output = true;
                 break;
 
             case oi_input_tokenised:

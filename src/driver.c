@@ -37,6 +37,14 @@ static int max(int lhs, int rhs) {
     return (lhs > rhs) ? lhs : rhs;
 }
 
+// A simple implementation of strdup() so we don't assume it's available; it's
+// not part of C99.
+static char *ourstrdup(const char *s) {
+    char *t = malloc(strlen(s) + 1);
+    strcpy(t, s);
+    return t;
+}
+
 // TODO: For stdout to be useful, I need to be sure all verbose output etc is written to stderr - maybe not, it depends how you view the verbose output. A user might want to do "basictool input.txt --pack -vv output.tok > pack-output.txt"; if we output to stderr this redirection becomes fiddlier.
 static FILE *fopen_wrapper(const char *pathname, const char *mode) {
     if (pathname == 0) {
@@ -91,11 +99,6 @@ static void check_pending_output(const char *s) {
 
 
 static void complete_output_line_handler(char *line) {
-#if 0 // TODO
-    if (true) { // SFTODO CONFIG FOR "SHOW ALL OUTPUT"
-        fprintf(stderr, "SFTODOHQQ:%d:%s\n", output_state, line);
-    }
-#endif
     switch (output_state) {
         case os_discard:
             break;
@@ -127,7 +130,7 @@ static void complete_output_line_handler(char *line) {
         case os_output_non_blank:
             assert(output_state_file != 0);
             if (*line != '\0') {
-                check(false || fprintf(output_state_file, "%s\n", line) >= 0,
+                check(fprintf(output_state_file, "%s\n", line) >= 0,
                       "Error: Error writing to output file \"%s\"",
                       output_state_filename);
             }
@@ -187,6 +190,14 @@ void pending_output_insert(uint8_t data) {
         return;
     }
     if (data == 10) {
+        if (config.show_all_output) {
+            // make_printable() changes its argument; it probably wouldn't hurt
+            // to do this here, but since this is for debugging we don't want
+            // to perturb things, so work with a copy.
+            char *s = make_printable(ourstrdup(pending_output));
+            fprintf(stderr, "bbc:%s\n", s);
+            free(s);
+        }
         complete_output_line_handler(pending_output);
         pending_output_length = pending_output_cursor_x = 0;
         pending_output[0] = '\0';

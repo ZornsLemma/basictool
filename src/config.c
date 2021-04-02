@@ -6,6 +6,7 @@
 // if we're outputting to stdout" because it's potentially confusing.
 struct s_config config = {
     0,      // verbose
+    false,  // show all output
     false,  // filter
     false,  // assume input is tokenised
     true,   // strip leading spaces
