@@ -20,6 +20,11 @@
 // let's not worry about that yet.
 //
 // TODO: Check I've implemented --verbose everywhere it's useful
+//
+// TODO: It might be nice to expose ABE's "unpack" option, but my experiments
+// with it (on b-em, not this hacky emulator) suggest it's quite fiddly and may
+// ask you to renumber lines several times. I will leave this for now.
+
 
 #include "main.h"
 #include <assert.h>
@@ -155,11 +160,6 @@ static struct cag_option options[] = {
       .access_name = "pack-concatenate-n",
       .description = "answer N to \"Concatenate?\" question when packing" },
 
-    // TODO: It might be nice to expose ABE's "unpack" option, but my
-    // experiments with it (on b-em, not this hacky emulator) suggest it's
-    // quite fiddly and may ask you to renumber lines several times. I will
-    // leave this for now.
-
     { .identifier = oi_renumber,
       .access_letters = "r",
       .access_name = "renumber",
@@ -266,18 +266,20 @@ static void show_roms(void) {
     };
 
     printf(
-            // TODO FORMATTING OF CODE
 "This program uses the BBC BASIC and Advanced BASIC Editor ROMs to operate on\n"
 "BBC BASIC programs. The ROM headers contain the following details:\n"
-);
+)   ;
 
     for (int i = 0; i < CAG_ARRAY_SIZE(roms); ++i) {
         printf("    ");
         int title_and_version_width = 40;
-        int version_offset = print_to_nul_and_count(roms[i], 9, &title_and_version_width); // title
+        const int title_offset = 9;
+        int version_offset = print_to_nul_and_count(
+            roms[i], title_offset, &title_and_version_width);
         int copyright_offset = roms[i][7];
         if (version_offset < copyright_offset) {
-            print_to_nul_and_count(roms[i], version_offset + 1, &title_and_version_width);
+            print_to_nul_and_count(roms[i], version_offset + 1,
+                                   &title_and_version_width);
         }
         if (title_and_version_width > 0) {
             printf("%*s", title_and_version_width, "");
@@ -291,8 +293,7 @@ static void show_roms(void) {
     printf(
 "\nThe BASIC editor and utilities were originally published separately by\n"
 "Altra. The Advanced BASIC Editor ROMs used here are (C) Baildon Electronics.\n"
-);
-            // TODO FORMATTING OF CODE
+    );
 }
 
 static long parse_long_argument(const char *name, const char *value, int min, int max) {
