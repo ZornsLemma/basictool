@@ -40,7 +40,7 @@
 extern const char *osrdch_queue; // TODO!
 void make_service_call(void); // TODO!
 
-const char *filenames[2] = {0, 0};
+const char *filenames[2] = {"-", "-"};
 
 static const char *program_name = 0;
 
@@ -454,11 +454,7 @@ int main(int argc, char *argv[]) {
     int i;
     for (i = context.index; (i < argc) && (filename_count < max_filenames);
          ++i, ++filename_count) {
-        const char *filename = context.argv[i];
-        if (strcmp(filename, "-") == 0) {
-            filename = 0;
-        }
-        filenames[filename_count] = filename;
+        filenames[filename_count] = context.argv[i];
         //fprintf(stderr, "SFTODOFILE %i %s\n", filename_count, filename);
     }
     if (i != argc) {

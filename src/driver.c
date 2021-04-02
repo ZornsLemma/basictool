@@ -22,7 +22,6 @@ enum {
     os_pack
 } output_state = os_discard;
 static FILE *output_state_file = 0; // TODO: RENAME? REMOVE "STATE"?
-static const char *output_state_filename = 0;
 
 static char *pending_output = 0;
 static size_t pending_output_length = 0;
@@ -47,7 +46,8 @@ static char *ourstrdup(const char *s) {
 
 // TODO: For stdout to be useful, I need to be sure all verbose output etc is written to stderr - maybe not, it depends how you view the verbose output. A user might want to do "basictool input.txt --pack -vv output.tok > pack-output.txt"; if we output to stderr this redirection becomes fiddlier.
 static FILE *fopen_wrapper(const char *pathname, const char *mode) {
-    if (pathname == 0) {
+    assert(pathname != 0);
+    if (strcmp(pathname, "-") == 0) {
         assert((mode != 0) && (*mode != '\0'));
         // We ignore the presence of a "b" in mode; I don't think there's a
         // portable way to re-open stdin/stdout in binary mode. TODO: Should we
@@ -132,7 +132,7 @@ static void complete_output_line_handler(char *line) {
             if (*line != '\0') {
                 check(fprintf(output_state_file, "%s\n", line) >= 0,
                       "Error: Error writing to output file \"%s\"",
-                      output_state_filename);
+                      filenames[1]);
             }
             break;
 
@@ -375,15 +375,12 @@ static FILE *fopen_output_wrapper(const char *filename, const char *mode) {
     FILE *file = fopen_wrapper(filename, mode);
     check(file != 0, "Error: Can't open output file \"%s\"", filename);
     output_state_file = file;
-    // SFTODO: This will go wrong if we get an error writing to stdout
-    output_state_filename = filename;
     return file;
 }
 
 static void fclose_output(FILE *file, const char *filename) {
     check(fclose(file) == 0, "Error: Error closing output file \"%s\"", filename);
     output_state_file = 0;
-    output_state_filename = 0;
 }
 
 void save_basic(const char *filename) {
