@@ -1,6 +1,3 @@
-// TODO: This file is a temporary collection of stuff as I refactor, there shouldn't ultimately be a file called other.c!
-// TODO: Make sure all local fns are static
-
 #include <assert.h>
 #include <stdarg.h>
 #include <stdbool.h>
@@ -24,13 +21,13 @@ enum {
     os_pack_discard_blank,
     os_pack
 } output_state = os_discard;
-FILE *output_state_file = 0; // TODO: RENAME? REMOVE "STATE"?
-const char *output_state_filename = 0;
+static FILE *output_state_file = 0; // TODO: RENAME? REMOVE "STATE"?
+static const char *output_state_filename = 0;
 
-char *pending_output = 0;
-size_t pending_output_length = 0;
-size_t pending_output_cursor_x = 0;
-size_t pending_output_buffer_size = 0;
+static char *pending_output = 0;
+static size_t pending_output_length = 0;
+static size_t pending_output_cursor_x = 0;
+static size_t pending_output_buffer_size = 0;
 
 // TODO: Support for HIBASIC might be nice (only for tokenising/detokenising;
 // ABE runs at &8000 so probably can't work with HIBASIC-sized programs), but
@@ -41,7 +38,7 @@ static int max(int lhs, int rhs) {
 }
 
 // TODO: For stdout to be useful, I need to be sure all verbose output etc is written to stderr - maybe not, it depends how you view the verbose output. A user might want to do "basictool input.txt --pack -vv output.tok > pack-output.txt"; if we output to stderr this redirection becomes fiddlier.
-FILE *fopen_wrapper(const char *pathname, const char *mode) {
+static FILE *fopen_wrapper(const char *pathname, const char *mode) {
     if (pathname == 0) {
         assert((mode != 0) && (*mode != '\0'));
         // We ignore the presence of a "b" in mode; I don't think there's a
@@ -63,7 +60,7 @@ FILE *fopen_wrapper(const char *pathname, const char *mode) {
 // TODO: Output should ultimately be gated via a -v option, perhaps with some
 // sort of (optional but default) filtering to tidy it up
 
-bool is_in_pending_output(const char *s) {
+static bool is_in_pending_output(const char *s) {
     return strstr(pending_output, s) != 0;
 }
 
@@ -83,7 +80,7 @@ static char *make_printable(char *s) {
     return s;
 }
 
-void check_pending_output(const char *s) {
+static void check_pending_output(const char *s) {
     if (is_in_pending_output(s)) {
         return;
     }

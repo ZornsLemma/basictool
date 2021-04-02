@@ -5,6 +5,7 @@
 #include <string.h>
 #include "cargs.h"
 #include "config.h"
+#include "driver.h"
 #include "emulation.h"
 #include "roms.h"
 #include "utils.h"
@@ -22,15 +23,7 @@
     } while (0)
 
 extern const char *osrdch_queue; // TODO!
-void load_basic(const char *filename); // TODO!
 void make_service_call(void); // TODO!
-void pack(void); // TODO!
-void renumber(void); // TODO!
-void save_basic(const char *filename); // TODO!
-void save_ascii_basic(const char *filename); // TODO!
-void save_formatted_basic(const char *filename); // TODO!
-void save_line_ref(const char *filename); // TODO!
-void save_variable_xref(const char *filename); // TODO!
 
 const char *filenames[2] = {0, 0};
 
