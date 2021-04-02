@@ -49,8 +49,6 @@ void die_help(const char *fmt, ...) {
     exit(EXIT_FAILURE);
 }
 
-
-// TODO: I should probably extend check to be printf-like and make all callers use this where helpful
 void check(bool b, const char *fmt, ...) {
     if (!b) {
         va_list ap;
