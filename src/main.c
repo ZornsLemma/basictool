@@ -316,11 +316,6 @@ int main(int argc, char *argv[]) {
     while (cag_option_fetch(&context)) {
         char identifier = cag_option_get(&context);
         switch (identifier) {
-            default:
-                // This occurs for unsupported options entered by the user,
-                // not just options we've told cargs about but forgotten to
-                // implement, so fall through to --help.
-                // TODO: OR USE die_help() AND PRINT THE UNSUPPORTED OPTION?
             case oi_help:
                 printf(
 "%s " VERSION "\n"
@@ -445,6 +440,11 @@ int main(int argc, char *argv[]) {
 
             case oi_ascii:
                 config.output_ascii = true;
+                break;
+
+            default:
+                die_help("Error: Unrecognised option \"%s\"",
+                         argv[cag_option_get_index(&context) - 1]);
                 break;
         }
     }
