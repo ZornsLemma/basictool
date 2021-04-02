@@ -8,7 +8,7 @@
 
 int error_line_number = -1;
 
-void print_error_filename_prefix(void) {
+void print_error_prefix(void) {
     if (error_line_number >= 1) {
         fprintf(stderr, "%s:%d: ", filenames[0] ? filenames[0] : "-",
                 error_line_number);
@@ -29,7 +29,7 @@ void warn(const char *s) {
 }
 
 static void die_internal(const char *fmt, va_list ap) {
-    print_error_filename_prefix();
+    print_error_prefix();
     vfprintf(stderr, fmt, ap);
     putc('\n', stderr);
 }

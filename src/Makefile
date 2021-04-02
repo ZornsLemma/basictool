@@ -6,7 +6,8 @@
 # TODO: Enable optimisation?
 # TODO: Test with clang
 CC	= cc # TODO!?
-CFLAGS  = -g -Wall --std=c99
+# TODO: Perhaps remove/comment out -Werror in release, as other compilers may generate warnings which we perhaps don't want to break the build
+CFLAGS  = -g -Wall -Werror --std=c99
 LDFLAGS = -g
 EDITORA = ../roms/EDITORA100.rom
 EDITORB = ../roms/EDITORB100.rom
@@ -50,12 +51,13 @@ depend:
 bintoinc.o: bintoinc.c
 cargs.o: cargs.c cargs.h
 config.o: config.c config.h
-driver.o: driver.c config.h emulation.h lib6502.h utils.h
+driver.o: driver.c cargs.h config.h emulation.h lib6502.h main.h utils.h
 emulation.o: emulation.c emulation.h lib6502.h driver.h roms.h utils.h
 lib6502.o: lib6502.c lib6502.h
-main.o: main.c cargs.h config.h emulation.h lib6502.h roms.h utils.h
+main.o: main.c main.h cargs.h config.h driver.h emulation.h lib6502.h \
+ roms.h utils.h
 roms.o: roms.c roms.h zz-editor-a.c zz-editor-b.c zz-basic.c
-utils.o: utils.c utils.h
+utils.o: utils.c utils.h main.h
 zz-basic.o: zz-basic.c
 zz-editor-a.o: zz-editor-a.c
 zz-editor-b.o: zz-editor-b.c

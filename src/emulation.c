@@ -312,7 +312,7 @@ static int callback_irq(M6502 *mpu, uint16_t address, uint8_t data) {
     uint16_t error_string_ptr = mpu_read_u16(0x102 + mpu_registers.s);
     mpu_registers.s += 2; // not really necessary, as we're about to exit()
     uint16_t error_num_address = error_string_ptr - 1;
-    print_error_filename_prefix();
+    print_error_prefix();
     fprintf(stderr, "Error: ");
     for (uint8_t c; (c = mpu_memory[error_string_ptr]) != '\0'; ++error_string_ptr) {
         putc(c, stderr);

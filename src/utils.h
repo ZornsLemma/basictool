@@ -14,8 +14,7 @@
 #endif
 
 // Constants for carriage return (CR) and line feed (LF). These are short
-// names but we use them a lot so let's just pollute the global namespace
-// with them.
+// names for globals but we use them a lot.
 //
 // We could probably just use '\r' and '\n' because we're already
 // assuming the C environment uses ASCII, but let's be paranoid - I could
@@ -27,21 +26,22 @@
 static const char cr = 13;
 static const char lf = 10;
 
-// TODO: COMMENT IF KEEP
+// Line number in input file to display on any error messages; if this is -1
+// the error is assumed to be independent of any particular line in the file.
 extern int error_line_number;
 
-// TODO: COMMENT IF KEEP
-// TODO: RENAME TO MAKE CLEAR IT INCLUDES LINE NUMBER?
-void print_error_filename_prefix(void);
+// Write a suitable error message prefix (which may be empty) to stderr; in
+// practice this will write nothing if error_line_number is -1, otherwise it
+// will write a gcc-style filename:lineno: prefix.
+void print_error_prefix(void);
 
-// TODO: COMMENT
+// printf-like function which adds an "info" prefix and writes to stderr.
 void info(const char *fmt, ...) PRINTFLIKE(1, 2);
 
-// TODO: COMMENT
+// Write a "warning" prefix and 's' to stderr.
 // TODO: PRINTF-ISE IF NEEDED
 void warn(const char *s);
 
-// TODO: Entirely experimental function, not yet used
 // Like fprintf(stderr, fmt, ...) except:
 // - a newline will automatically be appended
 // - exit(EXIT_FAILURE) will be called afterwards
@@ -50,10 +50,10 @@ void die(const char *fmt, ...) PRINTFLIKE(1, 2) NORETURN;
 // Like die(), but appending a line advising the user to try --help.
 void die_help(const char *fmt, ...) PRINTFLIKE(1, 2) NORETURN;
 
-// If b is false, call die(s, ...).
+// If b is false, call die(fmt, ...).
 void check(bool b, const char *fmt, ...) PRINTFLIKE(2, 3);
 
-// TODO: COMMENT
+// Return p if it's not null, otherwise die() with an "out of memory" error.
 void *check_alloc(void *p);
 
 // Return the larger of lhs and rhs.
@@ -71,7 +71,10 @@ FILE *fopen_wrapper(const char *pathname, const char *mode);
 // the malloc()-ed block is returned and *length is set to the length.
 char *load_binary(const char *filename, size_t *length);
 
-// TODO: COMMENT
+// Get the next line of text from a binary data block, which must have been
+// loaded with load_binary(). CR, LF, LFCR and CRLF line termination is
+// automatically detected. The arguments are pointers so they can be updated
+// as this is called. Return a pointer to the line or null at "EOF".
 char *get_line(char **data_ptr, size_t *length_ptr);
 
 // vi: colorcolumn=80
