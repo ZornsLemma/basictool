@@ -58,16 +58,17 @@ static char *make_printable(char *s) {
 // a copy of the current line of output as a C string in pending_output.
 // Whenever a line feed is written, complete_output_line_handler() is called
 // and pending_output is set to an empty string ready for the next line.
-// TODO: Review this code fresh to make sure it doesn't have memory leaks or write past bounds etc
-// TODO: Call the argument 'c'?
-void driver_oswrch(uint8_t data) {
-    static size_t pending_output_length = 0;
-    static size_t pending_output_cursor_x = 0;
-    static size_t pending_output_buffer_size = 0;
+void driver_oswrch(uint8_t c) {
+    // These three static variables track state related to pending_offset;
+    // since they aren't in the global namespace, we can use shorter names.
+    static size_t po_length = 0;
+    static size_t po_cursor_x = 0;
+    static size_t po_buffer_size = 0;
 
     // We just discard NULs in the output; they aren't important for anything
-    // we are emulating here.
-    if (data == '\0') {
+    // we are emulating here and they're not compatible with our strategy of
+    // pending_output being a C-style string.
+    if (c == '\0') {
         return;
     }
 
@@ -79,39 +80,39 @@ void driver_oswrch(uint8_t data) {
     // would probably work, but it feels a bit brittle, so instead we model CR
     // moving the cursor non-destructively back to the start of the current
     // line.
-    if (data == 13) {
-        pending_output_cursor_x = 0;
+    if (c == cr) {
+        po_cursor_x = 0;
         return;
     }
-    if (data == 10) {
+    if (c == lf) {
         if (config.show_all_output) {
             // make_printable() changes its argument; it probably wouldn't hurt
             // to do this here, but since this is for debugging we don't want
-            // to perturb things, so work with a copy.
+            // to perturb things so work with a copy.
             char *s = make_printable(ourstrdup(pending_output));
             fprintf(stderr, "bbc:%s\n", s);
             free(s);
         }
         complete_output_line_handler();
-        pending_output_length = pending_output_cursor_x = 0;
+        po_length = po_cursor_x = 0;
         pending_output[0] = '\0';
         return;
     }
 
-    if ((pending_output_cursor_x + 2) > pending_output_buffer_size) {
-        if (pending_output_buffer_size == 0) {
-            pending_output_buffer_size = 4; // TODO: make 64 or 128 or something
+    if ((po_cursor_x + 2) > po_buffer_size) {
+        if (po_buffer_size == 0) {
+            po_buffer_size = 4; // TODO: make 64 or 128 or something
         } else {
-            pending_output_buffer_size *= 2;
+            po_buffer_size *= 2;
         }
-        pending_output = check_alloc(realloc(pending_output, pending_output_buffer_size));
+        pending_output = check_alloc(realloc(pending_output, po_buffer_size));
     }
 
-    pending_output[pending_output_cursor_x] = data;
-    pending_output[max(pending_output_cursor_x, pending_output_length) + 1] = '\0';
-    pending_output_cursor_x += 1;
-    pending_output_length = max(pending_output_cursor_x, pending_output_length);
-    assert(strlen(pending_output) == pending_output_length);
+    pending_output[po_cursor_x] = c;
+    pending_output[max(po_cursor_x, po_length) + 1] ='\0';
+    po_cursor_x += 1;
+    po_length = max(po_cursor_x, po_length);
+    assert(strlen(pending_output) == po_length);
 }
 
 static bool is_in_pending_output(const char *s) {

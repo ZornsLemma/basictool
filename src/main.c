@@ -189,7 +189,6 @@ static struct cag_option options[] = {
       .value_name = "N",
       .description = "use LISTO N to indent ASCII output\n\nOutput type options (pick one only):" },
 
-    // TODO: NEED TO GENERATE ERROR IF USER GIVES INCOMPATIBLE OPTIONS, E.G. LISTO WITH TOKENISE, OR FORMAT WITH TOKENISE
     // TODO: REORDER ENUM LIST AND MAIN SWITCH() TO MATCH ORDER
     { .identifier = oi_ascii,
       .access_letters = "a",
@@ -473,7 +472,6 @@ int main(int argc, char *argv[]) {
         die_help("Error: Please give at least one filename; use input "
                  "filename \"-\" for standard input.");
     }
-    // TODO: If the output is binary we should probably also check an option (--filter again?) and refuse to proceed if so. But *maybe* output being stdout will be used to choose a text output option.
 
     int output_options = 0;
     COUNT_BOOL(output_options, config.format);
