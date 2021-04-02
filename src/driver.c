@@ -6,6 +6,7 @@
 #include <string.h>
 #include "config.h"
 #include "emulation.h"
+#include "main.h"
 #include "utils.h"
 
 #define BASIC_TOP (0x12)
@@ -31,50 +32,6 @@ enum {
 // FILE pointer used for "valuable" output we've picked out from the emulated
 // machine's output using the state machine.
 static FILE *output_file = 0;
-
-static int max(int lhs, int rhs) {
-    return (lhs > rhs) ? lhs : rhs;
-}
-
-// A simple implementation of strdup() so we don't assume it's available; it's
-// not part of C99.
-static char *ourstrdup(const char *s) {
-    char *t = malloc(strlen(s) + 1);
-    strcpy(t, s);
-    return t;
-}
-
-// A wrapper for fopen() which automatically converts "-" to stdin/stdout and
-// calls die() if any errors occur, so the return value can't be null.
-static FILE *fopen_wrapper(const char *pathname, const char *mode) {
-    assert(pathname != 0);
-    assert(mode != 0);
-
-    bool read;
-    switch (mode[0]) {
-        case 'r':
-            read = true;
-            break;
-        case 'w':
-            read = false;
-            break;
-        default:
-            die("Internal error: Invalid mode \"%s\" passed to fopen_wrapper()", mode);
-            break;
-    }
-
-    if (strcmp(pathname, "-") == 0) {
-        // We ignore the presence of a "b" in mode; I don't think there's a
-        // portable way to re-open stdin/stdout in binary mode. TODO: Should we
-        // generate an error if there's a "b"? But this is probably fine on
-        // Unix-like systems.
-        return read ? stdin : stdout;
-    } else {
-        FILE *file = fopen(pathname, mode);
-        check(file != 0, "Error: Can't open %s file \"%s\"", read ? "input" : "output", pathname);
-        return file;
-    }
-}
 
 // TODO: Output should ultimately be gated via a -v option, perhaps with some
 // sort of (optional but default) filtering to tidy it up
