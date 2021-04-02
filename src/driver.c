@@ -173,7 +173,7 @@ static void complete_output_line_handler() {
 
         case os_pack_discard_blank:
             check(*pending_output == '\0',
-                  "Error: Expected to see a blank line of output, got \"%s\"",
+                  "Internal error: Expected to see a blank line of output, got \"%s\"",
                   make_printable(pending_output));
             output_state = os_pack;
             break;
