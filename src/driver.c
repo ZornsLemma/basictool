@@ -332,10 +332,10 @@ void load_basic(const char *filename) {
         // http://beebwiki.mdfs.net/Program_format says a Wilson/Acorn format
         // tokenised BASIC program will end with <cr><ff>.
         tokenised = ((length >= 2) && (data[length - 2] == '\x0d') && (data[length - 1] == '\xff'));
-    }
-    if (config.verbose >= 1) {
-        info("Input auto-detected as %s BASIC",
-             tokenised ? "tokenised" : "ASCII text (non-tokenised)");
+        if (config.verbose >= 1) {
+            info("Input auto-detected as %s BASIC",
+                 tokenised ? "tokenised" : "ASCII text (non-tokenised)");
+        }
     }
 
     if (tokenised) {
