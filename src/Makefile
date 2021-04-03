@@ -29,7 +29,6 @@ bintoinc: $(BINTOINCOBJS)
 	$(CC) $(LDFLAGS) -o $@ $(BINTOINCOBJS)
 
 clean:
-	# TODO: Make sure this includes everything
 	rm -f ../basictool bintoinc depend.txt *.o zz-*.c
 
 depend: zz-editor-a.c zz-editor-b.c zz-basic.c
