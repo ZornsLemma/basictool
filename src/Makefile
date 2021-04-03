@@ -3,11 +3,7 @@
 
 .POSIX:
 .SUFFIXES:
-# TODO: Enable optimisation?
-# TODO: Test with clang
-#CC	= cc # TODO!?
-# TODO: Perhaps remove/comment out -Werror in release, as other compilers may generate warnings which we perhaps don't want to break the build
-CFLAGS  = -g -Wall -Werror --std=c99
+CFLAGS  = -g -O2 -Wall -Werror --std=c99
 LDFLAGS = -g
 EDITORA = ../roms/EDITORA100.rom
 EDITORB = ../roms/EDITORB100.rom
@@ -36,7 +32,7 @@ clean:
 	# TODO: Make sure this includes everything
 	rm -f ../basictool bintoinc depend.txt *.o zz-*.c
 
-depend:
+depend: zz-editor-a.c zz-editor-b.c zz-basic.c
 	# This is just a convenience for generating the dependencies, which
 	# then need to be manually copied into this Makefile. I'm trying to
 	# keep things simple and portable, and this isn't a huge project.
