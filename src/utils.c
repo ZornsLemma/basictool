@@ -24,8 +24,13 @@ void info(const char *fmt, ...) {
     putc('\n', stderr);
 }
 
-void warn(const char *s) {
-    fprintf(stderr, "Warning: %s\n", s);
+void warn(const char *fmt, ...) {
+    fprintf(stderr, "Warning: ");
+    va_list ap;
+    va_start(ap, fmt);
+    vfprintf(stderr, fmt, ap);
+    va_end(ap);
+    putc('\n', stderr);
 }
 
 static void die_internal(const char *fmt, va_list ap) {

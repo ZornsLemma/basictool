@@ -39,8 +39,7 @@ void print_error_prefix(void);
 void info(const char *fmt, ...) PRINTFLIKE(1, 2);
 
 // Write a "warning" prefix and 's' to stderr.
-// TODO: PRINTF-ISE IF NEEDED
-void warn(const char *s);
+void warn(const char *fmt, ...) PRINTFLIKE(1, 2);
 
 // Like fprintf(stderr, fmt, ...) except:
 // - a newline will automatically be appended
