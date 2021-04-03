@@ -127,8 +127,6 @@ char *load_binary(const char *filename, size_t *length) {
     return check_alloc(realloc(data, *length + 1));
 }
 
-// TODO: Review this later, I think there are no missing corner cases (now!)
-// but a fresh look would be good
 char *get_line(char **data_ptr, size_t *length_ptr) {
     assert(data_ptr != 0);
     assert(length_ptr != 0);

@@ -288,7 +288,6 @@ static int get_line_number(char **lineptr, int line_number) {
 // load_binary() at 'data' of length 'length', use get_line() to iterate
 // through it line-by-line and type it into the emulated machine so BASIC will
 // tokenise it for us.
-// TODO: PERHAPS CHANGE "type" TO SOMETHING ELSE, BE CONSISTENT
 static void type_basic_program(char *data, size_t length) {
     execute_input_line("NEW");
 
