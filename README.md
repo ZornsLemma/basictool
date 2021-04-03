@@ -6,6 +6,7 @@
 - [Other features](#other-features)
 - [Building](#building)
 - [Credits](#credits)
+- [Changelog](#changelog)
 
 ## Overview
 
@@ -244,3 +245,9 @@ If you're not on a Unix-like system you may need to create your own build script
 * 6502 emulation is performed using lib6502. This was originally written by Ian Piumarta, but the versions of lib6502.[ch] included here are taken from [PiTubeClient](https://github.com/hoglet67/PiTubeClient).
 
 * Cross-platform command line parsing (cargs.[ch]) is performed using [cargs](https://github.com/likle/cargs).
+
+## Changelog
+
+* v0.01: Initial release
+* v0.02:
+  * Fix build error on Ubuntu 20.10 (thanks to scruss for reporting this!)
