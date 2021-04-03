@@ -1,5 +1,7 @@
 TODO: Actually write something!
 
+TODO: Don't forget licence stuff - add comment headers on files, a LICENCE file, something in README, etc
+
 # basictool
 
 ## Table of contents
