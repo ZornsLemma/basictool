@@ -52,7 +52,7 @@ uint16_t mpu_read_u16(uint16_t address) {
     return (mpu_memory[address + 1] << 8) | mpu_memory[address];
 }
 
-static void mpu_clear_carry() {
+static void mpu_clear_carry(void) {
     mpu_registers.p &= ~(1<<0);
 }
 
@@ -426,7 +426,7 @@ void execute_osrdch(const char *s) {
     check(mpu_state == ms_osrdch_pending,
           "Internal error: Emulated machine isn't waiting for OSRDCH");
     mpu_registers.a = s[0];
-    mpu_clear_carry(mpu); // no error
+    mpu_clear_carry(); // no error
     mpu_registers.pc = pull_rts_target();
     mpu_run();
 } 
@@ -455,7 +455,7 @@ void execute_input_line(const char *line) {
 
     mpu_memory[buffer + pending_length] = cr;
     mpu_registers.y = pending_length;
-    mpu_clear_carry(mpu); // input not terminated by Escape
+    mpu_clear_carry(); // input not terminated by Escape
     mpu_registers.pc = pull_rts_target();
     mpu_run();
 }

@@ -5,7 +5,7 @@
 .SUFFIXES:
 # TODO: Enable optimisation?
 # TODO: Test with clang
-CC	= cc # TODO!?
+#CC	= cc # TODO!?
 # TODO: Perhaps remove/comment out -Werror in release, as other compilers may generate warnings which we perhaps don't want to break the build
 CFLAGS  = -g -Wall -Werror --std=c99
 LDFLAGS = -g

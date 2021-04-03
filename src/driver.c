@@ -464,8 +464,6 @@ void save_variable_xref(const char *filename) {
     fclose_output(output_file, filename);
 }
 
-// TODO: Test with invalid input - we don't want to be hanging if we can avoid it
-
 // TODO: Formatting of error messages is very inconsistent, e.g. use of Error: prefix - this is better now, but well worth reviewing later
 
 // vi: colorcolumn=80
