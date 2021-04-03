@@ -3,8 +3,11 @@ TODO: Actually write something!
 # basictool
 
 ## Table of contents
-- [Overview]
-- [How it works](#overview)
+- [Overview](#overview)
+- [How it works](#how-it-works)
+- [Other features](#other-features)
+- [Building](#building)
+- [Credits](#credits)
 
 ## Overview
 
