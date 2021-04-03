@@ -239,7 +239,7 @@ If you're not on a Unix-like system you may need to create your own build script
 
 * BBC BASIC was (of course) originally published by Acorn. The BASIC 4r32 ROM image linked above is hosted on J. G. Harston's [mdfs.net](http://mdfs.net/).
 
-* The BASIC editor and utilities were originally published separately by Altra. The Advanced BASIC Editor ROMs used here are (C) Baildon Electronics. The Advanced BASIC Editor ROM images linked above are hosted on [stardot](https://stardot.org.uk) and were posted by J. G. Harston. Thanks to Dave Hitchens for his support for developing basictool using these ROMs.
+* The BASIC editor and utilities were originally published separately by Altra. The Advanced BASIC Editor ROMs used here are (C) Baildon Electronics. The Advanced BASIC Editor ROM images linked above are hosted on [stardot](https://stardot.org.uk) and were posted by J. G. Harston. Thanks to Dave Hitchins for his support for developing basictool using these ROMs.
 
 * 6502 emulation is performed using lib6502. This was originally written by Ian Piumarta, but the versions of lib6502.[ch] included here are taken from [PiTubeClient](https://github.com/hoglet67/PiTubeClient).
 
