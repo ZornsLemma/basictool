@@ -1,10 +1,10 @@
 basictool needs ROM images to function, as described in ["Getting the ROM images" in the main README.md](README.md#getting-the-rom-images); these are not included in this repository and their licenses are not discussed in this file.
 
-The original version of lib6502 is Copyright (c) 2005 Ian Piumarta, but the lib6502.[ch] files included in this repository are modified versions taken from https://github.com/hoglet67/PiTubeClient. That project uses the [GNU GPL v3.0](https://github.com/hoglet67/PiTubeClient/blob/master/LICENSE).
+The original version of lib6502 is Copyright (c) 2005 Ian Piumarta, but the lib6502.[ch] files included in this repository are modified versions taken from [PiTubeClient](https://github.com/hoglet67/PiTubeClient), which uses the [GNU GPL v3.0](https://github.com/hoglet67/PiTubeClient/blob/master/LICENSE).
 
 The cargs.[ch] files included in this project are taken from [cargs](https://github.com/likle/cargs), which uses the [MIT License](https://github.com/likle/cargs/blob/master/LICENSE.md).
 
-The remaining files in this repository are covered by the following licence:
+The remaining files in this repository are covered by the following license:
 
 MIT License
 
