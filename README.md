@@ -212,7 +212,6 @@ total 52
 -rw-rw-r-- 1 steven steven 16384 Apr  3 14:26 Basic432
 -rw-rw-r-- 1 steven steven 16384 Apr  3 14:26 EDITORA100
 -rw-rw-r-- 1 steven steven 16384 Apr  3 14:26 EDITORB100
--rw-rw-r-- 1 steven steven   177 Apr  3 14:35 README.md
 $ md5sum *
 e11eed95d1caba8aa9772e9001590585  Basic432
 101fb6907609918db50cb3cfd5408772  EDITORA100
@@ -242,6 +241,6 @@ If you're not on a Unix-like system you may need to create your own build script
 
 * The BASIC editor and utilities were originally published separately by Altra. The Advanced BASIC Editor ROMs used here are (C) Baildon Electronics. The Advanced BASIC Editor ROM images linked above are hosted on [stardot](https://stardot.org.uk) and were posted by J. G. Harston. Thanks to Dave Hitchens for his support for developing basictool using these ROMs.
 
-* 6502 emulation is performed using lib6502. This was originally written by Ian Piumarta, but the versions of lib6502.[ch] included here are taken from [PiTubeDirect](https://github.com/hoglet67/PiTubeClient).
+* 6502 emulation is performed using lib6502. This was originally written by Ian Piumarta, but the versions of lib6502.[ch] included here are taken from [PiTubeClient](https://github.com/hoglet67/PiTubeClient).
 
 * Cross-platform command line parsing (cargs.[ch]) is performed using [cargs](https://github.com/likle/cargs).
