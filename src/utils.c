@@ -143,10 +143,9 @@ char *get_line(char **data_ptr, size_t *length_ptr) {
     if (length <= 1) {
         if (length == 0) {
             // The last line of text isn't terminated, so we need to write a
-            // NUL after the last character. This would write past the end of
-            // the buffer, but luckily load_binary() allocated a secret extra
-            // byte for exactly this eventuality.
-            ++p;
+            // NUL at *p after the last character. This would write past the
+            // end of the buffer, but luckily load_binary() allocated a secret
+            // extra byte for exactly this eventuality.
         } else {
             assert((*p == cr) || (*p == lf));
         }
