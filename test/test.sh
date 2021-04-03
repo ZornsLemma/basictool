@@ -1,6 +1,15 @@
 #!/bin/bash
 
+# This is a really crude test harness. It probably won't work properly on
+# non-Unix systems, because it doesn't allow for different text file
+# conventions.
+
 set -e
+
+VALGRIND=""
+if [ "$1" = "-v" ]; then
+	VALGRIND="valgrind --leak-check=yes"
+fi
 
 mkdir -p tmp
 mkdir -p out
@@ -19,7 +28,7 @@ echo -en "A=3\r\nB=4\r\nC=5\r\n" > zz-test-crlf.bas
 echo -en "A=3\n\rB=4\n\rC=5\n\r" > zz-test-lfcr.bas
 cd ..
 
-BASICTOOL=../basictool
+BASICTOOL="$VALGRIND ../basictool"
 TESTS="hello.bas loader.tok tmp/zz-test-*.bas"
 
 # TODO: We could also test stderr (especially with -vv) but let's not get too
