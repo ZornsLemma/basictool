@@ -31,12 +31,13 @@ $ cat test2.bas
 
 (basictool doesn't care about file extensions; I'm using .bas and .tok here for text BASIC and tokenised BASIC respectively, but you can use any conventions you wish.)
 
-You can also "pack" a program, making it significantly less readable but taking up less memory:
+You can also "pack" a program, making it significantly less readable but more compact:
 ```
 $ cat test3.bas
 square_root_of_49 = 7
 my_variable = 42 + square_root_of_49
 PRINT my_variable
+$ # Note that test3.bas doesn't have line numbers; basictool will add them for us.
 $ basictool -p test3.bas
     1s=7:m=42+s:PRINTm
 $ # basictool is happy to output the packed program as ASCII text, but it would
@@ -47,6 +48,51 @@ $ xxd test3.tok
 00000000: 0d00 0111 733d 373a 6d3d 3432 2b73 3af1  ...s=7:m=42+s:.
 00000010: 6d0d ff                                  m..
 ```
+
+## How it works
+
+basictool is really a specialised BBC Micro emulator, built on top of lib6502. It runs the original BBC BASIC ROM and uses that to tokenise and de-tokenise programs. Programs are tokenised simply by typing them in at the BASIC prompt and de-tokenised simply by using the BASIC "LIST" command.
+
+It also uses the Advanced BASIC Editor ROMs to provide the "pack" function, as well as line number and variable cross-referencing.
+
+## Other features
+
+* The standard BASIC abbreviations (such as "P." for "PRINT") can be used in text BASIC input to basictool.
+
+* Programs can be renumbered (just as with the BASIC "RENUMBER" command) using the --renumber option. You can control the start line number and gap between line numbers using --renumber-start and --renumber-step if you wish.
+
+### Automatic line numbering
+
+Line numbers are optional in text BASIC input; basictool will automatically generate them.
+
+If you need to number some lines, such as DATA statements which will be used with RESTORE, you can give just those lines numbers:
+```
+$ cat test4.bas
+PRINT "Hello, ";
+RESTORE 1000
+READ who$
+PRINT who$;"!"
+PROCend
+END
+DATA clouds, sky
+1000DATA world
+DEF PROCend
+PRINT "Goodbye!
+ENDPROC
+$ basictool test4.bas
+    1PRINT "Hello, ";
+    2RESTORE 1000
+    3READ who$
+    4PRINT who$;"!"
+    5PROCend
+    6END
+    7DATA clouds, sky
+ 1000DATA world
+ 1001DEF PROCend
+ 1002PRINT "Goodbye!
+ 1003ENDPROC
+```
+This will fail if the line numbers you provide would clash with the automatically generated line numbers; I suggest using large round values in order to avoid this being a problem.
 
 
 
