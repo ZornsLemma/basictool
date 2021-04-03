@@ -1,5 +1,8 @@
 # A hopefully simple, portable makefile, based on reading
 # https://nullprogram.com/blog/2017/08/20/.
+#
+# vi: colorcolumn=80
+
 
 .POSIX:
 .SUFFIXES:
