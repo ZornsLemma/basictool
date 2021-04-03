@@ -191,7 +191,6 @@ static struct cag_option options[] = {
       .value_name = "N",
       .description = "use LISTO N to indent ASCII output\n\nOutput type options (pick one only):" },
 
-    // TODO: REORDER ENUM LIST AND MAIN SWITCH() TO MATCH ORDER
     { .identifier = oi_output_ascii,
       .access_letters = "a",
       .access_name = "ascii",
