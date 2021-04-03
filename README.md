@@ -58,7 +58,7 @@ $ xxd test3.tok
 By specifying the "-v" (verbose) option twice when packing, additional information will be displayed during the packing process:
 ```
 $ basictool -p -v -v test3.bas
-Info: Input auto-detected as ASCII text (non-tokenised) BASIC
+info: input auto-detected as ASCII text (non-tokenised) BASIC
 TOP=&0E54
 @% [0]
 my_variable [2]                                   m
