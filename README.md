@@ -202,11 +202,22 @@ TODO!
 
 ### Getting the ROM images
 
-You can download EDITORA100 and EDITORB100 from https://stardot.org.uk/forums/viewtopic.php?p=81362#p81362. Rename them to have a ".rom" extension and copy them into the roms directory.
+You need to download three ROM images and put then in the roms subdirectory:
 
-I recommend using BBC BASIC 4r32, simply because that's what I've done most testing with. You can download it from http://mdfs.net/Software/BBCBasic/BBC/. Other versions of 6502 BASIC will probably work as well; the BASIC ROM is only used for tokenising, de-tokenising and renumbering BASIC programs, so most of the changes between different BASIC versions aren't relevant. Rename the file "basic4.rom" and copy it into the roms directory.
+* EDITORA100 and EDITORB100 from https://stardot.org.uk/forums/viewtopic.php?p=81362#p81362
+* BBC BASIC 4r32 from http://mdfs.net/Software/BBCBasic/BBC/
 
-TODO: This seems a little fiddly, if those are going to be my recommended download options. Maybe I should just use the original names with no extensions.
+Once you've done that, the roms subdirectory should look like this:
+```
+$ ls
+Basic432  EDITORA100  EDITORB100
+$ md5sum *
+e11eed95d1caba8aa9772e9001590585  Basic432
+101fb6907609918db50cb3cfd5408772  EDITORA100
+987a8aa4e09880e4274ddc26025b06e8  EDITORB100
+```
+
+Other versions of 6502 BBC BASIC (although not HIBASIC) will probably work, but I've always tested with BASIC 4r32 so that's what I recommend you use.
 
 The ROMs are compiled into the executable, so these files are only need when building - the resulting executable is self-contained and can be copied to wherever you want to install it.
 

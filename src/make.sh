@@ -13,9 +13,9 @@ set -v
 # Generate C-style hex dumps of the ROM images, so they can be compiled into
 # the executable. roms.c #includes these auto-generated files.
 gcc -o bintoinc -Wall -g --std=c99 bintoinc.c
-./bintoinc ../roms/EDITORA100.rom > zz-editor-a.c
-./bintoinc ../roms/EDITORB100.rom > zz-editor-b.c
-./bintoinc ../roms/basic4.rom > zz-basic.c
+./bintoinc ../roms/EDITORA100 > zz-editor-a.c
+./bintoinc ../roms/EDITORB100 > zz-editor-b.c
+./bintoinc ../roms/Basic432 > zz-basic.c
 
 gcc -o ../basictool -g -O2 -Wall -Werror --std=c99 main.c config.c emulation.c driver.c roms.c utils.c lib6502.c cargs.c
 

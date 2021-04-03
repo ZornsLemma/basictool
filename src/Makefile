@@ -8,9 +8,9 @@
 .SUFFIXES:
 CFLAGS  = -g -O2 -Wall -Werror --std=c99
 LDFLAGS = -g
-EDITORA = ../roms/EDITORA100.rom
-EDITORB = ../roms/EDITORB100.rom
-BASIC   = ../roms/basic4.rom
+EDITORA = ../roms/EDITORA100
+EDITORB = ../roms/EDITORB100
+BASIC   = ../roms/Basic432
 
 all: ../basictool
 

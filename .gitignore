@@ -1,4 +1,6 @@
-roms/*
+roms/Basic432
+roms/EDITORA100
+roms/EDITORB100
 src/bintoinc
 src/zz-*.c
 src/*.o
