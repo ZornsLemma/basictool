@@ -79,7 +79,7 @@ static uint16_t enter_basic(void) {
 }
 
 NORETURN static void callback_abort(const char *type, uint16_t address, uint8_t data) {
-    die("Error: Unexpected %s at address %04x, data %02x", type, address, data);
+    die("error: unexpected %s at address %04x, data %02x", type, address, data);
 }
 
 NORETURN static int callback_abort_read(M6502 *mpu, uint16_t address, uint8_t data) {
@@ -147,12 +147,12 @@ static int callback_osbyte_read_vdu_variable(void) {
     uint8_t i = mpu_registers.x;
     if (vdu_variables[i] == -1) {
         mpu_dump();
-        die("Internal error: Unsupported VDU variable %d read", i);
+        die("internal error: unsupported VDU variable %d read", i);
     }
     uint8_t j = i + 1; // use uint8_t intermediate so we wrap around (unlikely)
     if (vdu_variables[j] == -1) {
         mpu_dump();
-        die("Internal error: Unsupported VDU variable %d read", j);
+        die("internal error: unsupported VDU variable %d read", j);
     }
     mpu_registers.x = vdu_variables[i];
     mpu_registers.y = vdu_variables[j];
@@ -186,7 +186,7 @@ static int callback_osbyte(M6502 *mpu, uint16_t address, uint8_t data) {
             return callback_osbyte_read_vdu_variable();
         default:
             mpu_dump();
-            die("Error: Unsupported OSBYTE");
+            die("internal error: unsupported OSBYTE");
     }
 }
 
@@ -195,7 +195,8 @@ static int callback_oscli(M6502 *mpu, uint16_t address, uint8_t data) {
     // The following case is never going to happen in practice, so let's just
     // explicitly check for it then we don't have to worry about wrapping or
     // accessing past the end of mpu_memory in the following code.
-    check(yx <= 0xff00, "Internal error: command tail is too near top of memory");
+    check(yx <= 0xff00,
+          "internal error: command tail is too near top of memory");
 
     mpu_memory[os_text_pointer    ] = mpu_registers.x;
     mpu_memory[os_text_pointer + 1] = mpu_registers.y;
@@ -221,7 +222,7 @@ static int callback_oscli(M6502 *mpu, uint16_t address, uint8_t data) {
     while (mpu_memory[yx + mpu_registers.y] == '*') {
         ++mpu_registers.y;
         // Y is very unlikely to wrap wround, but be paranoid.
-        check(mpu_registers.y != 0, "Internal error: Too many *s on OSCLI");
+        check(mpu_registers.y != 0, "internal error: too many *s on OSCLI");
     }
 
     // This isn't case-insensitive and doesn't recognise abbreviations, but
@@ -277,7 +278,7 @@ static int callback_osword(M6502 *mpu, uint16_t address, uint8_t data) {
             return callback_osword_read_io_memory();
         default:
             mpu_dump();
-            die("Error: Unsupported OSWORD");
+            die("internal error: unsupported OSWORD");
     }
 }
 
@@ -299,7 +300,7 @@ static int callback_romsel_write(M6502 *mpu, uint16_t address, uint8_t data) {
             memcpy(rom_start, rom_basic, rom_size);
             break;
         default:
-            die("Internal error: Invalid ROM bank %d selected", data);
+            die("internal error: invalid ROM bank %d selected", data);
             break;
     }
     return 0; // return value ignored
@@ -312,7 +313,7 @@ static int callback_irq(M6502 *mpu, uint16_t address, uint8_t data) {
     mpu_registers.s += 2; // not really necessary, as we're about to exit()
     uint16_t error_num_address = error_string_ptr - 1;
     print_error_prefix();
-    fprintf(stderr, "Error: ");
+    fprintf(stderr, "error: ");
     for (uint8_t c; (c = mpu_memory[error_string_ptr]) != '\0'; ++error_string_ptr) {
         putc(c, stderr);
     }
@@ -421,9 +422,9 @@ void execute_osrdch(const char *s) {
     // this at the moment.
     assert(s != 0);
     check(strlen(s) == 1,
-          "Internal error: Attempt to return multiple characters from OSRDCH");
+          "internal error: attempt to return multiple characters from OSRDCH");
     check(mpu_state == ms_osrdch_pending,
-          "Internal error: Emulated machine isn't waiting for OSRDCH");
+          "internal error: emulated machine isn't waiting for OSRDCH");
     mpu_registers.a = s[0];
     mpu_clear_carry(); // no error
     mpu_registers.pc = pull_rts_target();
@@ -433,16 +434,16 @@ void execute_osrdch(const char *s) {
 void execute_input_line(const char *line) {
     assert(line != 0);
     check(mpu_state == ms_osword_input_line_pending,
-          "Internal error: Emulated machine isn't waiting for OSWORD 0");
+          "internal error: emulated machine isn't waiting for OSWORD 0");
     uint16_t yx = (mpu_registers.y << 8) | mpu_registers.x;
     check(yx <= 0xff00,
-          "Internal error: OSWORD 0 block is too near top of memory");
+          "internal error: OSWORD 0 block is too near top of memory");
     uint16_t buffer = mpu_read_u16(yx);
     check(buffer <= 0xff00,
-          "Internal error: OSWORD 0 buffer is too near top of memory");
+          "internal error: OSWORD 0 buffer is too near top of memory");
     uint8_t buffer_size = mpu_memory[yx + 2];
     size_t pending_length = strlen(line);
-    check(pending_length < buffer_size, "Error: Line too long");
+    check(pending_length < buffer_size, "error: line too long");
     memcpy(&mpu_memory[buffer], line, pending_length);
 
     // OSWORD 0 would echo the typed characters and move to a new line, so do
@@ -458,9 +459,5 @@ void execute_input_line(const char *line) {
     mpu_registers.pc = pull_rts_target();
     mpu_run();
 }
-
-// TODO: Bit OTT but be good to be consistent about full stop vs no full stop at end of all error messages, or at least *think* about whether we want one or not on each case rather than it being a bit ad-hoc
-
-// TODO: gcc error messages are "all lower case", e.g. "foo.c:42: error: your code sucks", since I'm copying gcc format for line number-related error messages, maybe I should use this style more/everywhere?
 
 // vi: colorcolumn=80

@@ -123,13 +123,13 @@ static void check_is_in_pending_output(const char *s) {
     if (is_in_pending_output(s)) {
         return;
     }
-    die("Internal error: Expected to see output containing '%s', got '%s'\n"
+    die("internal error: expected to see output containing '%s', got '%s'\n"
         "Try using --show-all-output to see what's going on.", s,
         make_printable(pending_output));
 }
 
 static void putc_wrapper(int c, FILE *file) {
-    check(putc(c, file) != EOF, "Error: Error writing to output file \"%s\"",
+    check(putc(c, file) != EOF, "error: error writing to output file \"%s\"",
           filenames[1]);
 }
 
@@ -214,7 +214,7 @@ static void complete_output_line_handler() {
             assert(output_file != 0);
             if (*pending_output != '\0') {
                 check(fprintf(output_file, "%s\n", pending_output) >= 0,
-                      "Error: Error writing to output file \"%s\"",
+                      "error: error writing to output file \"%s\"",
                       filenames[1]);
             }
             break;
@@ -226,7 +226,7 @@ static void complete_output_line_handler() {
 
         case os_pack_discard_blank:
             check(*pending_output == '\0',
-                  "Internal error: Expected to see a blank line of output, got \"%s\"",
+                  "enternal error: expected to see blank line of output, got \"%s\"",
                   make_printable(pending_output));
             output_state = os_pack_output;
             break;
@@ -268,17 +268,18 @@ static int get_line_number(char **lineptr, int line_number) {
         char *end;
         long l = strtol(number_start, &end, 10);
         check((end == number_start + number_length) && (l <= max_line_number),
-              "Line number %.*s is too large", number_length, number_start);
+              "error: line number %.*s is too large", number_length,
+              number_start);
         int user_line_number = (int) l;
 
         check(user_line_number >= line_number,
-              "Line number %d is less than previous line number %d",
+              "error: line number %d is less than previous line number %d",
               user_line_number, line_number - 1);
         line_number = user_line_number;
         *lineptr = number_start + number_length;
     }
 
-    check(line_number <= max_line_number, "Line number %d is too large",
+    check(line_number <= max_line_number, "error: line number %d is too large",
           line_number);
     return line_number;
 }
@@ -322,7 +323,7 @@ static void type_basic_program(char *data, size_t length) {
         // Generate the fake input for BASIC and pass it over.
         const int buffer_size = 256;
         char buffer[buffer_size];
-        check(snprintf(buffer, buffer_size, "%d%s", basic_line_number, line) < buffer_size, "Error: Line too long");
+        check(snprintf(buffer, buffer_size, "%d%s", basic_line_number, line) < buffer_size, "error: line too long");
         execute_input_line(buffer);
 
         ++basic_line_number;
@@ -343,7 +344,7 @@ void load_basic(const char *filename) {
         // tokenised BASIC program will end with <cr><ff>.
         tokenised = ((length >= 2) && (data[length - 2] == '\x0d') && (data[length - 1] == '\xff'));
         if (config.verbose >= 1) {
-            info("Input auto-detected as %s BASIC",
+            info("input auto-detected as %s BASIC",
                  tokenised ? "tokenised" : "ASCII text (non-tokenised)");
         }
     }
@@ -351,7 +352,7 @@ void load_basic(const char *filename) {
     if (tokenised) {
         // Copy the data directly into the emulated machine's memory.
         size_t max_length = himem - page - 512; // arbitrary safety margin
-        check(length <= max_length, "Input is too large");
+        check(length <= max_length, "error: input is too large");
         memcpy(&mpu_memory[page], data, length);
         // Now execute "OLD" so BASIC recognises the program.
         execute_input_line("OLD");
@@ -410,7 +411,7 @@ void renumber(void) {
 // Convenience function to close an output file, reporting any errors via die()
 // and setting output_file back to null if that's the file being closed.
 static void fclose_output(FILE *file, const char *filename) {
-    check(fclose(file) == 0, "Error: Error closing output file \"%s\"", filename);
+    check(fclose(file) == 0, "error: error closing output file \"%s\"", filename);
     if (file == output_file) {
         output_file = 0;
     }
@@ -421,7 +422,7 @@ void save_tokenised_basic(const char *filename) {
     uint16_t top = mpu_read_u16(BASIC_TOP);
     size_t length = top - page;
     size_t bytes_written = fwrite(&mpu_memory[page], 1, length, file);
-    check(bytes_written == length, "Error: Error writing to output file \"%s\"", filename);
+    check(bytes_written == length, "error: error writing to output file \"%s\"", filename);
     fclose_output(file, filename);
 }
 
@@ -463,7 +464,5 @@ void save_variable_xref(const char *filename) {
     output_state = os_discard;
     fclose_output(output_file, filename);
 }
-
-// TODO: Formatting of error messages is very inconsistent, e.g. use of Error: prefix - this is better now, but well worth reviewing later
 
 // vi: colorcolumn=80

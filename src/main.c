@@ -306,12 +306,12 @@ static void show_roms(void) {
 static long parse_long_argument(const char *name, const char *value, int min,
                                 int max) {
     if ((value == 0) || (*value == '\0')) {
-        die_help("Error: missing value for %s", name);
+        die_help("error: missing value for %s", name);
     }
     char *endptr;
     long result = strtol(value, &endptr, 10);
     if ((*endptr != '\0') || (result < min) || (result > max)) {
-        die_help("Error: invalid %s value \"%s\"", name, value);
+        die_help("error: invalid %s value \"%s\"", name, value);
     }
     return result;
 }
@@ -451,7 +451,7 @@ int main(int argc, char *argv[]) {
                 break;
 
             default:
-                die_help("Error: Unrecognised option \"%s\"",
+                die_help("error: unrecognised option \"%s\"",
                          argv[cag_option_get_index(&context) - 1]);
                 break;
         }
@@ -465,14 +465,14 @@ int main(int argc, char *argv[]) {
         filenames[filename_count] = context.argv[i];
     }
     if (i != argc) {
-        die_help("Error: Please use a maximum of one input filename and one "
+        die_help("error: Please use a maximum of one input filename and one "
                  "output filename.");
     }
     // Don't just sit waiting for input on stdin and writing to stdout if we're
     // invoked with no filenames. This is a supported mode of operation, but to
     // avoid confusion we require at least one "-" argument to be specified.
     if (filename_count == 0) {
-        die_help("Error: Please give at least one filename; use input "
+        die_help("error: Please give at least one filename; use input "
                  "filename \"-\" for standard input.");
     }
 
@@ -485,7 +485,7 @@ int main(int argc, char *argv[]) {
     if (output_options == 0) {
         config.output_ascii = true;
     } else if (output_options > 1) {
-        die_help("Error: Please don't use more than one output type option.");
+        die_help("error: Please don't use more than one output type option.");
     }
 
     if (config.listo == -1) {
@@ -517,7 +517,5 @@ int main(int argc, char *argv[]) {
         save_ascii_basic(filenames[1]);
     }
 }
-
-// TODO: Should I make sure all printf() etc output and --help fits in 80 cols or is wrapped nicely?
 
 // vi: colorcolumn=80

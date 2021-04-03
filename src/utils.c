@@ -16,7 +16,7 @@ void print_error_prefix(void) {
 }
 
 void info(const char *fmt, ...) {
-    fprintf(stderr, "Info: ");
+    fprintf(stderr, "info: ");
     va_list ap;
     va_start(ap, fmt);
     vfprintf(stderr, fmt, ap);
@@ -25,7 +25,7 @@ void info(const char *fmt, ...) {
 }
 
 void warn(const char *fmt, ...) {
-    fprintf(stderr, "Warning: ");
+    fprintf(stderr, "warning: ");
     va_list ap;
     va_start(ap, fmt);
     vfprintf(stderr, fmt, ap);
@@ -64,7 +64,7 @@ void check(bool b, const char *fmt, ...) {
 }
 
 void *check_alloc(void *p) {
-    check(p != 0, "Error: Unable to allocate memory");
+    check(p != 0, "error: unable to allocate memory");
     return p;
 }
 
@@ -91,7 +91,7 @@ FILE *fopen_wrapper(const char *pathname, const char *mode) {
             read = false;
             break;
         default:
-            die("Internal error: Invalid mode \"%s\" passed to fopen_wrapper()", mode);
+            die("internal error: invalid mode \"%s\" passed to fopen_wrapper()", mode);
             break;
     }
 
@@ -103,7 +103,7 @@ FILE *fopen_wrapper(const char *pathname, const char *mode) {
         return read ? stdin : stdout;
     } else {
         FILE *file = fopen(pathname, mode);
-        check(file != 0, "Error: Can't open %s file \"%s\"", read ? "input" : "output", pathname);
+        check(file != 0, "error: can't open %s file \"%s\"", read ? "input" : "output", pathname);
         return file;
     }
 }
@@ -116,10 +116,10 @@ char *load_binary(const char *filename, size_t *length) {
     const int max_size = 64 * 1024;
     char *data = check_alloc(malloc(max_size));
     *length = fread(data, 1, max_size, file);
-    check(!ferror(file), "Error: Error reading from input file \"%s\"",
+    check(!ferror(file), "error: error reading from input file \"%s\"",
           filename);
-    check(feof(file), "Error: Input file \"%s\" is too large", filename);
-    check(fclose(file) == 0, "Error: Error closing input file \"%s\"",
+    check(feof(file), "error: input file \"%s\" is too large", filename);
+    check(fclose(file) == 0, "error: error closing input file \"%s\"",
           filename);
     // Shrink the allocated block down from max_size to the size we actually
     // need. We secretly allocate an extra byte for get_line() to use in case
