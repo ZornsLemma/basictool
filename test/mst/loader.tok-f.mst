@@ -1,0 +1,693 @@
+    1 *FX229,1
+    2 *FX4,1
+    3 integra_b=FALSE
+    4 ON ERROR GOTO 100
+    5 integra_b=FNusr_osbyte_x(&49,&FF,0)=&49
+  100
+  101 ON ERROR PROCerror
+  102 *EXEC
+  103 CLOSE #0
+  104 A%=&85:
+      X%=135:
+      potential_himem=(USR&FFF4 AND &FFFF00) DIV &100
+  105 IF potential_himem=&8000 AND HIMEM<&8000 
+        THEN MODE 135:
+        CHAIN "LOADER"
+  106 VDU 23,16,0,254,0;0;0;
+  107 fg_colour=&409
+  108 bg_colour=&40A
+  109 ?&40B=3
+  110 screen_mode=&403
+  111 DIM block% 256
+  112 A%=0:
+      X%=1:
+      host_os=(USR&FFF4 AND &FF00) DIV &100
+  113 IF integra_b 
+        THEN host_os=1
+  114 electron=host_os=0
+  115 */FINDSWR
+  116 ON ERROR GOTO 500
+  117 *INFO XYZZY1
+  500 ON ERROR PROCerror
+  501 shadow=potential_himem=&8000
+  502 shadow_extra$=""
+  503 tube=PAGE<&E00
+  504 IF tube 
+        THEN PROCdetect_turbo
+  505 private_ram_in_use=FALSE
+  506 IF shadow AND NOT tube 
+        THEN PROCassemble_shadow_driver
+  507 PROCdetect_swr
+  508 MODE 135:
+      VDU 23,1,0;0;0;0;
+  509 ?fg_colour=7:
+      ?bg_colour=4
+  510 IF electron 
+        THEN VDU 19,0,?bg_colour,0;0,19,7,?fg_colour,0;0
+  511 IF electron 
+        THEN PROCelectron_header_footer 
+      ELSE PROCbbc_header_footer
+  512 normal_fg=&87:
+      normal_graphics_fg=normal_fg+16:
+      header_fg=&83:
+      highlight_fg=&83:
+      highlight_bg=&81:
+      electron_space=0
+  513 IF electron 
+        THEN normal_fg=0:
+        normal_graphics_fg=32:
+        header_fg=0:
+        electron_space=32
+  514 PRINT CHR$header_fg;"Hardware detected:"
+  515 vpos=VPOS
+  516 IF tube 
+        THEN PRINT CHR$normal_fg;"  Second processor";tube_ram$
+  517 IF shadow 
+        THEN PRINT CHR$normal_fg;"  Shadow RAM ";shadow_extra$
+  518 IF swr$<>"" 
+        THEN PRINT CHR$normal_fg;"  ";swr$
+  519 IF vpos=VPOS 
+        THEN PRINT CHR$normal_fg;"  None"
+  520 PRINT
+  521 die_top_y=VPOS
+  522 PROCchoose_version_and_check_ram
+  523 IF tube OR shadow 
+        THEN PROCmode_menu 
+      ELSE ?screen_mode=7+electron:
+      mode_keys_vpos=VPOS:
+      PROCshow_mode_keys:
+      PROCspace:
+      REPEAT 
+      UNTIL FNhandle_common_key(GET)
+  524 IF ?screen_mode=7 
+        THEN ?fg_colour=6
+  525 PRINT TAB(0,space_y);CHR$normal_fg;"Loading:";:
+      pos=POS:
+      PRINT "                               ";
+  526 PRINT TAB(pos,space_y);CHR$normal_graphics_fg;
+  527 VDU 23,255,-1;-1;-1;-1;
+  528 IF tube 
+        THEN */:
+        0.$.CACHE2P
+  529 IF NOT tube 
+        THEN ?&408=FNcode_start DIV 256
+  530 fs=FNfs
+  531 IF fs<>4 
+        THEN path$=FNpath
+  532 IF fs=5 
+        THEN *DIR
+  533 ON ERROR GOTO 1000
+  534 IF fs=4 
+        THEN PROCoscli("DIR S") 
+      ELSE *DIR SAVES
+ 1000 ON ERROR PROCerror
+ 1001 IF fs=4 
+        THEN filename$="/"+binary$ 
+      ELSE filename$=path$+".DATA"
+ 1002 IF LENfilename$>=49 
+        THEN PROCdie("Game data path too long")
+ 1003 filename_data=&42F
+ 1004 $filename_data=filename$
+ 1005 *FX4,0
+ 1006 IF fs=4 
+        THEN PROCoscli($filename_data) 
+      ELSE PROCoscli("/"+path$+"."+binary$)
+ 1007 END
+ 1008 DEF PROCerror:
+      CLS:
+      REPORT:
+      PRINT" at line ";ERL:
+      PROCfinalise
+ 1009 DEF PROCdie(message$)
+ 1010 VDU 28,0,space_y,39,die_top_y,12
+ 1011 PROCpretty_print(normal_fg,message$)
+ 1012 PRINT
+ 1013 DEF PROCfinalise
+ 1014 *FX229,0
+ 1015 *FX4,0
+ 1016 END
+ 1017 DEF PROCelectron_header_footer
+ 1018 VDU 23,128,0;0,255,255,0,0;
+ 1019 PRINT TAB(0,23);STRING$(40,CHR$128);"Powered by Ozmoo 6.0 (Acorn alpha 16)";
+ 1020 IF POS=0 
+        THEN VDU 30,11 
+      ELSE VDU 30
+ 1021 PRINT "Hollywoo";:
+      IF POS>0 
+        THEN PRINT
+ 1022 PRINT STRING$(40,CHR$128);
+ 1023 PRINT:
+      space_y=22
+ 1024 ENDPROC
+ 1025 DEF PROCbbc_header_footer
+ 1026 PRINT TAB(0,21);:
+      PRINT
+ 1027 PRINT
+ 1028 PRINT CHR$147;",,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,";
+ 1029 PRINT CHR$131;"Powered by Ozmoo 6.0 (Acorn alpha 16)";
+ 1030 IF POS=0 
+        THEN VDU 30,11 
+      ELSE VDU 30
+ 1031 PRINT CHR$141;"Hollywoo"
+ 1032 PRINT CHR$141;"Hollywoo"
+ 1033 PRINT CHR$147;",,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,";
+ 1034 PRINT
+ 1035 PRINT TAB(0,4);:
+      space_y=22
+ 1036 ENDPROC
+ 1037 DEF PROCchoose_version_and_check_ram
+ 1038 IF tube 
+        THEN binary$=":0.$.OZMOO2P":
+        ENDPROC
+ 1039 PROCchoose_non_tube_version
+ 1040 IF PAGE>max_page 
+        THEN PROCdie("Sorry, you need PAGE<=&"+STR$~max_page+"; it is &"+STR$~ PAGE+".")
+ 1041 extra_main_ram=max_page-PAGE
+ 1042 IF integra_b 
+        THEN vmem_only_swr=&2C00 
+      ELSE vmem_only_swr=0
+ 1043 flexible_swr=swr_size-vmem_only_swr
+ 1044 IF medium_dynmem 
+        THEN PROCcheck_ram_medium_dynmem:
+        ENDPROC
+ 1045 flexible_swr=flexible_swr-swr_dynmem_needed
+ 1046 IF flexible_swr<0 
+        THEN extra_main_ram=extra_main_ram+flexible_swr:
+        flexible_swr=0
+ 1047 PROCsubtract_ram(&400)
+ 1048 IF extra_main_ram<0 
+        THEN PROCdie_ram(-extra_main_ram,"main or sideways RAM")
+ 1049 free_main_ram=extra_main_ram
+ 1050 ENDPROC
+ 1051 DEF PROCcheck_ram_medium_dynmem
+ 1052 flexible_swr=flexible_swr-swr_dynmem_needed
+ 1053 PROCsubtract_ram(&400)
+ 1054 IF flexible_swr<0 
+        THEN PROCdie_ram(-flexible_swr,"sideways RAM")
+ 1055 IF extra_main_ram<0 
+        THEN PROCdie_ram(-extra_main_ram,"main RAM")
+ 1056 free_main_ram=extra_main_ram
+ 1057 ENDPROC
+ 1058 DEF PROCsubtract_ram(n)
+ 1059 IF vmem_only_swr>0 
+        THEN d=FNmin(n,vmem_only_swr):
+        vmem_only_swr=vmem_only_swr-d:
+        n=n-d
+ 1060 IF flexible_swr>0 
+        THEN d=FNmin(n,flexible_swr):
+        flexible_swr=flexible_swr-d:
+        n=n-d
+ 1061 extra_main_ram=extra_main_ram-n
+ 1062 ENDPROC
+ 1063 DEF FNcode_start
+ 1064 p=PAGE
+ 1065 IF NOT shadow 
+        THEN =p
+ 1066 IF NOT shadow_driver 
+        THEN =p
+ 1067 IF ?screen_mode=0 
+        THEN =p
+ 1068 shadow_cache=FNmin(4*256,free_main_ram)
+ 1069 IF p+shadow_cache>=&3000 
+        THEN shadow_cache=&3000-p
+ 1070 IF shadow_cache<512 
+        THEN shadow_cache=0
+ 1071 =p+shadow_cache
+ 1072 DEF FNmin(a,b)
+ 1073 IF a<b 
+        THEN =a 
+      ELSE =b
+ 1074 DEF FNusr_osbyte_x(A%,X%,Y%)=(USR&FFF4 AND &FF00) DIV &100
+ 1075 DEF PROCchoose_non_tube_version
+ 1076 IF electron 
+        THEN binary$=":0.$.OZMOOE":
+        max_page=6400:
+        swr_dynmem_needed=&3000:
+        medium_dynmem=TRUE:
+        ENDPROC
+ 1077 IF shadow 
+        THEN binary$=":0.$.OZMOOSH":
+        max_page=8960:
+        swr_dynmem_needed=0:
+        medium_dynmem=FALSE:
+        ENDPROC
+ 1078 binary$=":0.$.OZMOOB":
+      max_page=8448:
+      swr_dynmem_needed=-&400:
+      medium_dynmem=FALSE
+ 1079 ENDPROC
+ 1080 DEF PROCmode_menu
+ 1081 DIM mode_x(8),mode_y(8)
+ 1082 max_x=2
+ 1083 max_y=1
+ 1084 DIM menu$(max_x,max_y),menu_x(max_x)
+ 1085 menu$(0,0)="0) 80x32"
+ 1086 menu$(0,1)="3) 80x25"
+ 1087 menu$(1,0)="4) 40x32"
+ 1088 menu$(1,1)="6) 40x25"
+ 1089 menu$(2,0)="7) 40x25   "
+ 1090 menu$(2,1)="   teletext"
+ 1091 IF electron 
+        THEN max_x=1:
+        mode_list$="0346" 
+      ELSE mode_list$="03467"
+ 1092 FOR y=max_y TO 0 STEP -1:
+        FOR x=0 TO max_x:
+          mode=VAL LEFT$(menu$(x,y),1):
+          mode_x(mode)=x:
+          mode_y(mode)=y:
+        NEXT:
+      NEXT
+ 1093 PRINT CHR$header_fg;"Screen mode:";CHR$normal_fg;CHR$electron_space;"(hit ";:
+      sep$="":
+      FOR i=1 TO LEN(mode_list$):
+        PRINT sep$;MID$(mode_list$,i,1);:
+        sep$="/":
+      NEXT:
+      PRINT " to change)"
+ 1094 menu_top_y=VPOS
+ 1095 IF max_x=2 
+        THEN gutter=0 
+      ELSE gutter=5
+ 1096 FOR y=0 TO max_y:
+        PRINT TAB(0,menu_top_y+y);CHR$normal_fg;:
+        FOR x=0 TO max_x:
+          menu_x(x)=POS:
+          PRINT SPC2;menu$(x,y);SPC(2+gutter);:
+        NEXT:
+      NEXT
+ 1097 mode_keys_vpos=menu_top_y+max_y+2
+ 1098 mode$="7":
+      IF INSTR(mode_list$,mode$)=0 
+        THEN mode$=RIGHT$(mode_list$,1)
+ 1099 x=mode_x(VALmode$):
+      y=mode_y(VALmode$):
+      PROChighlight(x,y,TRUE):
+      PROCspace
+ 1100 REPEAT
+ 1101   old_x=x:
+        old_y=y
+ 1102   key=GET
+ 1103   IF key=136 AND x>0 
+          THEN x=x-1
+ 1104   IF key=137 AND x<max_x 
+          THEN x=x+1
+ 1105   IF key=138 AND y<max_y 
+          THEN y=y+1
+ 1106   IF key=139 AND y>0 
+          THEN y=y-1
+ 1107   key$=CHR$key:
+        IF INSTR(mode_list$,key$)<>0 
+          THEN x=mode_x(VALkey$):
+          IF NOT FNis_mode_7(x) 
+            THEN y=mode_y(VALkey$)
+ 1108   IF x<>old_x OR (y<>old_y AND NOT FNis_mode_7(x)) 
+          THEN PROChighlight(old_x,old_y,FALSE):
+          PROChighlight(x,y,TRUE)
+ 1109 UNTIL FNhandle_common_key(key)
+ 1110 ENDPROC
+ 1111 DEF FNhandle_common_key(key)
+ 1112 IF electron AND key=2 
+        THEN ?bg_colour=(?bg_colour+1) MOD 8:
+        VDU 19,0,?bg_colour,0;0
+ 1113 IF electron AND key=6 
+        THEN ?fg_colour=(?fg_colour+1) MOD 8:
+        VDU 19,7,?fg_colour,0;0
+ 1114 =key=32 OR key=13
+ 1115 DEF PROChighlight(x,y,on)
+ 1116 IF on AND FNis_mode_7(x) 
+        THEN ?screen_mode=7 
+      ELSE 
+      IF on 
+        THEN ?screen_mode=VAL(menu$(x,y))
+ 1117 IF on 
+        THEN PROCshow_mode_keys
+ 1118 IF electron 
+        THEN PROChighlight_internal_electron(x,y,on):
+        ENDPROC
+ 1119 IF FNis_mode_7(x) 
+        THEN PROChighlight_internal(x,0,on):
+        y=1
+ 1120 DEF PROChighlight_internal(x,y,on)
+ 1121 IF x<2 
+        THEN PRINT TAB(menu_x(x)+3+LENmenu$(x,y),menu_top_y+y);CHR$normal_fg;CHR$156;
+ 1122 PRINT TAB(menu_x(x)-1,menu_top_y+y);
+ 1123 IF on 
+        THEN PRINT CHR$highlight_bg;CHR$157;CHR$highlight_fg 
+      ELSE PRINT "  ";CHR$normal_fg
+ 1124 ENDPROC
+ 1125 DEF PROChighlight_internal_electron(x,y,on)
+ 1126 PRINT TAB(menu_x(x),menu_top_y+y);
+ 1127 IF on 
+        THEN COLOUR 135:
+        COLOUR 0 
+      ELSE COLOUR 128:
+      COLOUR 7
+ 1128 PRINT SPC(2);menu$(x,y);SPC(2);
+ 1129 COLOUR 128:
+      COLOUR 7
+ 1130 ENDPROC
+ 1131 DEF PROCpretty_print(colour,message$)
+ 1132 prefix$=CHR$colour+STRING$( POS," ")
+ 1133 i=1
+ 1134 VDU colour
+ 1135 REPEAT
+ 1136   space=INSTR(message$," ",i+1)
+ 1137   IF space=0 
+          THEN word$=MID$(message$,i) 
+        ELSE word$=MID$(message$,i,space-i)
+ 1138   new_pos=POS+LENword$
+ 1139   IF new_pos<40 
+          THEN PRINT word$;" "; 
+        ELSE 
+        IF new_pos=40 
+          THEN PRINT word$; 
+        ELSE PRINT'prefix$;word$;" ";
+ 1140   IF POS=0 AND space<>0 
+          THEN PRINT prefix$;
+ 1141   i=space+1
+ 1142 UNTIL space=0
+ 1143 IF POS<>0 
+        THEN PRINT
+ 1144 ENDPROC
+ 1145 DEF PROCdetect_turbo
+ 1146 turbo=0<>?&8F
+ 1147 ?&40E=turbo
+ 1148 IF turbo 
+        THEN tube_ram$=" (256K)" 
+      ELSE tube_ram$=" (64K)"
+ 1149 ENDPROC
+ 1150 DEF PROCassemble_shadow_driver
+ 1151 shadow_driver=TRUE
+ 1152 IF integra_b 
+        THEN PROCassemble_shadow_driver_integra_b:
+        ENDPROC
+ 1153 IF electron AND FNusr_osbyte_x(&EF,0,&FF)=&80 
+        THEN PROCassemble_shadow_driver_electron_mrb:
+        ENDPROC
+ 1154 IF host_os=2 
+        THEN PROCassemble_shadow_driver_bbc_b_plus:
+        ENDPROC
+ 1155 IF host_os>=3 
+        THEN PROCassemble_shadow_driver_master:
+        ENDPROC
+ 1156 shadow_driver=FALSE:
+      shadow_extra$="(screen only)"
+ 1157 ENDPROC
+ 1158 DEF PROCassemble_shadow_driver_electron_mrb
+ 1159 FOR opt%=0 TO 2 STEP 2
+ 1160   P%=&8C4
+ 1161   [OPT opt%
+ 1162   CMP #&30:
+        BCS copy_from_shadow
+ 1163   STA lda_abs_x+2
+ 1164   LDX #0
+ 1165   .copy_to_shadow_loop
+ 1166   .lda_abs_x
+ 1167   LDA &FF00,X 
+ 1168   BIT our_rts:
+        JSR &FBFD 
+ 1169   INX
+ 1170   BNE copy_to_shadow_loop
+ 1171   .our_rts
+ 1172   RTS
+ 1173   .copy_from_shadow
+ 1174   STY sta_abs_x+2:
+        TAY
+ 1175   LDX #0
+ 1176   .copy_from_shadow_loop
+ 1177   CLV:
+        JSR &FBFD 
+ 1178   .sta_abs_x
+ 1179   STA &FF00,X 
+ 1180   INX
+ 1181   BNE copy_from_shadow_loop
+ 1182   RTS
+ 1183   ]
+ 1184 NEXT
+ 1185 ENDPROC
+ 1186 DEF PROCassemble_shadow_driver_integra_b
+ 1187 FOR opt%=0 TO 2 STEP 2
+ 1188   P%=&8C4
+ 1189   [OPT opt%
+ 1190   STA lda_abs_y+2:
+        STY sta_abs_y+2
+ 1191   LDA #&6C:
+        LDX #1:
+        JSR &FFF4 
+ 1192   LDY #0
+ 1193   .copy_loop
+ 1194   .lda_abs_y
+ 1195   LDA &FF00,Y 
+ 1196   .sta_abs_y
+ 1197   STA &FF00,Y 
+ 1198   DEY
+ 1199   BNE copy_loop
+ 1200   LDA #&6C:
+        LDX #0:
+        JSR &FFF4 
+ 1201   RTS
+ 1202   ]
+ 1203 NEXT
+ 1204 ENDPROC
+ 1205 DEF PROCassemble_shadow_driver_bbc_b_plus
+ 1206 private_ram_in_use=FALSE
+ 1207 extended_vector_table=&D9F
+ 1208 FOR vector=0 TO 26
+ 1209   IF extended_vector_table?(vector*3+2)>=128 
+          THEN private_ram_in_use=TRUE
+ 1210 NEXT
+ 1211 IF private_ram_in_use 
+        THEN PROCassemble_shadow_driver_bbc_b_plus_os:
+        ENDPROC
+ 1212 shadow_copy_private_ram=&AF00
+ 1213 FOR opt%=0 TO 2 STEP 2
+ 1214   P%=&8C4
+ 1215   [OPT opt%
+ 1216   LDX &F4:
+        STX lda_imm_bank+1
+ 1217   LDX #128:
+        STX &F4:
+        STX &FE30
+ 1218   JMP shadow_copy_private_ram
+ 1219   .stub_finish
+ 1220   .lda_imm_bank
+ 1221   LDA #0 
+ 1222   STA &F4:
+        STA &FE30
+ 1223   RTS
+ 1224   ]
+ 1225   O%=block%:
+        P%=shadow_copy_private_ram
+ 1226   shadow_copy_low_ram=O%
+ 1227   [OPT opt%+4
+ 1228   STA lda_abs_y+2:
+        STY sta_abs_y+2
+ 1229   LDY #0
+ 1230   .copy_loop
+ 1231   .lda_abs_y
+ 1232   LDA &FF00,Y 
+ 1233   .sta_abs_y
+ 1234   STA &FF00,Y 
+ 1235   DEY
+ 1236   BNE copy_loop
+ 1237   JMP stub_finish
+ 1238   ]
+ 1239   shadow_copy_low_ram_end=O%
+ 1240   P%=O%
+ 1241   [OPT opt%
+ 1242   .copy_to_private_ram
+ 1243   LDA &F4:
+        STA &70
+ 1244   LDA #128:
+        STA &F4:
+        STA &FE30
+ 1245   LDY #shadow_copy_low_ram_end-shadow_copy_low_ram-1
+ 1246   .copy_to_private_ram_loop
+ 1247   LDA shadow_copy_low_ram,Y:
+        STA shadow_copy_private_ram,Y
+ 1248   DEY:
+        CPY #&FF:
+        BNE copy_to_private_ram_loop
+ 1249   LDA &70:
+        STA &F4:
+        STA &FE30
+ 1250   RTS
+ 1251   ]
+ 1252 NEXT
+ 1253 CALL copy_to_private_ram
+ 1254 ENDPROC
+ 1255 DEF PROCassemble_shadow_driver_bbc_b_plus_os
+ 1256 shadow_extra$="(via OS)"
+ 1257 FOR opt%=0 TO 2 STEP 2
+ 1258   P%=&8C4
+ 1259   [OPT opt%
+ 1260   CMP #&30:
+        BCS copy_from_shadow
+ 1261   STA lda_abs_y+2:
+        STY &D7
+ 1262   LDY #0:
+        STY &D6
+ 1263   .copy_to_shadow_loop
+ 1264   .lda_abs_y
+ 1265   LDA &FF00,Y 
+ 1266   JSR &FFB3 
+ 1267   INY
+ 1268   BNE copy_to_shadow_loop
+ 1269   RTS
+ 1270   .copy_from_shadow
+ 1271   STA &F7:
+        STY sta_abs+2
+ 1272   LDY #0:
+        STY &F6
+ 1273   .copy_from_shadow_loop
+ 1274   JSR &FFB9 
+ 1275   .sta_abs
+ 1276   STA &FF00 
+ 1277   INC &F6
+ 1278   INC sta_abs+1
+ 1279   BNE copy_from_shadow_loop
+ 1280   RTS
+ 1281   ]
+ 1282 NEXT
+ 1283 ENDPROC
+ 1284 DEF PROCassemble_shadow_driver_master
+ 1285 FOR opt%=0 TO 2 STEP 2
+ 1286   P%=&8C4
+ 1287   [OPT opt%
+ 1288   STA lda_abs_y+2:
+        STY sta_abs_y+2
+ 1289   LDA #4:
+        TSB &FE34 
+ 1290   LDY #0
+ 1291   .copy_loop
+ 1292   .lda_abs_y
+ 1293   LDA &FF00,Y 
+ 1294   .sta_abs_y
+ 1295   STA &FF00,Y 
+ 1296   DEY
+ 1297   BNE copy_loop
+ 1298   LDA #4:
+        TRB &FE34 
+ 1299   RTS
+ 1300   ]
+ 1301 NEXT
+ 1302 ENDPROC
+ 1303 DEF PROCdetect_swr
+ 1304 swr_banks=FNpeek(&904):
+      swr$=""
+ 1305 swr_adjust=0
+ 1306 IF NOT tube 
+        THEN PROCdetect_private_ram
+ 1307 IF FNpeek(&903)>2 
+        THEN swr$="("+STR$(swr_banks*16)+"K unsupported sideways RAM)"
+ 1308 swr_size=&4000*FNpeek(&904)-swr_adjust
+ 1309 IF swr_banks=0 
+        THEN ENDPROC
+ 1310 IF swr_size<=12*1024 
+        THEN swr$="12K private RAM":
+        ENDPROC
+ 1311 swr$=STR$(swr_size DIV 1024)+"K sideways RAM (bank":
+      IF swr_banks>1 
+        THEN swr$=swr$+"s"
+ 1312 swr$=swr$+" &":
+      FOR i=0 TO swr_banks-1:
+        bank=FNpeek(&905+i)
+ 1313   IF bank>=64 
+          THEN bank$="P" 
+        ELSE bank$=STR$~bank
+ 1314   swr$=swr$+bank$:
+      NEXT:
+      swr$=swr$+")"
+ 1315 ENDPROC
+ 1316 DEF PROCdetect_private_ram
+ 1317 IF swr_banks<9 AND integra_b 
+        THEN swr_banks?&905=64:
+        swr_banks=swr_banks+1:
+        ?&904=swr_banks:
+        swr_adjust=16*1024-&2C00
+ 1318 IF swr_banks<9 AND host_os=2 
+        THEN 
+        IF NOT private_ram_in_use 
+          THEN swr_banks?&905=128:
+          swr_banks=swr_banks+1:
+          ?&904=swr_banks:
+          swr_adjust=16*1024-&2E00
+ 1319 ENDPROC
+ 1320 DEF PROCunsupported_machine(machine$):
+      PROCdie("Sorry, this game won't run on "+machine$+".")
+ 1321 DEF PROCdie_ram(amount,ram_type$):
+      PROCdie("Sorry, you need at least "+STR$(amount/1024)+"K more "+ram_type$+".")
+ 1322 DEF PROCshow_mode_keys
+ 1323 mode_keys_last_max_y=mode_keys_last_max_y
+ 1324 IF mode_keys_last_max_y=0 
+        THEN PRINT TAB(0,mode_keys_vpos);CHR$header_fg;"In-game controls:" 
+      ELSE PRINT TAB(0,mode_keys_vpos+1);
+ 1325 PRINT CHR$normal_fg;"  SHIFT:  show next page of text"
+ 1326 IF ?screen_mode=7 
+        THEN PRINT CHR$normal_fg;"  CTRL-F: change status line colour"
+ 1327 IF ?screen_mode=7 
+        THEN PRINT CHR$normal_fg;"  CTRL-I: change input colour      "
+ 1328 IF ?screen_mode<>7 
+        THEN PRINT CHR$normal_fg;"  CTRL-F: change foreground colour "
+ 1329 IF ?screen_mode<>7 
+        THEN PRINT CHR$normal_fg;"  CTRL-B: change background colour "
+ 1330 IF ?screen_mode<>7 
+        THEN PRINT CHR$normal_fg;"  CTRL-S: change scrolling mode    "
+ 1331 IF VPOS<mode_keys_last_max_y 
+        THEN PRINT SPC(40*(mode_keys_last_max_y-VPOS));
+ 1332 mode_keys_last_max_y=VPOS
+ 1333 ENDPROC
+ 1334 DEF PROCspace
+ 1335 PRINT TAB(0,space_y);CHR$normal_fg;"Press SPACE/RETURN to start the game...";
+ 1336 ENDPROC
+ 1337 DEF FNis_mode_7(x)=LEFT$(menu$(x,0),1)="7"
+ 1338 DEF PROCoscli($block%):
+      X%=block%:
+      Y%=X%DIV256:
+      CALL&FFF7:
+      ENDPROC
+ 1339 DEF FNpeek(addr):
+      !block%=&FFFF0000 OR addr:
+      A%=5:
+      X%=block%:
+      Y%=block% DIV 256:
+      CALL &FFF1:
+      =block%?4
+ 1340 DEF FNfs:
+      A%=0:
+      Y%=0:
+      =USR&FFDA AND &FF
+ 1341 DEF FNpath
+ 1342 DIM data% 256
+ 1343 path$=""
+ 1344 REPEAT
+ 1345   block%!1=data%
+ 1346   A%=6:
+        X%=block%:
+        Y%=block% DIV 256:
+        CALL &FFD1
+ 1347   name=data%+1+?data%
+ 1348   name?(1+?name)=13
+ 1349   name$=FNstrip($(name+1))
+ 1350   path$=name$+"."+path$
+ 1351   IF name$<>"$" AND name$<>"&" 
+          THEN *DIR ^
+ 1352 UNTIL name$="$" OR name$="&"
+ 1353 path$=LEFT$(path$,LEN(path$)-1)
+ 1354 ?name=13
+ 1355 drive$=FNstrip($(data%+1))
+ 1356 IF drive$<>"" 
+        THEN path$=":"+drive$+"."+path$
+ 1357 PROCoscli("DIR "+path$)
+ 1358 =path$
+ 1359 DEF FNstrip(s$)
+ 1360 s$=s$+" "
+ 1361 REPEAT:
+        s$=LEFT$(s$,LEN(s$)-1):
+      UNTIL RIGHT$(s$,1)<>" "
+ 1362 =s$
+ 1363 DEF FNmax(a,b):
+      IF a<b 
+        THEN =b 
+      ELSE =a

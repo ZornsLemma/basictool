@@ -2,4 +2,6 @@ roms/*
 src/bintoinc
 src/zz-*.c
 src/*.o
+test/out/*.out
+test/tmp/zz-test-*.bas
 basictool

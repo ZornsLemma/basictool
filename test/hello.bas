@@ -1,2 +1,2 @@
 PRINT "Hello, world!"
-PRINT "Goodbyte, world!"
+PRINT "Goodbye, world!"
