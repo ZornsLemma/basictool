@@ -86,7 +86,6 @@ enum option_id {
     oi_ascii
 };
 
-// TODO: should probably be more consisting about omitting words like "the" in the help descriptions
 static struct cag_option options[] = {
     { .identifier = oi_help,
       .access_letters = "h",
@@ -96,7 +95,7 @@ static struct cag_option options[] = {
     { .identifier = oi_roms,
       .access_letters = 0,
       .access_name = "roms",
-      .description = "show information about the ROMs used and exit" },
+      .description = "show information about ROMs used and exit" },
 
     { .identifier = oi_verbose,
       .access_letters = "v",
@@ -111,7 +110,7 @@ static struct cag_option options[] = {
     { .identifier = oi_input_tokenised,
       .access_letters = 0,
       .access_name = "input-tokenised",
-      .description = "assume the input is tokenised BASIC instead of auto-detecting" },
+      .description = "assume input is tokenised BASIC, don't auto-detect" },
 
     { .identifier = oi_keep_spaces,
       .access_letters = "k",
@@ -131,10 +130,11 @@ static struct cag_option options[] = {
     { .identifier = oi_pack,
       .access_letters = "p",
       .access_name = "pack",
-      .description = "pack the program to reduce its size (implied by --pack-*)" },
+      .description = "pack program to reduce its size (implied by --pack-*)" },
 
-    // TODO: Arguably these options should be named and described in "standalone"
-    // terms, not as if the user is familiar with ABE's pack questions.
+    // TODO: Arguably these options should be named and described in
+    // "standalone" terms, not as if the user is familiar with ABE's pack
+    // questions.
  
     { .identifier = oi_pack_rems_n,
       .access_letters = "",
@@ -169,7 +169,7 @@ static struct cag_option options[] = {
     { .identifier = oi_renumber,
       .access_letters = "r",
       .access_name = "renumber",
-      .description = "renumber the program (implied by --renumber-start/step)" },
+      .description = "renumber program (implied by --renumber-start/step)" },
 
     { .identifier = oi_renumber_start,
       .access_letters = 0,
@@ -248,7 +248,8 @@ static const char *parse_program_name(const char *name) {
     return program_name;
 }
 
-static int print_to_nul_and_count(const uint8_t *data, int offset, int *width) {
+static int print_to_nul_and_count(const uint8_t *data, int offset, int *width)
+{
     int c;
     bool output = false;
     for (; (c = data[offset]) != '\0'; ++offset, --(*width)) {
@@ -301,7 +302,8 @@ static void show_roms(void) {
     );
 }
 
-static long parse_long_argument(const char *name, const char *value, int min, int max) {
+static long parse_long_argument(const char *name, const char *value, int min,
+                                int max) {
     if ((value == 0) || (*value == '\0')) {
         die_help("Error: missing value for %s", name);
     }
