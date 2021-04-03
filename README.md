@@ -196,7 +196,7 @@ to see all the options.
 
 ## Building
 
-I developed basictool on Linux, but the code does not use any platform-specific functions and it should build with few or no changes on any operating system with a C99 compiler. The supplied Makefile will probably only work on Unix-like systems, but I'd hope building on Windows is not a difficult job. Pull requests to add Windows build infrastructure (Visual Studio project files, make.bat files, whatever) are welcome!
+I developed basictool on Linux, but the code does not use any platform-specific functions and it should build with few or no changes on any operating system with a C99 compiler. The supplied Makefile will probably only work on Unix-like systems, but I'd hope building on Windows is not a difficult job. Pull requests to add Windows build infrastructure (Visual Studio project files, make.bat files, whatever) are welcome! TODO: SOMEWHERE, NOT NEC RIGHT HERE, MENTION MAKE.SH
 
 TODO!
 
