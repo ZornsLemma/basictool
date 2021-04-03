@@ -8,7 +8,7 @@ static const uint16_t himem = 0x8000;
 
 // Code outside the emulation is free to read/write the emulated machine's
 // memory directly.
-M6502_Memory mpu_memory;
+extern M6502_Memory mpu_memory;
 
 // Read a little-endian 16-bit word from the emulated machine's memory.
 uint16_t mpu_read_u16(uint16_t address);
