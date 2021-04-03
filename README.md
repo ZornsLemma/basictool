@@ -196,7 +196,7 @@ I developed basictool on Linux, but the code does not use any platform-specific 
 
 ## Downloading the basictool code
 
-The simplest option is to download a release zip file from the [releases](https://github.com/ZornsLemma/basictool/releases) pages; it's probably best to pick the most recent. Unzip that somewhere using your favourite tool. If you prefer, you can "git clone" this repository and check out the branch or tag of interest.
+The simplest option is to download a release zip file from the [releases](https://github.com/ZornsLemma/basictool/releases) page; it's probably best to pick the most recent. Unzip that somewhere using your favourite tool. If you prefer, you can "git clone" this repository and check out the branch or tag of interest.
 
 ### Getting the ROM images
 
