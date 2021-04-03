@@ -1,4 +1,3 @@
-// TODO: CHECK ALL FILES TO MAKE SURE "LOCAL" FNS ARE STATIC
 #include "emulation.h"
 #include <assert.h>
 #include <setjmp.h>
