@@ -26,7 +26,7 @@ $ xxd test.tok
 00000000: 0d00 0a15 f120 2248 656c 6c6f 2c20 776f  ..... "Hello, wo
 00000010: 726c 6421 220d ff                        rld!"..
 $ # Note that test.tok is tokenised - there's no "PRINT" in xxd's output.
-$ # If you transferred test.tok to a real BBC, you could LOAD it in the usual way.
+$ # If you transferred test.tok to a BBC Micro, you could LOAD it in the usual way.
 $ # Now we have a tokenised BASIC program, we can demonstrate de-tokenising it.
 $ basictool test.tok
    10PRINT "Hello, world!"
@@ -56,6 +56,20 @@ $ basictool -p -t test3.bas test3.tok
 $ xxd test3.tok
 00000000: 0d00 0111 733d 373a 6d3d 3432 2b73 3af1  ...s=7:m=42+s:.
 00000010: 6d0d ff                                  m..
+```
+
+By specifying the "-v" (verbose) option twice when packing, additional information will be displayed during the packing process:
+```
+$ basictool -p -v -v test3.bas
+Info: Input auto-detected as ASCII text (non-tokenised) BASIC
+TOP=&0E54
+@% [0]
+my_variable [2]                                   m
+square_root_of_49 [2]                             s
+
+TOP=&0E13
+Bytes saved= 65
+    1s=7:m=42+s:PRINTm
 ```
 
 ## How it works
