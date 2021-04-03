@@ -1,5 +1,3 @@
-TODO: Actually write something!
-
 TODO: Don't forget licence stuff - add comment headers on files, a LICENCE file, something in README, etc
 
 # basictool
@@ -196,9 +194,11 @@ to see all the options.
 
 ## Building
 
-I developed basictool on Linux, but the code does not use any platform-specific functions and it should build with few or no changes on any operating system with a C99 compiler. The supplied Makefile will probably only work on Unix-like systems, but I'd hope building on Windows is not a difficult job. Pull requests to add Windows build infrastructure (Visual Studio project files, make.bat files, whatever) are welcome! TODO: SOMEWHERE, NOT NEC RIGHT HERE, MENTION MAKE.SH
+I developed basictool on Linux, but the code does not use any platform-specific features and should build with few or no changes on any operating system with a C99 compiler.
 
-TODO!
+## Downloading the basictool code
+
+The simplest option is to download a release zip file from the [releases](https://github.com/ZornsLemma/basictool/releases) pages; it's probably best to pick the most recent. Unzip that somewhere using your favourite tool. If you prefer, you can "git clone" this repository and check out the branch or tag of interest.
 
 ### Getting the ROM images
 
@@ -209,8 +209,12 @@ You need to download three ROM images and put then in the roms subdirectory:
 
 Once you've done that, the roms subdirectory should look like this:
 ```
-$ ls
-Basic432  EDITORA100  EDITORB100
+$ ls -l
+total 52
+-rw-rw-r-- 1 steven steven 16384 Apr  3 14:26 Basic432
+-rw-rw-r-- 1 steven steven 16384 Apr  3 14:26 EDITORA100
+-rw-rw-r-- 1 steven steven 16384 Apr  3 14:26 EDITORB100
+-rw-rw-r-- 1 steven steven   177 Apr  3 14:35 README.md
 $ md5sum *
 e11eed95d1caba8aa9772e9001590585  Basic432
 101fb6907609918db50cb3cfd5408772  EDITORA100
@@ -221,14 +225,25 @@ Other versions of 6502 BBC BASIC (although not HIBASIC) will probably work, but 
 
 The ROMs are compiled into the executable, so these files are only need when building - the resulting executable is self-contained and can be copied to wherever you want to install it.
 
-## Credits
+### Compiling
 
-6502 emulation is performed using lib6502. This was originally written by Ian Piumarta, but the versions of lib6502.[ch] included here are taken from [PiTubeDirect](https://github.com/hoglet67/PiTubeClient).
+If you're on a Unix-like system, you should just be able to do:
+```
+$ cd src
+$ make
+```
+This will create a basictool executable in the top-level project directory, i.e. the one above src.
 
-Cross-platform command line parsing (cargs.[ch]) is performed using [cargs](https://github.com/likle/cargs).
+The executable has the ROM images compiled into it, so it can be copied wherever you want to install it and it should just work.
 
-TODO BASIC ROM
+If you're not on a Unix-like system you may need to create your own build script or project file for your IDE. src/Makefile may be a good starting point; alternatively there is a simple shell script src/make.sh which will perform a build and it may be easiest for you to translate that into your platform's equivalent of a shell script. If you do this, please consider sending me the results so I can add them and make it easier for other people to build on your platform.
 
-TODO: INCLUDE THE TEXT (OR A MILDLY MORE READABLE VARIANT) FROM THE "--roms" HELP ABOUT BASIC EDITOR/UTILITIES (ALTRA, BAILDON)
+## Credits and thanks
 
-TODO: DAVE
+* The BASIC editor and utilities were originally published separately by Altra. The Advanced BASIC Editor ROMs used here are (C) Baildon Electronics. The Advanced BASIC Editor ROM images linked above are hosted on stardot and were posted by J. G. Harston. Thanks to Dave Hitchens for his support for developing basictool using these ROMs.
+
+* BBC BASIC was (of course) originally published by Acorn. The BASIC 4r32 image linked above is hosted on mdfs.net.
+
+* 6502 emulation is performed using lib6502. This was originally written by Ian Piumarta, but the versions of lib6502.[ch] included here are taken from [PiTubeDirect](https://github.com/hoglet67/PiTubeClient).
+
+* Cross-platform command line parsing (cargs.[ch]) is performed using [cargs](https://github.com/likle/cargs).
