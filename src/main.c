@@ -19,8 +19,6 @@
 // ABE runs at &8000 so probably can't work with HIBASIC-sized programs), but
 // let's not worry about that yet.
 //
-// TODO: Check I've implemented --verbose everywhere it's useful
-//
 // TODO: It might be nice to expose ABE's "unpack" option, but my experiments
 // with it (on b-em, not this hacky emulator) suggest it's quite fiddly and may
 // ask you to renumber lines several times. I will leave this for now.
@@ -86,6 +84,10 @@ enum option_id {
     oi_ascii
 };
 
+// These options are roughly ordered so that they follow the order of
+// processing. First we load the program (so we have options related to
+// loading), then we maybe pack (so options related to packing are next), then
+// we output something (so options related to that are next).
 static struct cag_option options[] = {
     { .identifier = oi_help,
       .access_letters = "h",
@@ -327,7 +329,7 @@ int main(int argc, char *argv[]) {
                 printf(
 "%s " VERSION "\n"
 "Usage: %s [OPTION]... INPUTFILE [OUTPUTFILE]\n"
-"INPUTFILE should be ASCII or tokenised BBC BASIC.\n"
+"INPUTFILE should be ASCII text (non-tokenised) or tokenised BBC BASIC.\n"
 "(A filename of \"-\" indicates standard input/output.)\n"
 "\n"
 "Tokenise, de-tokenise, pack and analyse BBC BASIC programs.\n"
