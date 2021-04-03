@@ -77,11 +77,11 @@ enum option_id {
     oi_renumber_start,
     oi_renumber_step,
     oi_listo,
+    oi_output_ascii,
+    oi_output_tokenised,
     oi_format,
     oi_line_ref,
-    oi_variable_xref,
-    oi_tokenise,
-    oi_ascii
+    oi_variable_xref
 };
 
 // These options are roughly ordered so that they follow the order of
@@ -192,12 +192,12 @@ static struct cag_option options[] = {
       .description = "use LISTO N to indent ASCII output\n\nOutput type options (pick one only):" },
 
     // TODO: REORDER ENUM LIST AND MAIN SWITCH() TO MATCH ORDER
-    { .identifier = oi_ascii,
+    { .identifier = oi_output_ascii,
       .access_letters = "a",
       .access_name = "ascii",
       .description = "output ASCII text (non-tokenised) BASIC (default)" },
 
-    { .identifier = oi_tokenise,
+    { .identifier = oi_output_tokenised,
       .access_letters = "t",
       .access_name = "tokenise",
       .description = "output tokenised BASIC" },
@@ -427,6 +427,18 @@ int main(int argc, char *argv[]) {
                     "--listo", cag_option_get_value(&context), 0, 7);
                 break;
 
+            case oi_output_ascii:
+                config.output_ascii = true;
+                break;
+
+            case oi_output_tokenised:
+                // TODO: Should we require some kind of force option if this
+                // is set and we're writing to stdout? But stdout could be a
+                // file, should we get unportable and check if stdout is a
+                // terminal as well?
+                config.output_tokenised = true;
+                break;
+
             case oi_format:
                 config.format = true;
                 break;
@@ -437,18 +449,6 @@ int main(int argc, char *argv[]) {
 
             case oi_variable_xref:
                 config.variable_xref = true;
-                break;
-
-            case oi_tokenise:
-                // TODO: Should we require some kind of force option if this
-                // is set and we're writing to stdout? But stdout could be a
-                // file, should we get unportable and check if stdout is a
-                // terminal as well?
-                config.output_tokenised = true;
-                break;
-
-            case oi_ascii:
-                config.output_ascii = true;
                 break;
 
             default:
