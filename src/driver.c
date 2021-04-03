@@ -101,7 +101,7 @@ void driver_oswrch(uint8_t c) {
 
     if ((po_cursor_x + 2) > po_buffer_size) {
         if (po_buffer_size == 0) {
-            po_buffer_size = 4; // TODO: make 64 or 128 or something
+            po_buffer_size = 128;
         } else {
             po_buffer_size *= 2;
         }
@@ -467,7 +467,5 @@ void save_variable_xref(const char *filename) {
 // TODO: Test with invalid input - we don't want to be hanging if we can avoid it
 
 // TODO: Formatting of error messages is very inconsistent, e.g. use of Error: prefix - this is better now, but well worth reviewing later
-
-// TODO: Should create a test suite, which should include input text files with different line terminators and unterminated last lines - I should probably bundle the test files up in a .tar.gz so git can't mangle the line endings, although this is perhaps a bit error prone (I edit a test file and it is corrupted) - perhaps the test suite should "echo" the line-ending sensitive tests to create them on the fly, then I can use git for everything else
 
 // vi: colorcolumn=80
