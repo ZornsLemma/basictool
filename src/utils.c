@@ -109,16 +109,17 @@ char *load_binary(const char *filename, size_t *length) {
     // Since we're dealing with BASIC programs on a 32K-ish machine, we don't
     // need to handle arbitrarily large files.
     const int max_size = 64 * 1024;
-    // We secretly allocate an extra byte for get_line() to use in case the
-    // last line of a text file doesn't have a terminator.
-    char *data = check_alloc(malloc(max_size + 1));
+    char *data = check_alloc(malloc(max_size));
     *length = fread(data, 1, max_size, file);
     check(!ferror(file), "Error: Error reading from input file \"%s\"",
           filename);
     check(feof(file), "Error: Input file \"%s\" is too large", filename);
     check(fclose(file) == 0, "Error: Error closing input file \"%s\"",
           filename);
-    return data;
+    // Shrink the allocated block down from max_size to the size we actually
+    // need. We secretly allocate an extra byte for get_line() to use in case
+    // the last line of a text file doesn't have a terminator.
+    return check_alloc(realloc(data, *length + 1));
 }
 
 // TODO: Review this later, I think there are no missing corner cases (now!)
