@@ -470,8 +470,4 @@ void save_variable_xref(const char *filename) {
 
 // TODO: Should create a test suite, which should include input text files with different line terminators and unterminated last lines - I should probably bundle the test files up in a .tar.gz so git can't mangle the line endings, although this is perhaps a bit error prone (I edit a test file and it is corrupted) - perhaps the test suite should "echo" the line-ending sensitive tests to create them on the fly, then I can use git for everything else
 
-// TODO: Should probably test under something like valgrind
-
-// TODO: I'm being very casual about mixing char/uint8_t/int. It *may* be wise to use char for input/output - that is relatively pure ASCII, although some care is needed as there might be non-ASCII chars mixed in. For cases where I'm dealing with tokenised BASIC or raw 6502 memory not containing (near) ASCII, unsigned char might be a better bet. But think about it.
-
 // vi: colorcolumn=80
