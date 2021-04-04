@@ -29,6 +29,13 @@
 // "table line references" option to try (we'd never get it perfect, due to
 // things like calculated line numbers) to remove line numbers except where
 // they're not used.
+//
+// TODO: It might be nice if basictool could internally take the unpack
+// output (without writing it to a file) and "loop round" to treat that as
+// input, allowing it to be tokenised on the second pass. This would break
+// my "just use filenames[0] and [1]" approach to knowing where to get data
+// from, though - in this case the second pass would be taking input from
+// memory, not a file.
 
 #include "main.h"
 #include <assert.h>

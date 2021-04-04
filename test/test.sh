@@ -29,7 +29,7 @@ echo -en "A=3\n\rB=4\n\rC=5\n\r" > zz-test-lfcr.bas
 cd ..
 
 BASICTOOL="$VALGRIND ../basictool"
-TESTS="hello.bas loader.tok tmp/zz-test-*.bas"
+TESTS="hello.bas loader.tok loader-packed.tok tmp/zz-test-*.bas"
 
 # TODO: We could also test stderr (especially with -vv) but let's not get too
 # complex for now.
@@ -40,6 +40,7 @@ for TEST in $TESTS; do
 	$BASICTOOL -t $TEST > out/$BASENAME-t.out
 	$BASICTOOL -t --pack $TEST > out/$BASENAME-t-pack.out
 	$BASICTOOL -f $TEST > out/$BASENAME-f.out
+	$BASICTOOL -u --renumber-step 100 $TEST > out/$BASENAME-u.out
 	$BASICTOOL --line-ref $TEST > out/$BASENAME-line-ref.out
 	$BASICTOOL --variable-xref $TEST > out/$BASENAME-variable-xref.out
 done

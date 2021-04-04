@@ -492,7 +492,6 @@ void save_formatted_basic(void) {
     ensure_output_file_closed();
 }
 
-// TODO: ADD UNPACK TO TEST SUITE!
 void save_unpacked_basic(void) {
     execute_butil();
     output_state = os_unpack_discard_command;

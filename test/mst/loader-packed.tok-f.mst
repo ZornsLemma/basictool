@@ -1,0 +1,692 @@
+    1 *FX229,1
+    2 *FX4,1
+    3 V=FALSE:
+      ON ERROR GOTO 100
+    5 V=FNu(&49,&FF,0)=&49:
+      ON ERROR PROCe
+  102 *EXEC
+  103 CLOSE#0:
+      A%=&85:
+      X%=135:
+      po=(USR&FFF4AND&FFFF00)DIV&100:
+      IFpo=&8000AND HIMEM<&8000
+        THEN MODE135:
+        CHAIN"LOADER"
+  106 VDU23,16,0,254,0;0;0;:
+      f=&409:
+      C=&40A:
+      ?&40B=3:
+      s=&403:
+      DIMb%256:
+      A%=0:
+      X%=1:
+      h=(USR&FFF4AND&FF00)DIV&100:
+      IFV 
+        THENh=1
+  114 e=h=0:
+      */FINDSWR
+  116 ON ERROR GOTO 500
+  117 *INFO XYZZY1
+  500 ON ERROR PROCe
+  501 sh=po=&8000:
+      F$="":
+      t=PAGE<&E00:
+      IFt 
+        THEN PROCd
+  505 pr=FALSE:
+      IFsh AND NOTt 
+        THEN PROCa
+  507 PROCt:
+      MODE135:
+      VDU23,1,0;0;0;0;:
+      ?f=7:
+      ?C=4:
+      IFe 
+        THEN VDU19,0,?C,0;0,19,7,?f,0;0
+  511 IFe 
+        THEN PROCl 
+      ELSE PROCb
+  512 z=&87:
+      no=z+16:
+      S=&83:
+      T=&83:
+      U=&81:
+      L=0:
+      IFe 
+        THENz=0:
+        no=32:
+        S=0:
+        L=32
+  514 PRINT CHR$S;"Hardware detected:":
+      v=VPOS:
+      IFt 
+        THEN PRINT CHR$z;"  Second processor";t$
+  517 IFsh 
+        THEN PRINT CHR$z;"  Shadow RAM ";F$
+  518 IFG$<>""
+        THEN PRINT CHR$z;"  ";G$
+  519 IFv=VPOS 
+        THEN PRINT CHR$z;"  None"
+  520 PRINT:
+      K=VPOS:
+      PROCc:
+      IFt ORsh 
+        THEN PROCm 
+      ELSE?s=7+e:
+      m=VPOS:
+      PROCs:
+      PROCp:
+      REPEAT 
+      UNTIL FNh(GET)
+  524 IF?s=7
+        THEN?f=6
+  525 PRINT TAB(0,sp);CHR$z;"Loading:";:
+      ps=POS:
+      PRINT"                               ";:
+      PRINT TAB(ps,sp);CHR$no;:
+      VDU23,255,-1;-1;-1;-1;:
+      IFt 
+        THEN*/:
+        0.$.CACHE2P
+  529 IF NOTt 
+        THEN?&408=FNc DIV256
+  530 O=FNf:
+      IFO<>4
+        THENp$=FNp
+  532 IFO=5
+        THEN*DIR
+  533 ON ERROR GOTO 1000
+  534 IFO=4
+        THEN PROCo("DIR S")
+      ELSE*DIR SAVES
+ 1000 ON ERROR PROCe
+ 1001 IFO=4
+        THENf$="/"+b$
+      ELSEf$=p$+".DATA"
+ 1002 IF LENf$>=49
+        THEN PROCi("Game data path too long")
+ 1003 P=&42F:
+      $P=f$:
+      *FX4,0
+ 1006 IFO=4
+        THEN PROCo($P)
+      ELSE PROCo("/"+p$+"."+b$)
+ 1007 END
+ 1008 DEF PROCe:
+      CLS:
+      REPORT:
+      PRINT" at line ";ERL:
+      PROCf
+ 1009 DEF PROCi(m$):
+      VDU28,0,sp,39,K,12:
+      PROCr(z,m$):
+      PRINT
+ 1013 DEF PROCf:
+      *FX229,0
+ 1015 *FX4,0
+ 1016 END
+ 1017 DEF PROCl:
+      VDU23,128,0;0,255,255,0,0;:
+      PRINT TAB(0,23);STRING$(40,CHR$128);"Powered by Ozmoo 6.0 (Acorn alpha 16)";:
+      IF POS=0
+        THEN VDU30,11
+      ELSE VDU30
+ 1021 PRINT"Hollywoo";:
+      IF POS>0
+        THEN PRINT
+ 1022 PRINT STRING$(40,CHR$128);:
+      PRINT:
+      sp=22:
+      ENDPROC
+ 1025 DEF PROCb:
+      PRINT TAB(0,21);:
+      PRINT:
+      PRINT:
+      PRINT CHR$147;",,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,";:
+      PRINT CHR$131;"Powered by Ozmoo 6.0 (Acorn alpha 16)";:
+      IF POS=0
+        THEN VDU30,11
+      ELSE VDU30
+ 1031 PRINT CHR$141;"Hollywoo":
+      PRINT CHR$141;"Hollywoo":
+      PRINT CHR$147;",,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,";:
+      PRINT:
+      PRINT TAB(0,4);:
+      sp=22:
+      ENDPROC
+ 1037 DEF PROCc:
+      IFt 
+        THENb$=":0.$.OZMOO2P":
+        ENDPROC
+ 1039 PROCh:
+      IF PAGE>Y 
+        THEN PROCi("Sorry, you need PAGE<=&"+STR$~Y+"; it is &"+STR$~ PAGE+".")
+ 1041 M=Y-PAGE:
+      IFV 
+        THENvm=&2C00
+      ELSEvm=0
+ 1043 Q=sw-vm:
+      IFZ 
+        THEN PROCk:
+        ENDPROC
+ 1045 Q=Q-sr:
+      IFQ<0
+        THENM=M+Q:
+        Q=0
+ 1047 PROCu(&400):
+      IFM<0
+        THEN PROC_(-M,"main or sideways RAM")
+ 1049 R=M:
+      ENDPROC
+ 1051 DEF PROCk:
+      Q=Q-sr:
+      PROCu(&400):
+      IFQ<0
+        THEN PROC_(-Q,"sideways RAM")
+ 1055 IFM<0
+        THEN PROC_(-M,"main RAM")
+ 1056 R=M:
+      ENDPROC
+ 1058 DEF PROCu(n):
+      IFvm>0
+        THENd=FNm(n,vm):
+        vm=vm-d:
+        n=n-d
+ 1060 IFQ>0
+        THENd=FNm(n,Q):
+        Q=Q-d:
+        n=n-d
+ 1061 M=M-n:
+      ENDPROC
+ 1063 DEF FNc:
+      p=PAGE:
+      IF NOTsh 
+        THEN=p
+ 1066 IF NOTsa 
+        THEN=p
+ 1067 IF?s=0
+        THEN=p
+ 1068 sd=FNm(4*256,R):
+      IFp+sd>=&3000
+        THENsd=&3000-p
+ 1070 IFsd<512
+        THENsd=0
+ 1071 =p+sd
+ 1072 DEF FNm(a,b):
+      IFa<b 
+        THEN=a 
+      ELSE=b
+ 1074 DEF FNu(A%,X%,Y%)=(USR&FFF4AND&FF00)DIV&100
+ 1075 DEF PROCh:
+      IFe 
+        THENb$=":0.$.OZMOOE":
+        Y=6400:
+        sr=&3000:
+        Z=TRUE:
+        ENDPROC
+ 1077 IFsh 
+        THENb$=":0.$.OZMOOSH":
+        Y=8960:
+        sr=0:
+        Z=FALSE:
+        ENDPROC
+ 1078 b$=":0.$.OZMOOB":
+      Y=8448:
+      sr=-&400:
+      Z=FALSE:
+      ENDPROC
+ 1080 DEF PROCm:
+      DIMm(8),A(8):
+      j=2:
+      q=1:
+      DIMm$(j,q),B(j):
+      m$(0,0)="0) 80x32":
+      m$(0,1)="3) 80x25":
+      m$(1,0)="4) 40x32":
+      m$(1,1)="6) 40x25":
+      m$(2,0)="7) 40x25   ":
+      m$(2,1)="   teletext":
+      IFe 
+        THENj=1:
+        B$="0346"
+      ELSEB$="03467"
+ 1092 FORy=q TO0STEP-1:
+        FORx=0TOj:
+          r=VAL LEFT$(m$(x,y),1):
+          m(r)=x:
+          A(r)=y:
+        NEXT:
+      NEXT:
+      PRINT CHR$S;"Screen mode:";CHR$z;CHR$L;"(hit ";:
+      H$="":
+      FORi=1TO LEN(B$):
+        PRINTH$;MID$(B$,i,1);:
+        H$="/":
+      NEXT:
+      PRINT" to change)":
+      u=VPOS:
+      IFj=2
+        THENg=0
+      ELSEg=5
+ 1096 FORy=0TOq:
+        PRINT TAB(0,u+y);CHR$z;:
+        FORx=0TOj:
+          B(x)=POS:
+          PRINT SPC2;m$(x,y);SPC(2+g);:
+        NEXT:
+      NEXT:
+      m=u+q+2:
+      C$="7":
+      IF INSTR(B$,C$)=0
+        THENC$=RIGHT$(B$,1)
+ 1099 x=m(VALC$):
+      y=A(VALC$):
+      PROCg(x,y,TRUE):
+      PROCp:
+      REPEAT:
+        o=x:
+        ol=y:
+        k=GET:
+        IFk=136ANDx>0
+          THENx=x-1
+ 1104   IFk=137ANDx<j 
+          THENx=x+1
+ 1105   IFk=138ANDy<q 
+          THENy=y+1
+ 1106   IFk=139ANDy>0
+          THENy=y-1
+ 1107   k$=CHR$k:
+        IF INSTR(B$,k$)<>0
+          THENx=m(VALk$):
+          IF NOT FNi(x)
+            THENy=A(VALk$)
+ 1108   IFx<>o OR(y<>ol AND NOT FNi(x))
+          THEN PROCg(o,ol,FALSE):
+          PROCg(x,y,TRUE)
+ 1109 UNTIL FNh(k):
+      ENDPROC
+ 1111 DEF FNh(k):
+      IFe ANDk=2
+        THEN?C=(?C+1)MOD8:
+        VDU19,0,?C,0;0
+ 1113 IFe ANDk=6
+        THEN?f=(?f+1)MOD8:
+        VDU19,7,?f,0;0
+ 1114 =k=32ORk=13
+ 1115 DEF PROCg(x,y,on):
+      IFon AND FNi(x)
+        THEN?s=7
+      ELSE 
+      IFon 
+        THEN?s=VAL(m$(x,y))
+ 1117 IFon 
+        THEN PROCs
+ 1118 IFe 
+        THEN PROCn(x,y,on):
+        ENDPROC
+ 1119 IF FNi(x)
+        THEN PROCA(x,0,on):
+        y=1
+ 1120 DEF PROCA(x,y,on):
+      IFx<2
+        THEN PRINT TAB(B(x)+3+LENm$(x,y),u+y);CHR$z;CHR$156;
+ 1122 PRINT TAB(B(x)-1,u+y);:
+      IFon 
+        THEN PRINT CHR$U;CHR$157;CHR$T 
+      ELSE PRINT"  ";CHR$z
+ 1124 ENDPROC
+ 1125 DEF PROCn(x,y,on):
+      PRINT TAB(B(x),u+y);:
+      IFon 
+        THEN COLOUR135:
+        COLOUR0
+      ELSE COLOUR128:
+      COLOUR7
+ 1128 PRINT SPC(2);m$(x,y);SPC(2);:
+      COLOUR128:
+      COLOUR7:
+      ENDPROC
+ 1131 DEF PROCr(c,m$):
+      E$=CHR$c+STRING$( POS," "):
+      i=1:
+      VDUc:
+      REPEAT:
+        sc=INSTR(m$," ",i+1):
+        IFsc=0
+          THENw$=MID$(m$,i)
+        ELSEw$=MID$(m$,i,sc-i)
+ 1138   ne=POS+LENw$:
+        IFne<40
+          THEN PRINTw$;" ";
+        ELSE 
+        IFne=40
+          THEN PRINTw$;
+        ELSE PRINT'E$;w$;" ";
+ 1140   IF POS=0ANDsc<>0
+          THEN PRINTE$;
+ 1141   i=sc+1:
+      UNTILsc=0:
+      IF POS<>0
+        THEN PRINT
+ 1144 ENDPROC
+ 1145 DEF PROCd:
+      tu=0<>?&8F:
+      ?&40E=tu:
+      IFtu 
+        THENt$=" (256K)"
+      ELSEt$=" (64K)"
+ 1149 ENDPROC
+ 1150 DEF PROCa:
+      sa=TRUE:
+      IFV 
+        THEN PROCw:
+        ENDPROC
+ 1153 IFe AND FNu(&EF,0,&FF)=&80
+        THEN PROCv:
+        ENDPROC
+ 1154 IFh=2
+        THEN PROCB:
+        ENDPROC
+ 1155 IFh>=3
+        THEN PROCC:
+        ENDPROC
+ 1156 sa=FALSE:
+      F$="(screen only)":
+      ENDPROC
+ 1158 DEF PROCv:
+      FORo%=0TO2STEP2:
+        P%=&8C4:
+        [OPT o%:
+        CMP#&30:
+        BCS F:
+        STA l+2:
+        LDX#0:
+        .E:
+        .l:
+        LDA&FF00,X:
+        BIT ou:
+        JSR&FBFD:
+        INX:
+        BNE E:
+        .ou:
+        RTS:
+        .F:
+        STY st+2:
+        TAY:
+        LDX#0:
+        .G:
+        CLV:
+        JSR&FBFD:
+        .st:
+        STA&FF00,X:
+        INX:
+        BNE G:
+        RTS:
+        ]:
+      NEXT:
+      ENDPROC
+ 1186 DEF PROCw:
+      FORo%=0TO2STEP2:
+        P%=&8C4:
+        [OPT o%:
+        STA W+2:
+        STY s_+2:
+        LDA#&6C:
+        LDX#1:
+        JSR&FFF4:
+        LDY#0:
+        .H:
+        .W:
+        LDA&FF00,Y:
+        .s_:
+        STA&FF00,Y:
+        DEY:
+        BNE H:
+        LDA#&6C:
+        LDX#0:
+        JSR&FFF4:
+        RTS:
+        ]:
+      NEXT:
+      ENDPROC
+ 1205 DEF PROCB:
+      pr=FALSE:
+      N=&D9F:
+      FORve=0TO26:
+        IFN?(ve*3+2)>=128
+          THENpr=TRUE
+ 1210 NEXT:
+      IFpr 
+        THEN PROCD:
+        ENDPROC
+ 1212 so=&AF00:
+      FORo%=0TO2STEP2:
+        P%=&8C4:
+        [OPT o%:
+        LDX&F4:
+        STX X+1:
+        LDX#128:
+        STX&F4:
+        STX&FE30:
+        JMP so:
+        .su:
+        .X:
+        LDA#0:
+        STA&F4:
+        STA&FE30:
+        RTS:
+        ]:
+        O%=b%:
+        P%=so:
+        sy=O%:
+        [OPT o%+4:
+        STA W+2:
+        STY s_+2:
+        LDY#0:
+        .H:
+        .W:
+        LDA&FF00,Y:
+        .s_:
+        STA&FF00,Y:
+        DEY:
+        BNE H:
+        JMP su:
+        ]:
+        sl=O%:
+        P%=O%:
+        [OPT o%:
+        .I
+ 1243   LDA&F4:
+        STA&70:
+        LDA#128:
+        STA&F4:
+        STA&FE30:
+        LDY#sl-sy-1:
+        .J:
+        LDA sy,Y:
+        STA so,Y:
+        DEY:
+        CPY#&FF:
+        BNE J:
+        LDA&70:
+        STA&F4:
+        STA&FE30:
+        RTS:
+        ]:
+      NEXT:
+      CALLI:
+      ENDPROC
+ 1255 DEF PROCD:
+      F$="(via OS)":
+      FORo%=0TO2STEP2:
+        P%=&8C4:
+        [OPT o%:
+        CMP#&30:
+        BCS F:
+        STA W+2:
+        STY&D7:
+        LDY#0:
+        STY&D6:
+        .E:
+        .W:
+        LDA&FF00,Y:
+        JSR&FFB3:
+        INY:
+        BNE E:
+        RTS:
+        .F:
+        STA&F7:
+        STY sb+2:
+        LDY#0:
+        STY&F6:
+        .G:
+        JSR&FFB9:
+        .sb:
+        STA&FF00:
+        INC&F6:
+        INC sb+1:
+        BNE G:
+        RTS:
+        ]:
+      NEXT:
+      ENDPROC
+ 1284 DEF PROCC:
+      FORo%=0TO2STEP2:
+        P%=&8C4:
+        [OPT o%:
+        STA W+2:
+        STY s_+2:
+        LDA#4:
+        TSB&FE34:
+        LDY#0:
+        .H:
+        .W:
+        LDA&FF00,Y:
+        .s_:
+        STA&FF00,Y:
+        DEY:
+        BNE H:
+        LDA#4:
+        TRB&FE34:
+        RTS:
+        ]:
+      NEXT:
+      ENDPROC
+ 1303 DEF PROCt:
+      sn=FNe(&904):
+      G$="":
+      sj=0:
+      IF NOTt 
+        THEN PROCE
+ 1307 IF FNe(&903)>2
+        THENG$="("+STR$(sn*16)+"K unsupported sideways RAM)"
+ 1308 sw=&4000*FNe(&904)-sj:
+      IFsn=0
+        THEN ENDPROC
+ 1310 IFsw<=12*1024
+        THENG$="12K private RAM":
+        ENDPROC
+ 1311 G$=STR$(sw DIV1024)+"K sideways RAM (bank":
+      IFsn>1
+        THENG$=G$+"s"
+ 1312 G$=G$+" &":
+      FORi=0TOsn-1:
+        D=FNe(&905+i):
+        IFD>=64
+          THENA$="P"
+        ELSEA$=STR$~D
+ 1314   G$=G$+A$:
+      NEXT:
+      G$=G$+")":
+      ENDPROC
+ 1316 DEF PROCE:
+      IFsn<9ANDV 
+        THENsn?&905=64:
+        sn=sn+1:
+        ?&904=sn:
+        sj=16*1024-&2C00
+ 1318 IFsn<9ANDh=2
+        THEN 
+        IF NOTpr 
+          THENsn?&905=128:
+          sn=sn+1:
+          ?&904=sn:
+          sj=16*1024-&2E00
+ 1319 ENDPROC
+ 1320 DEF PROCF(D$):
+      PROCi("Sorry, this game won't run on "+D$+".")
+ 1321 DEF PROC_(A,r$):
+      PROCi("Sorry, you need at least "+STR$(A/1024)+"K more "+r$+".")
+ 1322 DEF PROCs:
+      w=w:
+      IFw=0
+        THEN PRINT TAB(0,m);CHR$S;"In-game controls:"
+      ELSE PRINT TAB(0,m+1);
+ 1325 PRINT CHR$z;"  SHIFT:  show next page of text":
+      IF?s=7
+        THEN PRINT CHR$z;"  CTRL-F: change status line colour"
+ 1327 IF?s=7
+        THEN PRINT CHR$z;"  CTRL-I: change input colour      "
+ 1328 IF?s<>7
+        THEN PRINT CHR$z;"  CTRL-F: change foreground colour "
+ 1329 IF?s<>7
+        THEN PRINT CHR$z;"  CTRL-B: change background colour "
+ 1330 IF?s<>7
+        THEN PRINT CHR$z;"  CTRL-S: change scrolling mode    "
+ 1331 IF VPOS<w 
+        THEN PRINT SPC(40*(w-VPOS));
+ 1332 w=VPOS:
+      ENDPROC
+ 1334 DEF PROCp:
+      PRINT TAB(0,sp);CHR$z;"Press SPACE/RETURN to start the game...";:
+      ENDPROC
+ 1337 DEF FNi(x)=LEFT$(m$(x,0),1)="7"
+ 1338 DEF PROCo($b%):
+      X%=b%:
+      Y%=X%DIV256:
+      CALL&FFF7:
+      ENDPROC
+ 1339 DEF FNe(B):
+      !b%=&FFFF0000ORB:
+      A%=5:
+      X%=b%:
+      Y%=b%DIV256:
+      CALL&FFF1:
+      =b%?4
+ 1340 DEF FNf:
+      A%=0:
+      Y%=0:
+      =USR&FFDA AND&FF
+ 1341 DEF FNp:
+      DIMd%256:
+      p$="":
+      REPEAT:
+        b%!1=d%:
+        A%=6:
+        X%=b%:
+        Y%=b%DIV256:
+        CALL&FFD1:
+        na=d%+1+?d%:
+        na?(1+?na)=13:
+        n$=FNs($(na+1)):
+        p$=n$+"."+p$:
+        IFn$<>"$"ANDn$<>"&"
+          THEN*DIR ^
+ 1352 UNTILn$="$"ORn$="&":
+      p$=LEFT$(p$,LEN(p$)-1):
+      ?na=13:
+      d$=FNs($(d%+1)):
+      IFd$<>""
+        THENp$=":"+d$+"."+p$
+ 1357 PROCo("DIR "+p$):
+      =p$
+ 1359 DEF FNs(s$):
+      s$=s$+" ":
+      REPEAT:
+        s$=LEFT$(s$,LEN(s$)-1):
+      UNTIL RIGHT$(s$,1)<>" ":
+      =s$
+ 1363 DEF FNa(a,b):
+      IFa<b 
+        THEN=b 
+      ELSE=a
