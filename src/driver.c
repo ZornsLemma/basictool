@@ -131,6 +131,15 @@ static void check_is_in_pending_output(const char *s) {
         make_printable(pending_output));
 }
 
+// Convenience function used just before we're going to write to output_file;
+// by using this we avoid opening the file if we're going to hit an error that
+// prevents us generating any output.
+static void ensure_output_file_open(const char *mode) {
+    if (output_file == 0) {
+        output_file = fopen_wrapper(filenames[1], mode);
+    }
+}
+
 static void putc_wrapper(int c, FILE *file) {
     check(putc(c, file) != EOF, "error: error writing to output file \"%s\"",
           filenames[1]);
@@ -175,7 +184,7 @@ static void print_aligned(FILE *file, const char *s) {
 
 // This is called by driver_oswrch() when a complete line of output has been
 // printed by the emulated machine. It implements a very basic state machine to
-// discard noise and write valuable output to output_file.
+// discard noise and write valuable output to output_file. TODO WE NOW OPEN THAT ON DEMAND
 static void complete_output_line_handler() {
     switch (output_state) {
         case os_discard:
@@ -206,7 +215,7 @@ static void complete_output_line_handler() {
                 if (is_in_pending_output("Renumber line")) {
                     // The output can't be unpacked because it needs
                     // renumbering; show the ABE output to the user on stderr
-                    // but treat the operation as a failure. SFTODO: We really shouldn't generate an output file in this case, i.e. we should defer opening the output until the 'else' branch
+                    // but treat the operation as a failure.
                     fprintf(stderr, "%s\n", make_printable(pending_output));
                     output_state = os_unpack_show_nonblank;
                 } else {
@@ -232,16 +241,16 @@ static void complete_output_line_handler() {
             break;
 
         case os_variable_xref_output:
-            assert(output_file != 0);
             if (*pending_output != '\0') {
+                ensure_output_file_open("w");
                 make_printable(pending_output);
                 print_aligned(output_file, pending_output);
             }
             break;
 
         case os_output_non_blank:
-            assert(output_file != 0);
             if (*pending_output != '\0') {
+                ensure_output_file_open("w");
                 check(fprintf(output_file, "%s\n", pending_output) >= 0,
                       "error: error writing to output file \"%s\"",
                       filenames[1]);
@@ -436,26 +445,27 @@ void renumber(void) {
 }
 
 
-// Convenience function to close an output file, reporting any errors via die()
-// and setting output_file back to null if that's the file being closed.
-static void fclose_output(FILE *file, const char *filename) {
-    check(fclose(file) == 0, "error: error closing output file \"%s\"", filename);
-    if (file == output_file) {
+// Convenience function to close the output file, reporting any errors via
+// die().
+static void ensure_output_file_closed(void) {
+    if (output_file != 0) {
+        check(fclose(output_file) == 0,
+              "error: error closing output file \"%s\"", filenames[1]);
         output_file = 0;
     }
 }
 
+// SFTODO: Maybe stop passing filename in to any of these? We know it's filenames[1]
 void save_tokenised_basic(const char *filename) {
     FILE *file = fopen_wrapper(filename, "wb");
     uint16_t top = mpu_read_u16(BASIC_TOP);
     size_t length = top - page;
     size_t bytes_written = fwrite(&mpu_memory[page], 1, length, file);
     check(bytes_written == length, "error: error writing to output file \"%s\"", filename);
-    fclose_output(file, filename);
+    ensure_output_file_closed();
 }
 
 void save_ascii_basic(const char *filename) {
-    output_file = fopen_wrapper(filename, "w");
     assert(output_state == os_discard);
     char buffer[256];
     sprintf(buffer, "LISTO %d", config.listo);
@@ -463,43 +473,43 @@ void save_ascii_basic(const char *filename) {
     output_state = os_list_discard_command;
     execute_input_line("LIST");
     output_state = os_discard;
-    fclose_output(output_file, filename);
+    ensure_output_file_closed();
 }
 
 void save_formatted_basic(const char *filename) {
-    output_file = fopen_wrapper(filename, "w");
     execute_butil();
     output_state = os_format_discard_command;
     execute_osrdch("F"); // format
     output_state = os_discard;
-    fclose_output(output_file, filename);
+    ensure_output_file_closed();
 }
 
+// TODO: ADD UNPACK TO TEST SUITE!
 void save_unpacked_basic(const char *filename) {
-    output_file = fopen_wrapper(filename, "w");
     execute_butil();
     output_state = os_unpack_discard_command;
     execute_osrdch("U"); // unpack
+    if (output_state == os_unpack_show_nonblank) {
+        die_help("error: can't unpack, try using --renumber-step to increase gaps between lines");
+    }
     output_state = os_discard;
-    fclose_output(output_file, filename);
+    ensure_output_file_closed();
 }
 
 void save_line_ref(const char *filename) {
-    output_file = fopen_wrapper(filename, "w");
     execute_butil();
     output_state = os_line_ref_discard_command;
     execute_osrdch("T"); // table line references
     output_state = os_discard;
-    fclose_output(output_file, filename);
+    ensure_output_file_closed();
 }
 
 void save_variable_xref(const char *filename) {
-    output_file = fopen_wrapper(filename, "w");
     execute_butil();
     output_state = os_variable_xref_discard_command;
     execute_osrdch("V"); // variable xref
     output_state = os_discard;
-    fclose_output(output_file, filename);
+    ensure_output_file_closed();
 }
 
 // vi: colorcolumn=80
