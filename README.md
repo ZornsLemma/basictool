@@ -5,6 +5,7 @@
 - [How it works](#how-it-works)
 - [Other features](#other-features)
 - [Building](#building)
+- [Getting help](#getting-help)
 - [Credits](#credits)
 - [Changelog](#changelog)
 
@@ -235,6 +236,10 @@ This will create a basictool executable in the top-level project directory, i.e.
 The executable has the ROM images compiled into it, so it can be copied wherever you want to install it and it should just work.
 
 If you're not on a Unix-like system you may need to create your own build script or project file for your IDE. src/Makefile may be a good starting point; alternatively there is a simple shell script src/make.sh which will perform a build and it may be easiest for you to translate that into your platform's equivalent of a shell script. If you do this, please consider sending me the results so I can add them and make it easier for other people to build on your platform.
+
+## Getting help
+
+If you have problems or suggestions for improvement, you can raise an issue or submit a pull request in github. Alternatively you may like to post in the [basictool thread](https://stardot.org.uk/forums/viewtopic.php?f=55&t=22210&p=315577#p315577) on the [stardot](https://stardot.org.uk) forums.
 
 ## Credits and thanks
 
