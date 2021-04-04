@@ -222,7 +222,7 @@ e11eed95d1caba8aa9772e9001590585  Basic432
 
 Other versions of 6502 BBC BASIC (although not HIBASIC) will probably work, but I've always tested with BASIC 4r32 so that's what I recommend you use.
 
-The ROMs are compiled into the executable, so these files are only need when building - the resulting executable is self-contained and can be copied to wherever you want to install it.
+The ROMs are compiled into the executable, so these files are only need when building.
 
 ### Compiling
 
@@ -231,9 +231,7 @@ If you're on a Unix-like system, you should just be able to do:
 $ cd src
 $ make
 ```
-This will create a basictool executable in the top-level project directory, i.e. the one above src.
-
-The executable has the ROM images compiled into it, so it can be copied wherever you want to install it and it should just work.
+This will create a basictool executable in the top-level project directory, i.e. the one above src. The executable is self-contained and can be copied to wherever you want to install it.
 
 If you're not on a Unix-like system you may need to create your own build script or project file for your IDE. src/Makefile may be a good starting point; alternatively there is a simple shell script src/make.sh which will perform a build and it may be easiest for you to translate that into your platform's equivalent of a shell script. If you do this, please consider sending me the results so I can add them and make it easier for other people to build on your platform.
 
