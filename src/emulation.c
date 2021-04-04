@@ -43,11 +43,13 @@ enum {
 };
 
 static void mpu_write_u16(uint16_t address, uint16_t data) {
+    check(address != 0xffff, "internal error: write_u16 at top of memory");
     mpu_memory[address    ] = data & 0xff;
     mpu_memory[address + 1] = (data >> 8) & 0xff;
 }
 
 uint16_t mpu_read_u16(uint16_t address) {
+    check(address != 0xffff, "internal error: read_u16 at top of memory");
     return (mpu_memory[address + 1] << 8) | mpu_memory[address];
 }
 
@@ -260,13 +262,13 @@ static int callback_osword_read_io_memory(void) {
     // We do this access via dynamically generated code so we don't bypass any
     // lib6502 callbacks.
     uint16_t yx = (mpu_registers.y << 8) | mpu_registers.x;
-    uint16_t source = mpu_read_u16(yx);
+    uint16_t src = mpu_read_u16(yx);
     uint16_t dest = yx + 4;
     const uint16_t code_address = transient_code;
     uint8_t *p = &mpu_memory[code_address];
-    *p++ = 0xad; *p++ = source & 0xff; *p++ = (source >> 8) & 0xff; // LDA source
-    *p++ = 0x8d; *p++ = dest & 0xff; *p++ = (dest >> 8) & 0xff;     // STA dest
-    *p++ = 0x60;                                                    // RTS
+    *p++ = 0xad; *p++ = src & 0xff; *p++ = (src >> 8) & 0xff;   // LDA src
+    *p++ = 0x8d; *p++ = dest & 0xff; *p++ = (dest >> 8) & 0xff; // STA dest
+    *p++ = 0x60;                                                // RTS
     return code_address;
 }
 
@@ -282,7 +284,8 @@ static int callback_osword(M6502 *mpu, uint16_t address, uint8_t data) {
     }
 }
 
-static int callback_read_escape_flag(M6502 *mpu, uint16_t address, uint8_t data) {
+static int callback_read_escape_flag(M6502 *mpu, uint16_t address,
+                                     uint8_t data) {
     return 0; // Escape flag not set
 }
 
@@ -314,7 +317,8 @@ static int callback_irq(M6502 *mpu, uint16_t address, uint8_t data) {
     uint16_t error_num_address = error_string_ptr - 1;
     print_error_prefix();
     fprintf(stderr, "error: ");
-    for (uint8_t c; (c = mpu_memory[error_string_ptr]) != '\0'; ++error_string_ptr) {
+    for (uint8_t c; (c = mpu_memory[error_string_ptr]) != '\0';
+         ++error_string_ptr) {
         putc(c, stderr);
     }
     uint8_t error_num = mpu_memory[error_num_address];
@@ -343,8 +347,9 @@ void emulation_init(void) {
     
     // Install handlers to abort on read or write of anywhere in OS workspace
     // we haven't explicitly allowed; this makes it more obvious if the OS
-    // emulation needs to be extended. Addresses 0x90-0xaf are used, but they
-    // don't contain OS state we need to emulate so this loop excludes them.
+    // emulation needs to be extended. Addresses 0x90-0xaf are part of OS
+    // workspace which we allow access to; they're omitted from the loop to
+    // save writing case statements for each of them.
     for (uint16_t address = 0xb0; address < 0x100; ++address) {
         switch (address) {
             case os_text_pointer:

@@ -23,7 +23,8 @@ void emulation_init(void);
 // being run on the emulated machine - but of course it would be possible
 // to provide a generic "type this" function which hides this detail.
 
-// TODO: Rename next two functions emulation_* not execute_*? Or other naming change?
+// TODO: Rename next two functions emulation_* not execute_*? Or other
+// naming change?
 
 // Enter 'line' as if typed at the keyboard; 'line' should not be terminated
 // with CR or LF, this function will automatically append CR. This assumes
