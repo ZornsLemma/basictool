@@ -463,17 +463,17 @@ static void ensure_output_file_closed(void) {
     }
 }
 
-// SFTODO: Maybe stop passing filename in to any of these? We know it's filenames[1]
-void save_tokenised_basic(const char *filename) {
-    FILE *file = fopen_wrapper(filename, "wb");
+void save_tokenised_basic(void) {
+    FILE *file = fopen_wrapper(filenames[1], "wb");
     uint16_t top = mpu_read_u16(BASIC_TOP);
     size_t length = top - page;
     size_t bytes_written = fwrite(&mpu_memory[page], 1, length, file);
-    check(bytes_written == length, "error: error writing to output file \"%s\"", filename);
+    check(bytes_written == length,
+          "error: error writing to output file \"%s\"", filenames[1]);
     ensure_output_file_closed();
 }
 
-void save_ascii_basic(const char *filename) {
+void save_ascii_basic(void) {
     assert(output_state == os_discard);
     char buffer[256];
     sprintf(buffer, "LISTO %d", config.listo);
@@ -484,7 +484,7 @@ void save_ascii_basic(const char *filename) {
     ensure_output_file_closed();
 }
 
-void save_formatted_basic(const char *filename) {
+void save_formatted_basic(void) {
     execute_butil();
     output_state = os_format_discard_command;
     execute_osrdch("F"); // format
@@ -493,7 +493,7 @@ void save_formatted_basic(const char *filename) {
 }
 
 // TODO: ADD UNPACK TO TEST SUITE!
-void save_unpacked_basic(const char *filename) {
+void save_unpacked_basic(void) {
     execute_butil();
     output_state = os_unpack_discard_command;
     execute_osrdch("U"); // unpack
@@ -504,7 +504,7 @@ void save_unpacked_basic(const char *filename) {
     ensure_output_file_closed();
 }
 
-void save_line_ref(const char *filename) {
+void save_line_ref(void) {
     execute_butil();
     output_state = os_line_ref_discard_command;
     execute_osrdch("T"); // table line references
@@ -512,7 +512,7 @@ void save_line_ref(const char *filename) {
     ensure_output_file_closed();
 }
 
-void save_variable_xref(const char *filename) {
+void save_variable_xref(void) {
     execute_butil();
     output_state = os_variable_xref_discard_command;
     execute_osrdch("V"); // variable xref

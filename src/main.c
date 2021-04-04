@@ -520,18 +520,18 @@ int main(int argc, char *argv[]) {
         renumber();
     }
     if (config.format) {
-        save_formatted_basic(filenames[1]);
+        save_formatted_basic();
     } else if (config.unpack) {
-        save_unpacked_basic(filenames[1]);
+        save_unpacked_basic();
     } else if (config.line_ref) {
-        save_line_ref(filenames[1]);
+        save_line_ref();
     } else if (config.variable_xref) {
-        save_variable_xref(filenames[1]);
+        save_variable_xref();
     } else if (config.output_tokenised) {
-        save_tokenised_basic(filenames[1]);
+        save_tokenised_basic();
     } else {
         assert(config.output_ascii);
-        save_ascii_basic(filenames[1]);
+        save_ascii_basic();
     }
 }
 
