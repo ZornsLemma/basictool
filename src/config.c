@@ -22,6 +22,7 @@ struct s_config config = {
     10,     // renumber step
     -1,     // LISTO
     false,  // format
+    false,  // unpack
     false,  // line_ref
     false,  // variable_xref
     false,  // tokenise output

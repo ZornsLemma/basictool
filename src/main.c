@@ -80,6 +80,7 @@ enum option_id {
     oi_output_ascii,
     oi_output_tokenised,
     oi_format,
+    oi_unpack,
     oi_line_ref,
     oi_variable_xref
 };
@@ -205,6 +206,11 @@ static struct cag_option options[] = {
       .access_letters = "f",
       .access_name = "format",
       .description = "output formatted ASCII text (non-tokenised) BASIC" },
+
+    { .identifier = oi_unpack,
+      .access_letters = "u",
+      .access_name = "unpack",
+      .description = "output unpacked ASCII text (non-tokenised) BASIC" },
 
     { .identifier = oi_line_ref,
       .access_letters = 0,
@@ -442,6 +448,10 @@ int main(int argc, char *argv[]) {
                 config.format = true;
                 break;
 
+            case oi_unpack:
+                config.unpack = true;
+                break;
+
             case oi_line_ref:
                 config.line_ref = true;
                 break;
@@ -478,6 +488,7 @@ int main(int argc, char *argv[]) {
 
     int output_options = 0;
     COUNT_BOOL(output_options, config.format);
+    COUNT_BOOL(output_options, config.unpack);
     COUNT_BOOL(output_options, config.line_ref);
     COUNT_BOOL(output_options, config.variable_xref);
     COUNT_BOOL(output_options, config.output_tokenised);
@@ -496,6 +507,10 @@ int main(int argc, char *argv[]) {
         }
     }
 
+    if (config.pack && config.unpack) {
+        warn("program will be packed and then unpacked");
+    }
+
     emulation_init();
     load_basic(filenames[0]);
     if (config.pack) {
@@ -506,6 +521,8 @@ int main(int argc, char *argv[]) {
     }
     if (config.format) {
         save_formatted_basic(filenames[1]);
+    } else if (config.unpack) {
+        save_unpacked_basic(filenames[1]);
     } else if (config.line_ref) {
         save_line_ref(filenames[1]);
     } else if (config.variable_xref) {

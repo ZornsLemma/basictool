@@ -32,6 +32,10 @@ void save_ascii_basic(const char *filename);
 // ASCII format, using ABE's "format" option to print it.
 void save_formatted_basic(const char *filename);
 
+// Save the BASIC program in the emulated machine's memory to 'filename' in
+// ASCII format, using ABE's "unpack" option to print it.
+void save_unpacked_basic(const char *filename);
+
 // Save the output of ABE's "Table line references" command on the BASIC
 // program in the emulated machine's memory to 'filename'.
 void save_line_ref(const char *filename);

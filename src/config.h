@@ -21,6 +21,7 @@ struct s_config {
     int renumber_step;
     int listo;
     bool format;
+    bool unpack;
     bool line_ref;
     bool variable_xref;
     bool output_tokenised;

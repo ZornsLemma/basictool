@@ -22,6 +22,9 @@ enum {
     os_discard,
     os_list_discard_command,
     os_format_discard_command,
+    os_unpack_discard_command,
+    os_unpack_discard_initial_blank,
+    os_unpack_show_nonblank,
     os_line_ref_discard_command,
     os_variable_xref_discard_command,
     os_variable_xref_output,
@@ -190,6 +193,32 @@ static void complete_output_line_handler() {
             // Format output doesn't contain any blank lines (there's always at
             // least a line number) so this won't lose anything.
             output_state = os_output_non_blank;
+            break;
+
+        case os_unpack_discard_command:
+            check_is_in_pending_output("Unpack");
+            output_state = os_unpack_discard_initial_blank;
+            break;
+
+        case os_unpack_discard_initial_blank:
+            fprintf(stderr, "SFTODO!%s!\n", pending_output);
+            if (*pending_output != '\0') {
+                if (is_in_pending_output("Renumber line")) {
+                    // The output can't be unpacked because it needs
+                    // renumbering; show the ABE output to the user on stderr
+                    // but treat the operation as a failure. SFTODO: We really shouldn't generate an output file in this case, i.e. we should defer opening the output until the 'else' branch
+                    fprintf(stderr, "%s\n", make_printable(pending_output));
+                    output_state = os_unpack_show_nonblank;
+                } else {
+                    abort();
+                }
+            }
+            break;
+        
+        case os_unpack_show_nonblank:
+            if (*pending_output != '\0') {
+                fprintf(stderr, "%s\n", make_printable(pending_output));
+            }
             break;
 
         case os_line_ref_discard_command:
@@ -442,6 +471,15 @@ void save_formatted_basic(const char *filename) {
     execute_butil();
     output_state = os_format_discard_command;
     execute_osrdch("F"); // format
+    output_state = os_discard;
+    fclose_output(output_file, filename);
+}
+
+void save_unpacked_basic(const char *filename) {
+    output_file = fopen_wrapper(filename, "w");
+    execute_butil();
+    output_state = os_unpack_discard_command;
+    execute_osrdch("U"); // unpack
     output_state = os_discard;
     fclose_output(output_file, filename);
 }
