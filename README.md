@@ -165,7 +165,7 @@ $ basictool -f test5.bas
 
 ### Unpacking a program
 
-You can "unpack" a program, adding additional spaces and breaking apart multi-statement lines, in order to make it more readable. Of course this isn't a perfect inverse of "pack", but it will make the code more readable.
+You can "unpack" a program, adding additional spaces and breaking apart multi-statement lines, in order to make it more readable:
 ```
 $ cat test7.bas
 10foo=42:bar=7
@@ -177,6 +177,7 @@ $ basictool -u test7.bas
    20 IFfoo+bar=49 THEN PRINT"7^2!":bar=8 ELSEbar=4
    30 PRINTbar-foo
 ```
+Of course this isn't a perfect inverse of "pack", but it will help.
 
 You may need to use the --renumber-step option to increase the gaps between line numbers in order for the unpack to succeed.
 
