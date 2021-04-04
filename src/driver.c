@@ -140,6 +140,13 @@ static void ensure_output_file_open(const char *mode) {
     }
 }
 
+static void output_pending_output(void) {
+    ensure_output_file_open("w");
+    check(fprintf(output_file, "%s\n", pending_output) >= 0,
+          "error: error writing to output file \"%s\"",
+          filenames[1]);
+}
+
 static void putc_wrapper(int c, FILE *file) {
     check(putc(c, file) != EOF, "error: error writing to output file \"%s\"",
           filenames[1]);
@@ -210,16 +217,20 @@ static void complete_output_line_handler() {
             break;
 
         case os_unpack_discard_initial_blank:
-            fprintf(stderr, "SFTODO!%s!\n", pending_output);
             if (*pending_output != '\0') {
                 if (is_in_pending_output("Renumber line")) {
                     // The output can't be unpacked because it needs
-                    // renumbering; show the ABE output to the user on stderr
-                    // but treat the operation as a failure.
+                    // renumbering; show the ABE output (the problematic line
+                    // numbers) to the user on stderr but treat the operation
+                    // as a failure.
+                    // TODO: Just possibly this should only be shown if
+                    // verbose > 0, but since it is part of the error output
+                    // I think it's probably best to always show it.
                     fprintf(stderr, "%s\n", make_printable(pending_output));
                     output_state = os_unpack_show_nonblank;
                 } else {
-                    abort();
+                    output_pending_output();
+                    output_state = os_output_non_blank;
                 }
             }
             break;
@@ -250,10 +261,7 @@ static void complete_output_line_handler() {
 
         case os_output_non_blank:
             if (*pending_output != '\0') {
-                ensure_output_file_open("w");
-                check(fprintf(output_file, "%s\n", pending_output) >= 0,
-                      "error: error writing to output file \"%s\"",
-                      filenames[1]);
+                output_pending_output();
             }
             break;
 
