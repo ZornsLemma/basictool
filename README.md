@@ -163,6 +163,25 @@ $ basictool -f test5.bas
     5 NEXT
 ```
 
+### Unpacking a program
+
+You can "unpack" a program, adding additional spaces and breaking apart multi-statement lines, in order to make it more readable. Of course this isn't a perfect inverse of "pack", but it will make the code more readable.
+```
+$ cat test7.bas
+10foo=42:bar=7
+20IFfoo+bar=49THENPRINT"7^2!":bar=8ELSEbar=4
+30PRINTbar-foo
+$ basictool -u test7.bas
+   10 foo=42
+   11 bar=7
+   20 IFfoo+bar=49 THEN PRINT"7^2!":bar=8 ELSEbar=4
+   30 PRINTbar-foo
+```
+
+You may need to use the --renumber-step option to increase the gaps between line numbers in order for the unpack to succeed.
+
+Note that --unpack is an output option rather than a transformation, so you can't (for example) unpack *and* tokenise or unpack *and* format at the same time. If you need to do this, you can call basictool a second time with the unpacked output as the input.
+
 ### Analysing a program
 
 You can generate line number reference tables and variable cross-reference tables using the Advanced BASIC Editor's utilities. Obviously these are more useful with larger programs, but here's a simple demonstration:
@@ -254,3 +273,6 @@ If you have problems or suggestions for improvement, you can raise an issue or s
 * v0.01: Initial release
 * v0.02:
   * Fix build error on gcc 10 (thanks to scruss for reporting this!)
+* v0.03:
+  * Add --unpack (thanks to Dave Hitchins for the suggestion!)
+  * Don't open the output file until we're about to write to it; this will avoid occasionally creating a zero-length output when an error occurs.
