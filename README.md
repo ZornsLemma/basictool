@@ -253,4 +253,4 @@ If you have problems or suggestions for improvement, you can raise an issue or s
 
 * v0.01: Initial release
 * v0.02:
-  * Fix build error on Ubuntu 20.10 (thanks to scruss for reporting this!)
+  * Fix build error on gcc 10 (thanks to scruss for reporting this!)
