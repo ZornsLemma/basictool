@@ -191,7 +191,7 @@ static void print_aligned(FILE *file, const char *s) {
 
 // This is called by driver_oswrch() when a complete line of output has been
 // printed by the emulated machine. It implements a very basic state machine to
-// discard noise and write valuable output to output_file. TODO WE NOW OPEN THAT ON DEMAND
+// discard noise and write valuable output to filenames[1].
 static void complete_output_line_handler() {
     switch (output_state) {
         case os_discard:
