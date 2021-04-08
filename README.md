@@ -253,3 +253,5 @@ If you have problems or suggestions for improvement, you can raise an issue or s
 * v0.03:
   * Add --unpack (thanks to Dave Hitchins for the suggestion!)
   * Don't open the output file until we're about to write to it; this will avoid occasionally creating a zero-length output when an error occurs.
+* v0.04:
+  * No code changes, but ROMs are now included in the github repository.
