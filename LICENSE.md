@@ -1,4 +1,4 @@
-basictool needs ROM images to function, as described in ["Getting the ROM images" in the main README.md](README.md#getting-the-rom-images); these are not included in this repository and their licenses are not discussed in this file.
+basictool needs ROM images to function; suitable ROMs are included in the roms directory in this repository but their licenses are not discussed in this file.
 
 The original version of lib6502 is Copyright (c) 2005 Ian Piumarta, but the lib6502.[ch] files included in this repository are modified versions taken from [PiTubeClient](https://github.com/hoglet67/PiTubeClient), which uses the [GNU GPL v3.0](https://github.com/hoglet67/PiTubeClient/blob/master/LICENSE).
 

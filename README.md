@@ -220,30 +220,6 @@ I developed basictool on Linux, but the code does not use any platform-specific 
 
 The simplest option is to download a release zip file from the [releases](https://github.com/ZornsLemma/basictool/releases) page; it's probably best to pick the most recent. Unzip that somewhere using your favourite tool. If you prefer, you can "git clone" this repository and check out the branch or tag of interest.
 
-### Getting the ROM images
-
-You need to download three ROM images and put then in the roms subdirectory:
-
-* EDITORA100 and EDITORB100 from https://stardot.org.uk/forums/viewtopic.php?p=81362#p81362
-* BBC BASIC 4r32 from http://mdfs.net/Software/BBCBasic/BBC/
-
-Once you've done that, the roms subdirectory should look like this:
-```
-$ ls -l
-total 52
--rw-rw-r-- 1 steven steven 16384 Apr  3 14:26 Basic432
--rw-rw-r-- 1 steven steven 16384 Apr  3 14:26 EDITORA100
--rw-rw-r-- 1 steven steven 16384 Apr  3 14:26 EDITORB100
-$ md5sum *
-e11eed95d1caba8aa9772e9001590585  Basic432
-101fb6907609918db50cb3cfd5408772  EDITORA100
-987a8aa4e09880e4274ddc26025b06e8  EDITORB100
-```
-
-Other versions of 6502 BBC BASIC (although not HIBASIC) will probably work, but I've always tested with BASIC 4r32 so that's what I recommend you use.
-
-The ROMs are compiled into the executable, so these files are only need when building.
-
 ### Compiling
 
 If you're on a Unix-like system, you should just be able to do:
@@ -261,9 +237,9 @@ If you have problems or suggestions for improvement, you can raise an issue or s
 
 ## Credits and thanks
 
-* BBC BASIC was (of course) originally published by Acorn. The BASIC 4r32 ROM image linked above is hosted on J. G. Harston's [mdfs.net](http://mdfs.net/).
+* BBC BASIC was (of course) originally published by Acorn. The BASIC 4r32 ROM in the roms directory was downloaded from J. G. Harston's [mdfs.net](http://mdfs.net/).
 
-* The BASIC editor and utilities were originally published separately by Altra. The Advanced BASIC Editor ROMs used here are (C) Baildon Electronics. The Advanced BASIC Editor ROM images linked above are hosted on [stardot](https://stardot.org.uk) and were posted by J. G. Harston. Thanks to Dave Hitchins for his support for developing basictool using these ROMs.
+* The BASIC editor and utilities were originally published separately by Altra. The Advanced BASIC Editor ROMs used here are (C) Baildon Electronics. The Advanced BASIC Editor ROM images in the roms directory were posted to [stardot](https://stardot.org.uk) by J. G. Harston. Thanks to Dave Hitchins for his support for developing basictool using these ROMs.
 
 * 6502 emulation is performed using lib6502. This was originally written by Ian Piumarta, but the versions of lib6502.[ch] included here are taken from [PiTubeClient](https://github.com/hoglet67/PiTubeClient).
 
