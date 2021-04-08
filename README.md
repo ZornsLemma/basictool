@@ -220,7 +220,7 @@ I developed basictool on Linux, but the code does not use any platform-specific 
 
 The simplest option is to download a release zip file from the [releases](https://github.com/ZornsLemma/basictool/releases) page; it's probably best to pick the most recent. Unzip that somewhere using your favourite tool. If you prefer, you can "git clone" this repository and check out the branch or tag of interest.
 
-### Compiling
+## Compiling
 
 If you're on a Unix-like system, you should just be able to do:
 ```
