@@ -310,9 +310,9 @@ static void show_roms(void) {
         putchar('\n');
     }
 
-    printf(
-"\nThe BASIC editor and utilities were originally published separately by\n"
-"Altra. The Advanced BASIC Editor ROMs used here are (C) Baildon Electronics.\n"
+    printf("\n"
+"The BASIC editor and utilities were originally published separately by Altra.\n"
+"The Advanced BASIC Editor ROMs used here are (C) Baildon Electronics.\n"
     );
 }
 
