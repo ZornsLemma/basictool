@@ -1,0 +1,36 @@
+.Dd April 10, 2021
+.Dt BASICTOOL 1
+.Os
+.Sh NAME
+.Nm basictool
+.Nd Tokenise, de-tokenise, pack and analyse BBC BASIC programs
+.Sh SYNOPSIS
+.Nm
+.\" TODO: Is this the right way to list arguments? Seems a bit useless given mix of long and short options.
+.Op Fl h
+.Op Fl -roms
+.Op Fl v
+.Op Fl -show-all-output
+.Op Fl -input-tokenised
+.Op Fl k
+.Op Fl -keep-spaces-start
+.Op Fl -keep-spaces-end
+.Op Fl p
+.Op Fl -pack-rems-n
+.Op Fl -pack-spaces-n
+.Op Fl -pack-comments-n
+.Op Fl -pack-variables-n
+.Op Fl -pack-singles-n
+.Op Fl -pack-concatenate-n
+.Op Fl r
+.Op Fl -renumber-start Ar N
+.Op Fl -renumber-step Ar N
+.Op Fl l Ar N
+.Op Fl a
+.Op Fl t
+.Op Fl f
+.Op Fl u
+.Op Fl -line-ref
+.Op Fl -variable-xref
+INPUTFILE
+.Op OUTPUTFILE
