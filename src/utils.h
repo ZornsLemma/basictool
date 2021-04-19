@@ -38,7 +38,7 @@ void print_error_prefix(void);
 // printf-like function which adds an "info" prefix and writes to stderr.
 void info(const char *fmt, ...) PRINTFLIKE(1, 2);
 
-// Write a "warning" prefix and 's' to stderr.
+// printf-like function which adds an "warning" prefix and writes to stderr.
 void warn(const char *fmt, ...) PRINTFLIKE(1, 2);
 
 // Like fprintf(stderr, fmt, ...) except:
