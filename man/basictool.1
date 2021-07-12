@@ -7,7 +7,7 @@ basictool \- tokenise, de-tokenise, pack, unpack and analyse BBC BASIC programs
 .SH DESCRIPTION
 .BR basictool
 can convert BBC BASIC programs between ASCII text and the tokenised form used by (6502) BBC BASIC. It can also pack programs (making them shorter but less readable), unpack them (to partially reverse the effects of packing) and generate variable and line number references. Behind the scenes, it is really a specialised BBC Micro emulator which uses the BBC BASIC and Advanced BASIC Editor ROMs to operate on BBC BASIC programs.
-
+.PP
 .BR basictool
 expects at least one argument, the name of the input file. The input may be either tokenised or ASCII BBC BASIC;
 .BR basictool
@@ -18,6 +18,8 @@ if necessary.
 does not care about file extensions; auto detection is based on the file contents. To read from standard input, specify the input file as
 .IR \-
 \&. A second argument, the name of the output file, may be given; standard output will be used by default.
+.PP
+TODO: Document auto-line numbering for ASCII BASIC, anything else (check README)
 .SH OPTIONS
 .TP
 \fB\-h\fR, \fB\-\-help\fR
