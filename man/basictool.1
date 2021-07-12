@@ -1,36 +1,31 @@
-.Dd April 10, 2021
-.Dt BASICTOOL 1
-.Os
-.Sh NAME
-.Nm basictool
-.Nd Tokenise, de-tokenise, pack and analyse BBC BASIC programs
-.Sh SYNOPSIS
-.Nm
-.\" TODO: Is this the right way to list arguments? Seems a bit useless given mix of long and short options. Copying the ls man page (on Ubuntu) which just says "[OPTIONS]" and then expands them in the main body of the man page might be better. If so, I should probably use the same "Usage:" string as output by --help
-.Op Fl h
-.Op Fl -roms
-.Op Fl v
-.Op Fl -show-all-output
-.Op Fl -input-tokenised
-.Op Fl k
-.Op Fl -keep-spaces-start
-.Op Fl -keep-spaces-end
-.Op Fl p
-.Op Fl -pack-rems-n
-.Op Fl -pack-spaces-n
-.Op Fl -pack-comments-n
-.Op Fl -pack-variables-n
-.Op Fl -pack-singles-n
-.Op Fl -pack-concatenate-n
-.Op Fl r
-.Op Fl -renumber-start Ar N
-.Op Fl -renumber-step Ar N
-.Op Fl l Ar N
-.Op Fl a
-.Op Fl t
-.Op Fl f
-.Op Fl u
-.Op Fl -line-ref
-.Op Fl -variable-xref
-INPUTFILE
-.Op OUTPUTFILE
+.TH BASICTOOL 1 "July 2021" "basictool 0.05" "User Commands"
+.SH NAME
+basictool \- tokenise, de-tokenise, pack, unpack and analyse BBC BASIC programs
+.SH SYNOPSIS
+.B basictool
+[\fI\,OPTION\/\fR]... INPUTFILE [\fI\,OUTPUTFILE\/\fR]
+.SH DESCRIPTION
+basictool can convert BBC BASIC programs between ASCII text and the tokenised form used by (6502) BBC BASIC. It can also pack programs (making them shorter but less readable), unpack them (to partially reverse the effects of packing) and generate variable and line number references. Behind the scenes, it is really a specialised BBC Micro emulator which uses the BBC BASIC and Advanced BASIC Editor ROMs to operate on BBC BASIC programs.
+
+basictool expects at least one argument, the name of the input file. The input may be either tokenised or ASCII BBC BASIC; basictool will auto-detect the type of input, although this can be overridden using
+.B --input-tokenised
+if necessary. To read from standard input, specify the input file as
+.B -
+\&. A second argument, the name of the output file, may be given; if this isn't specified, standard output will be used.
+.SH OPTIONS
+TODO!
+.SH EXAMPLES
+.PP
+Tokenise an ASCII BASIC program so it can be loaded by BBC BASIC.
+.br
+\fI$ basictool -t prog.txt prog.tok\fR
+.br
+.PP
+Display a tokenised BASIC program as human-readable ASCII.
+.br
+\fI$ basictool prog.tok\fR
+.PP
+Tokenise and pack an ASCII BASIC program so it can be loaded by BBC BASIC and use less memory.
+.br
+\fI$ basictool -t -p prog.txt prog.tok\fR
+.\" TODO: more?
