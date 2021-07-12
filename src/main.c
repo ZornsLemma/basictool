@@ -19,10 +19,6 @@
 // ABE runs at &8000 so probably can't work with HIBASIC-sized programs), but
 // let's not worry about that yet.
 //
-// TODO: It might be nice to expose ABE's "unpack" option, but my experiments
-// with it (on b-em, not this hacky emulator) suggest it's quite fiddly and may
-// ask you to renumber lines several times. I will leave this for now.
-//
 // TODO: It might be nice to offer an option to strip line numbers on
 // non-tokenised output. However, that would break programs which need to use
 // line numbers, so it might be nice to do that in conjunction with the ABE
