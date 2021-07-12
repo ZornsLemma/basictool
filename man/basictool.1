@@ -5,15 +5,22 @@ basictool \- tokenise, de-tokenise, pack, unpack and analyse BBC BASIC programs
 .B basictool
 [\fI\,OPTION\/\fR]... INPUTFILE [\fI\,OUTPUTFILE\/\fR]
 .SH DESCRIPTION
-basictool can convert BBC BASIC programs between ASCII text and the tokenised form used by (6502) BBC BASIC. It can also pack programs (making them shorter but less readable), unpack them (to partially reverse the effects of packing) and generate variable and line number references. Behind the scenes, it is really a specialised BBC Micro emulator which uses the BBC BASIC and Advanced BASIC Editor ROMs to operate on BBC BASIC programs.
+.BR basictool
+can convert BBC BASIC programs between ASCII text and the tokenised form used by (6502) BBC BASIC. It can also pack programs (making them shorter but less readable), unpack them (to partially reverse the effects of packing) and generate variable and line number references. Behind the scenes, it is really a specialised BBC Micro emulator which uses the BBC BASIC and Advanced BASIC Editor ROMs to operate on BBC BASIC programs.
 
-basictool expects at least one argument, the name of the input file. The input may be either tokenised or ASCII BBC BASIC; basictool will auto-detect the type of input, although this can be overridden using
+.BR basictool
+expects at least one argument, the name of the input file. The input may be either tokenised or ASCII BBC BASIC;
+.BR basictool
+will auto-detect the type of input, although this can be overridden using
 .B --input-tokenised
 if necessary. To read from standard input, specify the input file as
-.B -
+.B \-
 \&. A second argument, the name of the output file, may be given; if this isn't specified, standard output will be used.
 .SH OPTIONS
 TODO!
+.SH EXIT STATUS
+.BR basictool
+will exit with a zero exit status if no errors occur; errors are indicated by a non-zero exit status.
 .SH EXAMPLES
 .PP
 Tokenise an ASCII BASIC program so it can be loaded by BBC BASIC.
@@ -29,3 +36,18 @@ Tokenise and pack an ASCII BASIC program so it can be loaded by BBC BASIC and us
 .br
 \fI$ basictool -t -p prog.txt prog.tok\fR
 .\" TODO: more?
+.SH AUTHORS
+.BR basictool
+was written by Steven Flintham. It builds on several other existing pieces of code, most notably the BBC BASIC and Advanced BASIC Editor ROMs, which actually do most of the work, and lib6502, which allows the 6502 code in those ROMs to be executed.
+.PP
+BBC BASIC was (of course) originally published by Acorn.
+.PP
+The BASIC editor and utilities were originally published separately by Altra. The Advanced BASIC Editor ROMs used here are (C) Baildon Electronics. Thanks to Dave Hitchins for his support for developing
+.BR basictool
+using these ROMs.
+.PP
+6502 emulation is performed using lib6502. This was originally written by Ian Piumarta, although
+.BR basictool
+uses the versions from PiTubeClient (https://github.com/hoglet67/PiTubeClient).
+.PP
+Cross-platform command line parsing is performed using cargs (https://github.com/likle/cargs).
