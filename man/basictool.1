@@ -13,10 +13,22 @@ expects at least one argument, the name of the input file. The input may be eith
 .BR basictool
 will auto-detect the type of input, although this can be overridden using
 .IR \-\-input-tokenised
-if necessary. To read from standard input, specify the input file as
+if necessary.
+.BR basictool
+does not care about file extensions; auto detection is based on the file contents. To read from standard input, specify the input file as
 .IR \-
-\&. A second argument, the name of the output file, may be given; standard output will be used otherwise.
+\&. A second argument, the name of the output file, may be given; standard output will be used by default.
 .SH OPTIONS
+.TP
+\fB\-h\fR, \fB\-\-help\fR
+Show a description of
+.BR basictool
+and list the available options.
+.TP
+\fB\-\-roms\fR
+Show information about the BBC BASIC and Advanced BASIC Editor ROMs built into
+.BR basictool .
+.TP
 TODO!
 .SH EXIT STATUS
 .BR basictool
@@ -52,8 +64,8 @@ The BASIC editor and utilities were originally published separately by Altra. Th
 .BR basictool
 using these ROMs.
 .PP
-6502 emulation is performed using lib6502. This was originally written by Ian Piumarta, although
+lib6502 was originally written by Ian Piumarta, although
 .BR basictool
-uses the versions from PiTubeClient (https://github.com/hoglet67/PiTubeClient).
+uses the version from PiTubeClient (https://github.com/hoglet67/PiTubeClient).
 .PP
 Cross-platform command line parsing is performed using cargs (https://github.com/likle/cargs).
