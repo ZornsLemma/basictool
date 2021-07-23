@@ -255,3 +255,6 @@ If you have problems or suggestions for improvement, you can raise an issue or s
   * Don't open the output file until we're about to write to it; this will avoid occasionally creating a zero-length output when an error occurs.
 * v0.04:
   * No code changes, but ROMs are now included in the github repository.
+* v0.05:
+  * Get rid of --keep-spaces-start and --keep-spaces-end; BASIC 4 always strips trailing spaces anyway so --keep-spaces-end didn't work, and if we can only control stripping at the start of lines we only need the -k/--keep-spaces option.
+  * Warn if --keep-spaces is used with output options it has no effect on.

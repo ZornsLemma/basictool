@@ -8,7 +8,9 @@ struct s_config {
     bool show_all_output;
     bool input_tokenised;
     bool strip_leading_spaces;
+#ifdef SUPPORT_STRIP_TRAILING_SPACES
     bool strip_trailing_spaces;
+#endif
     bool pack;
     bool pack_rems_n;
     bool pack_spaces_n;

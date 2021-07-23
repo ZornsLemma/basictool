@@ -67,8 +67,10 @@ enum option_id {
     oi_show_all_output,
     oi_input_tokenised,
     oi_keep_spaces,
+#ifdef SUPPORT_STRIP_TRAILING_SPACES
     oi_keep_spaces_start,
     oi_keep_spaces_end,
+#endif
     oi_pack,
     oi_pack_rems_n,
     oi_pack_spaces_n,
@@ -118,6 +120,14 @@ static struct cag_option options[] = {
       .access_name = "input-tokenised",
       .description = "assume input is tokenised BASIC, don't auto-detect" },
 
+    // basictool is currently using BASIC 4 internally, and that automatically
+    // strips trailing spaces from lines of input, which stops
+    // --keep-spaces-end working. The code to implement this has been left in
+    // place but protected by SUPPORT_STRIP_TRAILIG_SPACES, which will not
+    // normally be defined. This code would be useful if basictool were built
+    // with BASIC 2, although then it would not be possible to handle programs
+    // using BASIC 4 keywords.
+#ifdef SUPPORT_STRIP_TRAILING_SPACES
     { .identifier = oi_keep_spaces,
       .access_letters = "k",
       .access_name = "keep-spaces",
@@ -132,6 +142,12 @@ static struct cag_option options[] = {
       .access_letters = 0,
       .access_name = "keep-spaces-end",
       .description = "don't strip spaces at end of lines when tokenising" },
+#else
+    { .identifier = oi_keep_spaces,
+      .access_letters = "k",
+      .access_name = "keep-spaces",
+      .description = "don't strip spaces at start of lines when tokenising" },
+#endif
 
     { .identifier = oi_pack,
       .access_letters = "p",
@@ -367,9 +383,12 @@ int main(int argc, char *argv[]) {
 
             case oi_keep_spaces:
                 config.strip_leading_spaces = false;
+#ifdef SUPPORT_STRIP_TRAILING_SPACES
                 config.strip_trailing_spaces = false;
+#endif
                 break;
 
+#ifdef SUPPORT_STRIP_TRAILING_SPACES
             case oi_keep_spaces_start:
                 config.strip_leading_spaces = false;
                 break;
@@ -377,6 +396,7 @@ int main(int argc, char *argv[]) {
             case oi_keep_spaces_end:
                 config.strip_trailing_spaces = false;
                 break;
+#endif
             
             case oi_pack:
                 config.pack = true;
@@ -500,6 +520,14 @@ int main(int argc, char *argv[]) {
         config.output_ascii = true;
     } else if (output_options > 1) {
         die_help("error: Please don't use more than one output type option.");
+    }
+
+    if (!config.output_tokenised && (!config.strip_leading_spaces
+#ifdef SUPPORT_STRIP_TRAILING_SPACES
+         || !config.strip_trailing_spaces
+#endif
+       )) {
+        warn("--keep-spaces only has an effect with the --tokenise output type");
     }
 
     if (config.listo == -1) {

@@ -23,7 +23,7 @@ Text input to
 .BR basictool
 can use the standard BBC BASIC abbreviations (such as "P." for "PRINT"). Line numbers are also optional; lines with no number will be automatically assigned the next line number in sequence.
 .PP
-TODO: Document auto-line numbering for ASCII BASIC, anything else (check README)
+TODO: Anything else? (check README)
 .SH OPTIONS
 .TP
 \fB\-h\fR, \fB\-\-help\fR
@@ -48,20 +48,12 @@ normally parses the output internally but does not show it to the user. This is 
 \fB\-\-input-tokenised\fR
 Assume that the input file is tokenised BASIC instead of trying to auto-detect whether it is text or tokenised BASIC. This should not normally be necessary, but in rare cases (such as a tokenised BASIC program with machine code attached at the end) the auto-detection heuristics may fail. There is no way to explicitly force the input to be treated as text BASIC and it shouldn't be necessary to do this.
 .TP
-\fB\-\-keep\-spaces\-start\fR
-By default
-.BR basictool
-will strip leading spaces from each line of text BASIC on input or output; this option disables this behaviour.
-.TP
-\fB\-\-keep\-spaces\-end\fR
-By default
-.BR basictool
-will strip trailing spaces from each line of text BASIC on input or output; this option disables this behaviour.
-.TP
 \fB\-k\fR, \fB\-\-keep\-spaces\fR
-Shorthand for
-.IR \-\-keep\-spaces\-start
-.IR \-\-keep\-spaces\-end .
+By default
+.BR basictool
+will strip leading spaces from each line of text BASIC input; this option disables this behaviour.
+.RB ( basictool
+- to be precise, the BASIC 4 ROM it uses - will also strip trailing spaces from each line of text BASIC input; this cannot be disabled, since it's implemented by BASIC itself.)
 .TP
 TODO!
 .SH EXIT STATUS

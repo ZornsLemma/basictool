@@ -357,6 +357,7 @@ static void type_basic_program(char *data, size_t length) {
         if (config.strip_leading_spaces) {
             line += strspn(line, " \t");
         }
+#ifdef SUPPORT_STRIP_TRAILING_SPACES
         if (config.strip_trailing_spaces) {
             int length = strlen(line);
             while ((length > 0) && (strchr(" \t", line[length - 1]) != 0)) {
@@ -364,6 +365,7 @@ static void type_basic_program(char *data, size_t length) {
             }
             line[length] = '\0';
         }
+#endif
 
         // Generate the fake input for BASIC and pass it over.
         const int buffer_size = 256;
