@@ -527,7 +527,8 @@ int main(int argc, char *argv[]) {
          || !config.strip_trailing_spaces
 #endif
        )) {
-        warn("--keep-spaces only has an effect with the --tokenise output type");
+        warn("--keep-spaces only has an effect with the --tokenise output "
+             "type");
     }
 
     if (config.listo == -1) {
