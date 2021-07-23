@@ -123,7 +123,7 @@ static struct cag_option options[] = {
     // basictool is currently using BASIC 4 internally, and that automatically
     // strips trailing spaces from lines of input, which stops
     // --keep-spaces-end working. The code to implement this has been left in
-    // place but protected by SUPPORT_STRIP_TRAILIG_SPACES, which will not
+    // place but protected by SUPPORT_STRIP_TRAILING_SPACES, which will not
     // normally be defined. This code would be useful if basictool were built
     // with BASIC 2, although then it would not be possible to handle programs
     // using BASIC 4 keywords.
