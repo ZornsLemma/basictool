@@ -12,12 +12,16 @@ can convert BBC BASIC programs between ASCII text and the tokenised form used by
 expects at least one argument, the name of the input file. The input may be either tokenised or ASCII BBC BASIC;
 .BR basictool
 will auto-detect the type of input, although this can be overridden using
-.IR \-\-input-tokenised
+.IR \-\-input\-tokenised
 if necessary.
 .BR basictool
 does not care about file extensions; auto detection is based on the file contents. To read from standard input, specify the input file as
 .IR \-
 \&. A second argument, the name of the output file, may be given; standard output will be used by default.
+.PP
+Text input to
+.BR basictool
+can use the standard BBC BASIC abbreviations (such as "P." for "PRINT"). Line numbers are also optional; lines with no number will be automatically assigned the next line number in sequence.
 .PP
 TODO: Document auto-line numbering for ASCII BASIC, anything else (check README)
 .SH OPTIONS
@@ -30,6 +34,34 @@ and list the available options.
 \fB\-\-roms\fR
 Show information about the BBC BASIC and Advanced BASIC Editor ROMs built into
 .BR basictool .
+.TP
+\fB\-v\fR, \fB\-\-verbose\fR
+Increase the verbosity of
+.BR basictool 's
+output; this can be specified twice for extra-verbose output.
+.TP
+\fB\-\-show\-all\-output\fR
+Show all output from the hidden emulated BBC Micro. 
+.BR basictool
+normally parses the output internally but does not show it to the user. This is mostly useful for debugging or to see what's going on behind the scenes.
+.TP
+\fB\-\-input-tokenised\fR
+Assume that the input file is tokenised BASIC instead of trying to auto-detect whether it is text or tokenised BASIC. This should not normally be necessary, but in rare cases (such as a tokenised BASIC program with machine code attached at the end) the auto-detection heuristics may fail. There is no way to explicitly force the input to be treated as text BASIC and it shouldn't be necessary to do this.
+.TP
+\fB\-\-keep\-spaces\-start\fR
+By default
+.BR basictool
+will strip leading spaces from each line of text BASIC on input or output; this option disables this behaviour.
+.TP
+\fB\-\-keep\-spaces\-end\fR
+By default
+.BR basictool
+will strip trailing spaces from each line of text BASIC on input or output; this option disables this behaviour.
+.TP
+\fB\-k\fR, \fB\-\-keep\-spaces\fR
+Shorthand for
+.IR \-\-keep\-spaces\-start
+.IR \-\-keep\-spaces\-end .
 .TP
 TODO!
 .SH EXIT STATUS
