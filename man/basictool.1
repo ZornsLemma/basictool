@@ -57,6 +57,12 @@ will strip leading spaces from each line of text BASIC input; this option disabl
 .RB ( basictool
 - to be precise, the BASIC 4 ROM it uses - will also strip trailing spaces from each line of text BASIC input; this cannot be disabled, since it's implemented by BASIC itself.)
 .TP
+\fB\-p\fR, \fB\-\-pack\fR
+Pack the program using the Advanced BASIC Editor's pack routine; this will reduce its size and improve its performance, at the cost of significantly reducing its readability. By default the pack options which give the largest possible size reduction are used; the following options allow individual pack options to be disabled if they are inappropriate.
+.TP
+\fB\-\-pack-rems-n\fR
+Disable removal of REM statements (comments) when packing.
+.TP
 TODO!
 .SH EXIT STATUS
 .BR basictool
