@@ -109,8 +109,38 @@ Use BASIC's LISTO option N to control the formatting of ASCII text output.
 This option is only relevant when using the
 .IR \-\-ascii
 output type option.
+.PP
+The following options control the type of output produced by
+.BR basictool .
+Only one of these options can be given; if no output type option is given,
+.IR \-\-ascii
+will be used.
 .TP
-TODO!
+\fB\-a\fR, \fB\-\-ascii\fR
+Output the program as ASCII text suitable for viewing or editing with a text editor.
+.TP
+\fB\-t\fR, \fB\-\-tokenise\fR
+Output the program as tokenised BASIC suitable for LOADing or CHAINing into (6502) BBC BASIC.
+.TP
+\fB\-f\fR, \fB\-\-format\fR
+Output the program as formatted ASCII text, using the Advanced BASIC Editor's format utility; this may be more readable but cannot be used as input to
+.BR basictool .
+.TP
+\fB\-u\fR, \fB\-\-unpack\fR
+Output the program as unpacked ASCII text, using the Advanced BASIC Editor's unpack utility. This will partially undo the effects of
+.IR \-\-pack
+but of course cannot restore comments or variable names. The output is human readable and should be suitable for use as input to
+.BR basictool .
+Unpacking splits apart multi-statement lines and will fail if the line numbers in the input program do not have sufficient gaps to allocate numbers for the new lines; if this happens, try using
+.IR \-\-renumber-step
+in combination with
+.IR \-\-unpack .
+.TP
+\fB\-\-line\-ref\fR
+Output a table of line number references in the program, using the Advanced BASIC Editor's "Table Line References" utility.
+.TP
+\fB\-\-variable\-xref\fR
+Output a table of variable, procedure and function names used in the program and the line numbers they are used on, using the Advanced BASIC Editor's "Variables Cross Reference Tables" utility.
 .SH EXIT STATUS
 .BR basictool
 will exit with a zero exit status if no errors occur; errors are indicated by a non-zero exit status.
