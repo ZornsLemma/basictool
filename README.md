@@ -72,9 +72,9 @@ Bytes saved= 65
 
 ## How it works
 
-basictool is really a specialised BBC Micro emulator built on top of lib6502. It runs the original BBC BASIC ROM and uses that to tokenise and de-tokenise programs. Programs are tokenised simply by typing them in at the BASIC prompt and de-tokenised simply by using the BASIC "LIST" command.
+basictool is really a specialised BBC Micro emulator built on top of lib6502. It runs an original BBC BASIC ROM and uses that to tokenise and de-tokenise programs. Programs are tokenised simply by typing them in at the BASIC prompt and de-tokenised simply by using the BASIC "LIST" command.
 
-It also uses the Advanced BASIC Editor ROMs to provide the "pack" function, as well as to generate line number reference tables and variable cross-reference tables.
+It also uses the Advanced BASIC Editor ROMs to provide the pack, unpack and analysis functions.
 
 ## Other features
 
