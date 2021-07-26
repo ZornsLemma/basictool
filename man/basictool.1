@@ -62,21 +62,44 @@ Pack the program using the Advanced BASIC Editor's pack routine; this will reduc
 .TP
 \fB\-\-pack\-rems\-n\fR
 Disable removal of REM statements (BASIC comments) when packing.
+This option implies
+.IR \-\-pack .
 .TP
 \fB\-\-pack\-spaces\-n\fR
 Disable removal of unnecessary spaces when packing.
+This option implies
+.IR \-\-pack .
 .TP
 \fB\-\-pack\-comments\-n\fR
 Disable removal of assembly language comments when packing.
+This option implies
+.IR \-\-pack .
 .TP
 \fB\-\-pack\-variables\-n\fR
 Disable shortening of variable, procedure and function names when packing.
+This option implies
+.IR \-\-pack .
 .TP
 \fB\-\-pack\-singles\-n\fR
 Disable changing the first character of variable, procedure and function names when packing.
+This option implies
+.IR \-\-pack .
 .TP
 \fB\-\-pack\-concatenate\-n\fR
 Disable combining separate lines of code together when packing.
+This option implies
+.IR \-\-pack .
+.TP
+\fB\-r\fR, \fB\-\-renumber\fR
+Renumber the program, by default starting with line 10 and incrementing the line number in steps of 10 for subsequent lines; the following options allow these defaults to be overriden. Simple line number references are fixed up during renumbering, but programs containing computed line numbers are likely to be broken by renumbering.
+.TP
+\fB\-\-renumber\-start\fR=\fI\,N\/\fR
+Renumber the program using N as the first line number. This option implies
+.IR \-\-renumber .
+.TP
+\fB\-\-renumber\-step\fR=\fI\,N\/\fR
+Renumber the program using gaps of N between line numbers. This option implies
+.IR \-\-renumber .
 .TP
 TODO!
 .SH EXIT STATUS
