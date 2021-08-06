@@ -1,31 +1,27 @@
-.TH BASICTOOL 1 "July 2021" "basictool 0.05" "User Commands"
+.TH BASICTOOL 1 "August 2021" "basictool 0.05" "User Commands"
 .SH NAME
 basictool \- tokenise, de-tokenise, pack, unpack and analyse BBC BASIC programs
 .SH SYNOPSIS
 .B basictool
-[\fI\,OPTION\/\fR]... INPUTFILE [\fI\,OUTPUTFILE\/\fR]
+[\fI\,OPTION\/\fR]... INFILE [\fI\,OUTFILE\/\fR]
 .SH DESCRIPTION
 .BR basictool
 converts BBC BASIC programs between ASCII text and the tokenised form used by (6502) BBC BASIC. It can also pack programs (making them shorter but less readable), unpack them (to partially reverse the effects of packing) and generate variable and line number references. Behind the scenes, it is really a specialised BBC Micro emulator which uses the BBC BASIC and Advanced BASIC Editor ROMs to operate on BBC BASIC programs.
 .PP
 .BR basictool
-expects at least one argument, the name of the input file. The input may be either tokenised or ASCII BBC BASIC;
+expects at least one argument, the name of the input file. The input may be either tokenised or text BBC BASIC;
 .BR basictool
 will auto-detect the type of input, although this can be overridden using
 .IR \-\-input\-tokenised
 if necessary.
 .BR basictool
-does not care about file extensions; auto detection is based on the file contents. To read from standard input, specify the input file as
+does not care about file extensions; auto-detection is based on the file contents. To read from standard input, specify the input file as
 .IR \-
 \&. A second argument, the name of the output file, may be given; standard output will be used by default.
 .PP
 Text input to
 .BR basictool
-can use the standard BBC BASIC abbreviations (such as "P." for "PRINT"). Line numbers are also optional; lines with no number will be automatically assigned the next line number in sequence.
-.PP
-TODO: Maybe somewhere in here describe the way basictool operates on a input-process-output basis and how you have to choose exactly one output option?
-.PP
-TODO: Anything else? (check README)
+can use the standard BBC BASIC abbreviations (such as "P." for "PRINT"). Line numbers in text input are optional; lines with no number will be automatically assigned the next line number in sequence.
 .SH OPTIONS
 .TP
 \fB\-h\fR, \fB\-\-help\fR
@@ -45,7 +41,7 @@ output; this can be specified twice for extra-verbose output.
 \fB\-\-show\-all\-output\fR
 Show all output from the hidden emulated BBC Micro. 
 .BR basictool
-normally parses the output internally but does not show it to the user. This is mostly useful for debugging or to see what's going on behind the scenes.
+normally processes this output internally but does not show it to the user. This is mostly useful for debugging or to see what's going on behind the scenes.
 .TP
 \fB\-\-input-tokenised\fR
 Assume that the input file is tokenised BASIC instead of trying to auto-detect whether it is text or tokenised BASIC. This should not normally be necessary, but in rare cases (such as a tokenised BASIC program with machine code attached at the end) the auto-detection heuristics may fail. There is no way to explicitly force the input to be treated as text BASIC and it shouldn't be necessary to do this.
@@ -54,11 +50,12 @@ Assume that the input file is tokenised BASIC instead of trying to auto-detect w
 By default
 .BR basictool
 will strip leading spaces from each line of text BASIC input; this option disables this behaviour.
-.RB ( basictool
-- to be precise, the BASIC 4 ROM it uses - will also strip trailing spaces from each line of text BASIC input; this cannot be disabled, since it's implemented by BASIC itself.)
 This option is only relevant when using the
 .IR \-\-tokenise
 output type option.
+.IP
+.RB ( basictool
+\(em to be precise, the BASIC 4 ROM it uses \(em will also strip trailing spaces from each line of text BASIC input; this cannot be disabled, since it's implemented by BASIC itself.)
 .TP
 \fB\-p\fR, \fB\-\-pack\fR
 Pack the program using the Advanced BASIC Editor's pack utility; this will reduce its size and improve its performance, at the cost of significantly reducing its readability. By default the pack options which give the largest possible size reduction are used; the following options allow individual pack options to be disabled if they are inappropriate.
@@ -94,7 +91,7 @@ This option implies
 .IR \-\-pack .
 .TP
 \fB\-r\fR, \fB\-\-renumber\fR
-Renumber the program, by default starting with line 10 and incrementing the line number in steps of 10 for subsequent lines; the following options allow these defaults to be overriden. Simple line number references are fixed up during renumbering, but programs containing computed line numbers are likely to be broken by renumbering.
+Renumber the program, by default starting with line 10 and incrementing the line number in steps of 10 for subsequent lines; the following options allow these defaults to be overridden. Simple line number references are fixed up during renumbering, but programs using computed line numbers are likely to be broken by renumbering.
 .TP
 \fB\-\-renumber\-start\fR=\fI\,N\/\fR
 Renumber the program using N as the first line number. This option implies
@@ -105,7 +102,7 @@ Renumber the program using gaps of N between line numbers. This option implies
 .IR \-\-renumber .
 .TP
 \fB\-l\fR, \fB\-\-listo\fR=\fI\,N\/\fR
-Use BASIC's LISTO option N to control the formatting of ASCII text output.
+Use BASIC's LISTO option N to control the formatting of text output.
 This option is only relevant when using the
 .IR \-\-ascii
 output type option.
@@ -123,13 +120,13 @@ Output the program as ASCII text suitable for viewing or editing with a text edi
 Output the program as tokenised BASIC suitable for LOADing or CHAINing into (6502) BBC BASIC.
 .TP
 \fB\-f\fR, \fB\-\-format\fR
-Output the program as formatted ASCII text using the Advanced BASIC Editor's format utility; this may be more readable but cannot be used as input to
+Output the program as formatted text using the Advanced BASIC Editor's format utility. This splits up multi-statement lines, which may be more readable but means the output cannot be re-used as input to
 .BR basictool .
 .TP
 \fB\-u\fR, \fB\-\-unpack\fR
-Output the program as unpacked ASCII text using the Advanced BASIC Editor's unpack utility. This will partially undo the effects of
+Output the program as unpacked text using the Advanced BASIC Editor's unpack utility. This will partially undo the effects of
 .IR \-\-pack
-but of course cannot restore comments or variable names. The output is human readable and should be suitable for use as input to
+but of course cannot restore comments or variable names. The output is human-readable and should also be suitable for use as input to
 .BR basictool .
 Unpacking splits apart multi-statement lines and will fail if the line numbers in the input program do not have sufficient gaps to allocate numbers for the new lines; if this happens, try using
 .IR \-\-renumber-step
@@ -146,30 +143,29 @@ Output a table of variable, procedure and function names used in the program and
 will exit with a zero exit status if no errors occur; errors are indicated by a non-zero exit status.
 .SH EXAMPLES
 .PP
-Tokenise an ASCII BASIC program so it can be loaded by BBC BASIC.
+Tokenise a text BASIC program so it can be loaded by BBC BASIC.
 .br
 .EX
 $ \fBbasictool -t prog.txt prog.tok\fP
 .EE
 .br
 .PP
-Display a tokenised BASIC program as human-readable ASCII.
+Display a tokenised BASIC program as human-readable text.
 .br
 .EX
 $ \fBbasictool prog.tok\fP
 .EE
 .PP
-Tokenise and pack an ASCII BASIC program so it can be loaded by BBC BASIC and use less memory.
+Tokenise and pack a text BASIC program so it can be loaded by BBC BASIC and use less memory.
 .br
 .EX
 $ \fBbasictool -t -p prog.txt prog.tok\fP
 .EE
-.\" TODO: more?
 .SH AUTHORS
 .BR basictool
 was written by Steven Flintham. It builds on several other existing pieces of code, most notably the BBC BASIC and Advanced BASIC Editor ROMs, which actually do most of the work, and lib6502, which allows the 6502 code in those ROMs to be executed.
 .PP
-BBC BASIC was (of course) originally published by Acorn.
+BBC BASIC was originally published by Acorn.
 .PP
 The BASIC editor and utilities were originally published separately by Altra. The Advanced BASIC Editor ROMs used here are (C) Baildon Electronics. Thanks to Dave Hitchins for his support for developing
 .BR basictool
