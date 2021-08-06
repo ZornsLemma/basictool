@@ -352,11 +352,11 @@ int main(int argc, char *argv[]) {
             case oi_help:
                 printf(
 "%s " VERSION "\n"
-"Usage: %s [OPTION]... INPUTFILE [OUTPUTFILE]\n"
-"INPUTFILE should be ASCII text (non-tokenised) or tokenised BBC BASIC.\n"
+"Usage: %s [OPTION]... INFILE [OUTFILE]\n"
+"INFILE should be ASCII text (non-tokenised) or tokenised BBC BASIC.\n"
 "(A filename of \"-\" indicates standard input/output.)\n"
 "\n"
-"Tokenise, de-tokenise, pack and analyse BBC BASIC programs.\n"
+"Tokenise, de-tokenise, pack, unpack and analyse BBC BASIC programs.\n"
 "\n"
 "This program is really a specialised BBC Micro emulator which uses the BBC\n"
 "BASIC and Advanced BASIC Editor ROMs to operate on BBC BASIC programs. Use\n"
