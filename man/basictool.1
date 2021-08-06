@@ -21,7 +21,7 @@ does not care about file extensions; auto-detection is based on the file content
 .PP
 Text input to
 .BR basictool
-can use the standard BBC BASIC abbreviations (such as "P." for "PRINT"). Line numbers in text input are optional; lines with no number will be automatically assigned the next line number in sequence.
+can use the standard BBC BASIC abbreviations (such as ``P.'' for ``PRINT''). Line numbers in text input are optional; lines with no number will be automatically assigned the next line number in sequence.
 .SH OPTIONS
 .TP
 \fB\-h\fR, \fB\-\-help\fR
@@ -128,16 +128,17 @@ Output the program as unpacked text using the Advanced BASIC Editor's unpack uti
 .IR \-\-pack
 but of course cannot restore comments or variable names. The output is human-readable and should also be suitable for use as input to
 .BR basictool .
+.IP
 Unpacking splits apart multi-statement lines and will fail if the line numbers in the input program do not have sufficient gaps to allocate numbers for the new lines; if this happens, try using
 .IR \-\-renumber-step
 in combination with
 .IR \-\-unpack .
 .TP
 \fB\-\-line\-ref\fR
-Output a table of line number references in the program using the Advanced BASIC Editor's "Table Line References" utility.
+Output a table of line number references in the program using the Advanced BASIC Editor's ``Table Line References'' utility.
 .TP
 \fB\-\-variable\-xref\fR
-Output a table of variable, procedure and function names used in the program and the line numbers they are used on using the Advanced BASIC Editor's "Variables Cross Reference Tables" utility.
+Output a table of variable, procedure and function names used in the program and the line numbers they are used on using the Advanced BASIC Editor's ``Variables Cross Reference Tables'' utility.
 .SH EXIT STATUS
 .BR basictool
 will exit with a zero exit status if no errors occur; errors are indicated by a non-zero exit status.
