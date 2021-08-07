@@ -247,7 +247,8 @@ If you have problems or suggestions for improvement, you can raise an issue or s
 
 ## Changelog
 
-* v0.01: Initial release
+* v0.01:
+  * Initial release
 * v0.02:
   * Fix build error on gcc 10 (thanks to scruss for reporting this!)
 * v0.03:
@@ -257,5 +258,6 @@ If you have problems or suggestions for improvement, you can raise an issue or s
   * No code changes, but ROMs are now included in the github repository.
 * v0.05:
   * Get rid of --keep-spaces-start and --keep-spaces-end; BASIC 4 always strips trailing spaces anyway so --keep-spaces-end didn't work, and if we can only control stripping at the start of lines we only need the -k/--keep-spaces option.
-  * Warn if --keep-spaces is used with output options it has no effect on.
+  * Warn if --keep-spaces is used when it has no effect.
+  * Warn if --pack-singles-n is used when it has no effect.
   * Add man page.

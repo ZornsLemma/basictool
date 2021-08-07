@@ -543,6 +543,10 @@ int main(int argc, char *argv[]) {
         warn("program will be packed and then unpacked");
     }
 
+    if (config.pack_variables_n && config.pack_singles_n) {
+        warn("--pack-singles-n has no effect with --pack-variables-n");
+    }
+
     emulation_init();
     load_basic(filenames[0]);
     if (config.pack) {
