@@ -399,6 +399,14 @@ void load_basic(const char *filename) {
     }
 
     if (tokenised) {
+        if (config.output_tokenised && (!config.strip_leading_spaces
+#ifdef SUPPORT_STRIP_TRAILING_SPACES
+             || !config.strip_trailing_spaces
+#endif
+           )) {
+            warn("--keep-spaces has no effect with pre-tokenised input");
+        }
+
         // Copy the data directly into the emulated machine's memory.
         size_t max_length = himem - page - 512; // arbitrary safety margin
         check(length <= max_length, "error: input is too large");
