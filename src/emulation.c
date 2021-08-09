@@ -3,6 +3,7 @@
 #include <setjmp.h>
 #include <stdlib.h>
 #include <string.h>
+#include "config.h"
 #include "driver.h"
 #include "lib6502.h"
 #include "roms.h"
@@ -291,7 +292,6 @@ static int callback_read_escape_flag(M6502 *mpu, uint16_t address,
 
 static int callback_romsel_write(M6502 *mpu, uint16_t address, uint8_t data) {
     uint8_t *rom_start = &mpu_memory[0x8000];
-    const size_t rom_size = 16 * 1024;
     switch (data) {
         case bank_editor_a:
             memcpy(rom_start, rom_editor_a, rom_size);
@@ -300,7 +300,7 @@ static int callback_romsel_write(M6502 *mpu, uint16_t address, uint8_t data) {
             memcpy(rom_start, rom_editor_b, rom_size);
             break;
         case bank_basic:
-            memcpy(rom_start, rom_basic, rom_size);
+            memcpy(rom_start, rom_basic[config.basic_version], rom_size);
             break;
         default:
             die("internal error: invalid ROM bank %d selected", data);

@@ -2,10 +2,12 @@
 #define CONFIG_H
 
 #include <stdbool.h>
+#include "roms.h"
 
 struct s_config {
     int verbose;
     bool show_all_output;
+    int basic_version;
     bool input_tokenised;
     bool strip_leading_spaces;
 #ifdef SUPPORT_STRIP_TRAILING_SPACES

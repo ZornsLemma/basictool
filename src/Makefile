@@ -10,7 +10,8 @@ CFLAGS  = -g -O2 -Wall -Werror --std=c99
 LDFLAGS = -g
 EDITORA = ../roms/EDITORA100
 EDITORB = ../roms/EDITORB100
-BASIC   = ../roms/Basic432
+BASIC2  = ../roms/Basic2
+BASIC4  = ../roms/Basic432
 
 all: ../basictool
 
@@ -24,8 +25,11 @@ zz-editor-a.c: bintoinc $(EDITORA)
 zz-editor-b.c: bintoinc $(EDITORB)
 	./bintoinc $(EDITORB) > zz-editor-b.c
 
-zz-basic.c: bintoinc $(BASIC)
-	./bintoinc $(BASIC) > zz-basic.c
+zz-basic-2.c: bintoinc $(BASIC2)
+	./bintoinc $(BASIC2) > zz-basic-2.c
+
+zz-basic-4.c: bintoinc $(BASIC4)
+	./bintoinc $(BASIC4) > zz-basic-4.c
 
 BINTOINCOBJS = bintoinc.o
 bintoinc: $(BINTOINCOBJS)
@@ -34,7 +38,7 @@ bintoinc: $(BINTOINCOBJS)
 clean:
 	rm -f ../basictool bintoinc depend.txt *.o zz-*.c
 
-depend: zz-editor-a.c zz-editor-b.c zz-basic.c
+depend: zz-editor-a.c zz-editor-b.c zz-basic-2.c zz-basic-4.c
 	# This is just a convenience for generating the dependencies, which
 	# then need to be manually copied into this Makefile. I'm trying to
 	# keep things simple and portable, and this isn't a huge project.
@@ -48,14 +52,19 @@ depend: zz-editor-a.c zz-editor-b.c zz-basic.c
 # TODO: Keep this up to date!
 bintoinc.o: bintoinc.c
 cargs.o: cargs.c cargs.h
-config.o: config.c config.h
-driver.o: driver.c cargs.h config.h emulation.h lib6502.h main.h utils.h
-emulation.o: emulation.c emulation.h lib6502.h driver.h roms.h utils.h
+config.o: config.c config.h roms.h
+driver.o: driver.c cargs.h config.h roms.h emulation.h lib6502.h main.h \
+ utils.h
+emulation.o: emulation.c emulation.h lib6502.h config.h roms.h driver.h \
+ utils.h
+foo.o: foo.c cargs.h
 lib6502.o: lib6502.c lib6502.h
-main.o: main.c main.h cargs.h config.h driver.h emulation.h lib6502.h \
- roms.h utils.h
-roms.o: roms.c roms.h zz-editor-a.c zz-editor-b.c zz-basic.c
+main.o: main.c main.h cargs.h config.h roms.h driver.h emulation.h \
+ lib6502.h utils.h
+roms.o: roms.c roms.h zz-editor-a.c zz-editor-b.c zz-basic-2.c \
+ zz-basic-4.c
 utils.o: utils.c utils.h main.h
-zz-basic.o: zz-basic.c
+zz-basic-2.o: zz-basic-2.c
+zz-basic-4.o: zz-basic-4.c
 zz-editor-a.o: zz-editor-a.c
 zz-editor-b.o: zz-editor-b.c

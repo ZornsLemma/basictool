@@ -1,4 +1,5 @@
 src/bintoinc
+src/depend.txt
 src/zz-*.c
 src/*.o
 test/out/*.out

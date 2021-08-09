@@ -65,6 +65,8 @@ enum option_id {
     oi_roms,
     oi_verbose,
     oi_show_all_output,
+    oi_basic_2,
+    oi_basic_4,
     oi_input_tokenised,
     oi_keep_spaces,
 #ifdef SUPPORT_STRIP_TRAILING_SPACES
@@ -114,6 +116,16 @@ static struct cag_option options[] = {
       .access_letters = 0,
       .access_name = "show-all-output",
       .description = "show all output from emulated machine" },
+
+    { .identifier = oi_basic_2,
+      .access_letters = "2",
+      .access_name = "basic-2",
+      .description = "use the BASIC 2 ROM" },
+
+    { .identifier = oi_basic_4,
+      .access_letters = "4",
+      .access_name = "basic-4",
+      .description = "use the BASIC 4 ROM (default)" },
 
     { .identifier = oi_input_tokenised,
       .access_letters = 0,
@@ -293,7 +305,8 @@ static int print_to_nul_and_count(const uint8_t *data, int offset, int *width)
 
 static void show_roms(void) {
     const uint8_t *roms[] = {
-        rom_basic,
+        rom_basic[basic_2],
+        rom_basic[basic_4],
         rom_editor_b
     };
 
@@ -376,6 +389,17 @@ int main(int argc, char *argv[]) {
             case oi_show_all_output:
                 config.show_all_output = true;
                 break;
+
+            case oi_basic_2:
+            case oi_basic_4:
+            {
+                int version = (identifier == oi_basic_2) ? basic_2 : basic_4;
+                check((config.basic_version == -1) ||
+                      (config.basic_version == version),
+                      "error: Only one version of BASIC can be specified.");
+                config.basic_version = version;
+                break;
+            }
 
             case oi_input_tokenised:
                 config.input_tokenised = true;
@@ -507,6 +531,10 @@ int main(int argc, char *argv[]) {
     if (filename_count == 0) {
         die_help("error: Please give at least one filename; use input "
                  "filename \"-\" for standard input.");
+    }
+
+    if (config.basic_version == -1) {
+        config.basic_version = basic_4;
     }
 
     int output_options = 0;

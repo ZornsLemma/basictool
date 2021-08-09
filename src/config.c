@@ -7,6 +7,7 @@
 struct s_config config = {
     0,      // verbose
     false,  // show all output
+    -1,     // BASIC version
     false,  // assume input is tokenised
     true,   // strip leading spaces
 #ifdef SUPPORT_STRIP_TRAILING_SPACES
