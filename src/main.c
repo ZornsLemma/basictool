@@ -341,6 +341,13 @@ static void show_roms(void) {
     );
 }
 
+static void set_basic_version(int basic_version) {
+    check((config.basic_version == -1) ||
+          (config.basic_version == basic_version),
+          "error: Only one version of BASIC can be specified.");
+    config.basic_version = basic_version;
+}
+
 static long parse_long_argument(const char *name, const char *value, int min,
                                 int max) {
     if ((value == 0) || (*value == '\0')) {
@@ -391,15 +398,12 @@ int main(int argc, char *argv[]) {
                 break;
 
             case oi_basic_2:
-            case oi_basic_4:
-            {
-                int version = (identifier == oi_basic_2) ? basic_2 : basic_4;
-                check((config.basic_version == -1) ||
-                      (config.basic_version == version),
-                      "error: Only one version of BASIC can be specified.");
-                config.basic_version = version;
+                set_basic_version(oi_basic_2);
                 break;
-            }
+
+            case oi_basic_4:
+                set_basic_version(oi_basic_4);
+                break;
 
             case oi_input_tokenised:
                 config.input_tokenised = true;
