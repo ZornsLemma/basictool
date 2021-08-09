@@ -398,11 +398,11 @@ int main(int argc, char *argv[]) {
                 break;
 
             case oi_basic_2:
-                set_basic_version(oi_basic_2);
+                set_basic_version(basic_2);
                 break;
 
             case oi_basic_4:
-                set_basic_version(oi_basic_4);
+                set_basic_version(basic_4);
                 break;
 
             case oi_input_tokenised:
