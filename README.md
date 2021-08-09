@@ -261,3 +261,5 @@ If you have problems or suggestions for improvement, you can raise an issue or s
   * Warn if --keep-spaces is used when it has no effect.
   * Warn if --pack-singles-n is used when it has no effect.
   * Add man page.
+* v0.06:
+  * TODO

@@ -45,7 +45,7 @@
 #include "roms.h"
 #include "utils.h"
 
-#define VERSION "0.05"
+#define VERSION "0.06-pre"
 
 // We could just sum the bool variables, but let's play it safe in case we
 // want to support pre-C99 compilers where bool is a typedef for something
