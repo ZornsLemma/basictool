@@ -357,7 +357,6 @@ static void type_basic_program(char *data, size_t length) {
         if (config.strip_leading_spaces) {
             line += strspn(line, " \t");
         }
-#ifdef SUPPORT_STRIP_TRAILING_SPACES
         if (config.strip_trailing_spaces) {
             int length = strlen(line);
             while ((length > 0) && (strchr(" \t", line[length - 1]) != 0)) {
@@ -365,7 +364,6 @@ static void type_basic_program(char *data, size_t length) {
             }
             line[length] = '\0';
         }
-#endif
 
         // Generate the fake input for BASIC and pass it over.
         const int buffer_size = 256;
@@ -377,6 +375,27 @@ static void type_basic_program(char *data, size_t length) {
         ++basic_line_number;
     }
     error_line_number = -1;
+}
+
+// Warn about uses of the --keep-spaces* options in situations where they will
+// be ignored. We do this relatively late so we can tell if the input is
+// tokenised or not.
+static void check_keep_spaces_use(bool input_tokenised) {
+    if (config.strip_leading_spaces && config.strip_trailing_spaces) {
+        return;
+    }
+
+    // We only generate one warning to keep the verbosity down, so we prefer
+    // more generally helpful ones.
+    if (!config.output_tokenised) {
+        warn("--keep-spaces* only have an effect with the --tokenise output "
+             "type");
+    } else if (input_tokenised) {
+        warn("--keep-spaces* have no effect with pre-tokenised input");
+    } else if ((config.basic_version == basic_4) && 
+               !config.strip_trailing_spaces) {
+        warn("--keep-spaces-end only has an effect when BASIC 2 is used");
+    }
 }
 
 void load_basic(const char *filename) {
@@ -398,15 +417,11 @@ void load_basic(const char *filename) {
         }
     }
 
-    if (tokenised) {
-        if (config.output_tokenised && (!config.strip_leading_spaces
-#ifdef SUPPORT_STRIP_TRAILING_SPACES
-             || !config.strip_trailing_spaces
-#endif
-           )) {
-            warn("--keep-spaces has no effect with pre-tokenised input");
-        }
+    // Now we know if the input is tokenised or not, warn about possible
+    // problems with --keep-spaces*.
+    check_keep_spaces_use(tokenised);
 
+    if (tokenised) {
         // Copy the data directly into the emulated machine's memory.
         size_t max_length = himem - page - 512; // arbitrary safety margin
         check(length <= max_length, "error: input is too large");

@@ -300,6 +300,8 @@ static int callback_romsel_write(M6502 *mpu, uint16_t address, uint8_t data) {
             memcpy(rom_start, rom_editor_b, rom_size);
             break;
         case bank_basic:
+            check(config.basic_version != -1,
+                  "internal error: no BASIC version selected");
             memcpy(rom_start, rom_basic[config.basic_version], rom_size);
             break;
         default:

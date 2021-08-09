@@ -26,6 +26,7 @@ echo -en "A=3\nB=4\nC=5\n" > zz-test-lf.bas
 echo -en "A=3\rB=4\rC=5\r" > zz-test-cr.bas
 echo -en "A=3\r\nB=4\r\nC=5\r\n" > zz-test-crlf.bas
 echo -en "A=3\n\rB=4\n\rC=5\n\r" > zz-test-lfcr.bas
+echo -en "A=3\n   B=4\nC=5   \n" >> zz-test-spaces.bas
 cd ..
 
 BASICTOOL="$VALGRIND ../basictool"
@@ -43,6 +44,11 @@ for TEST in $TESTS; do
 	$BASICTOOL -u --renumber-step 100 $TEST > out/$BASENAME-u.out
 	$BASICTOOL --line-ref $TEST > out/$BASENAME-line-ref.out
 	$BASICTOOL --variable-xref $TEST > out/$BASENAME-variable-xref.out
+	if [ "$TEST" == "tmp/zz-test-spaces.bas" ]; then
+		$BASICTOOL -2kt $TEST out/$BASENAME-2kt.out
+		# The next line generates a warning.
+		$BASICTOOL -4kt $TEST > out/$BASENAME-4kt.out 2> out/$BASENAME-4kt-err.out
+	fi
 done
 
 for RESULT in out/*.out; do
