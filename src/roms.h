@@ -22,8 +22,8 @@ enum {
 
 // TODO: Rename rom_editor to rom_abe? Ditto bank_editor. Or maybe I should
 // be calling it "bet", *HELP calls it "BASIC Editor & Toolkit".
-extern const uint8_t rom_editor_a[];
-extern const uint8_t rom_editor_b[];
+extern const uint8_t rom_editor_a[rom_size];
+extern const uint8_t rom_editor_b[rom_size];
 extern const uint8_t rom_basic[basic_count][rom_size];
 
 // vi: colorcolumn=80
