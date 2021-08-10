@@ -9,8 +9,8 @@ struct s_config config = {
     false,  // show all output
     -1,     // BASIC version
     false,  // assume input is tokenised
-    true,   // strip leading spaces
-    true,   // strip trailing spaces
+    false,  // strip leading spaces
+    false,  // strip trailing spaces
     false,  // pack
     false,  // pack_rems_n
     false,  // pack_spaces_n

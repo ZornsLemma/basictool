@@ -330,6 +330,16 @@ static int get_line_number(char **lineptr, int line_number) {
     return line_number;
 }
 
+static int find_trailing_stripped_length(const char *line) {
+    int original_length = strlen(line);
+    int stripped_length = original_length;
+    while ((stripped_length > 0) &&
+           (strchr(" \t", line[stripped_length - 1]) != 0)) {
+        --stripped_length;
+    }
+    return stripped_length;
+}
+
 // Given untokenised ASCII BASIC program text loaded in binary mode using
 // load_binary() at 'data' of length 'length', use get_line() to iterate
 // through it line-by-line and type it into the emulated machine so BASIC will
@@ -346,6 +356,7 @@ static void type_basic_program(char *data, size_t length) {
     // any program before we output it, which has the same effect.
     int basic_line_number = 1;
     int file_line_number = 1;
+    bool warned_about_spaces = false;
     for (char *line = 0; (line = get_line(&data, &length)) != 0; ++file_line_number) {
         error_line_number = file_line_number;
 
@@ -353,16 +364,27 @@ static void type_basic_program(char *data, size_t length) {
         // We now have the line number to use in basic_line_number and the line
         // with no line number at 'line'.
 
-        // Strip leading/trailing spaces if required.
+        // Strip laeding spaces if required.
         if (config.strip_leading_spaces) {
             line += strspn(line, " \t");
         }
+
+        // Strip trailing spaces if required and warn if they will be stripped
+        // despite the user not requesting that.
+        // TODO: I suppose I could manually adjust the line tokenised into
+        // memory by BASIC 4 to re-add any trailing spaces it has stripped off
+        // automatically. I do quite like the way we currently let BASIC do all
+        // the work though.
         if (config.strip_trailing_spaces) {
-            int length = strlen(line);
-            while ((length > 0) && (strchr(" \t", line[length - 1]) != 0)) {
-                --length;
+            line[find_trailing_stripped_length(line)] = '\0';
+        } else {
+            if ((config.basic_version == basic_4) &&
+                (line[find_trailing_stripped_length(line)] != '\0') && 
+                !warned_about_spaces) {
+                warn("BASIC 4 will strip trailing spaces; use --basic-2 to "
+                     "preserve them");
+                warned_about_spaces = true;
             }
-            line[length] = '\0';
         }
 
         // Generate the fake input for BASIC and pass it over.
@@ -377,24 +399,21 @@ static void type_basic_program(char *data, size_t length) {
     error_line_number = -1;
 }
 
-// Warn about uses of the --keep-spaces* options in situations where they will
+// Warn about uses of the --strip-spaces* options in situations where they will
 // be ignored. We do this relatively late so we can tell if the input is
 // tokenised or not.
-static void check_keep_spaces_use(bool input_tokenised) {
-    if (config.strip_leading_spaces && config.strip_trailing_spaces) {
+static void check_strip_spaces_use(bool input_tokenised) {
+    if (!config.strip_leading_spaces && !config.strip_trailing_spaces) {
         return;
     }
 
     // We only generate one warning to keep the verbosity down, so we prefer
     // more generally helpful ones.
     if (!config.output_tokenised) {
-        warn("--keep-spaces* only have an effect with the --tokenise output "
+        warn("--strip-spaces* only have an effect with the --tokenise output "
              "type");
     } else if (input_tokenised) {
-        warn("--keep-spaces* have no effect with pre-tokenised input");
-    } else if ((config.basic_version == basic_4) && 
-               !config.strip_trailing_spaces) {
-        warn("--keep-spaces-end only has an effect when BASIC 2 is used");
+        warn("--strip-spaces* have no effect with pre-tokenised input");
     }
 }
 
@@ -418,8 +437,8 @@ void load_basic(const char *filename) {
     }
 
     // Now we know if the input is tokenised or not, warn about possible
-    // problems with --keep-spaces*.
-    check_keep_spaces_use(tokenised);
+    // problems with --strip-spaces*.
+    check_strip_spaces_use(tokenised);
 
     if (tokenised) {
         // Copy the data directly into the emulated machine's memory.

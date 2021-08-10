@@ -9,8 +9,6 @@ struct s_config {
     bool show_all_output;
     int basic_version;
     bool input_tokenised;
-    // TODO: Should I rename the strip_*_spaces options to match the
-    // command-line options?
     bool strip_leading_spaces;
     bool strip_trailing_spaces;
     bool pack;

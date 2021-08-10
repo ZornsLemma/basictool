@@ -68,9 +68,9 @@ enum option_id {
     oi_basic_2,
     oi_basic_4,
     oi_input_tokenised,
-    oi_keep_spaces,
-    oi_keep_spaces_start,
-    oi_keep_spaces_end,
+    oi_strip_spaces,
+    oi_strip_spaces_start,
+    oi_strip_spaces_end,
     oi_pack,
     oi_pack_rems_n,
     oi_pack_spaces_n,
@@ -130,20 +130,20 @@ static struct cag_option options[] = {
       .access_name = "input-tokenised",
       .description = "assume input is tokenised BASIC, don't auto-detect" },
 
-    { .identifier = oi_keep_spaces,
-      .access_letters = "k",
-      .access_name = "keep-spaces",
-      .description = "don't strip spaces at start/end of lines when tokenising" },
+    { .identifier = oi_strip_spaces,
+      .access_letters = "s",
+      .access_name = "strip-spaces",
+      .description = "strip spaces at start/end of lines when tokenising" },
 
-    { .identifier = oi_keep_spaces_start,
+    { .identifier = oi_strip_spaces_start,
       .access_letters = 0,
-      .access_name = "keep-spaces-start",
-      .description = "don't strip spaces at start of lines when tokenising" },
+      .access_name = "strip-spaces-start",
+      .description = "strip spaces at start of lines when tokenising" },
 
-    { .identifier = oi_keep_spaces_end,
+    { .identifier = oi_strip_spaces_end,
       .access_letters = 0,
-      .access_name = "keep-spaces-end",
-      .description = "don't strip spaces at end of lines when tokenising" },
+      .access_name = "strip-spaces-end",
+      .description = "strip spaces at end of lines when tokenising" },
 
     { .identifier = oi_pack,
       .access_letters = "p",
@@ -393,17 +393,17 @@ int main(int argc, char *argv[]) {
                 config.input_tokenised = true;
                 break;
 
-            case oi_keep_spaces:
-                config.strip_leading_spaces = false;
-                config.strip_trailing_spaces = false;
+            case oi_strip_spaces:
+                config.strip_leading_spaces = true;
+                config.strip_trailing_spaces = true;
                 break;
 
-            case oi_keep_spaces_start:
-                config.strip_leading_spaces = false;
+            case oi_strip_spaces_start:
+                config.strip_leading_spaces = true;
                 break;
 
-            case oi_keep_spaces_end:
-                config.strip_trailing_spaces = false;
+            case oi_strip_spaces_end:
+                config.strip_trailing_spaces = true;
                 break;
             
             case oi_pack:
