@@ -354,7 +354,7 @@ static void type_basic_program(char *data, size_t length) {
     // (e.g. DATA statements) if desired. We don't allow control over the
     // start value and increment here because we provide facilities to renumber
     // any program before we output it, which has the same effect.
-    int basic_line_number = 1;
+    int basic_line_number = 0;
     int file_line_number = 1;
     bool warned_about_spaces = false;
     for (char *line = 0; (line = get_line(&data, &length)) != 0; ++file_line_number) {
