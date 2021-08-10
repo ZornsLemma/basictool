@@ -381,8 +381,8 @@ static void type_basic_program(char *data, size_t length) {
             if ((config.basic_version == basic_4) &&
                 (line[find_trailing_stripped_length(line)] != '\0') && 
                 !warned_about_spaces) {
-                warn("BASIC 4 will strip trailing spaces; use --basic-2 to "
-                     "preserve them");
+                warn("BASIC 4 will strip spaces at ends of lines; use "
+                     "--basic-2 to preserve them");
                 warned_about_spaces = true;
             }
         }
@@ -397,24 +397,6 @@ static void type_basic_program(char *data, size_t length) {
         ++basic_line_number;
     }
     error_line_number = -1;
-}
-
-// Warn about uses of the --strip-spaces* options in situations where they will
-// be ignored. We do this relatively late so we can tell if the input is
-// tokenised or not.
-static void check_strip_spaces_use(bool input_tokenised) {
-    if (!config.strip_leading_spaces && !config.strip_trailing_spaces) {
-        return;
-    }
-
-    // We only generate one warning to keep the verbosity down, so we prefer
-    // more generally helpful ones.
-    if (!config.output_tokenised) {
-        warn("--strip-spaces* only have an effect with the --tokenise output "
-             "type");
-    } else if (input_tokenised) {
-        warn("--strip-spaces* have no effect with pre-tokenised input");
-    }
 }
 
 void load_basic(const char *filename) {
@@ -438,7 +420,10 @@ void load_basic(const char *filename) {
 
     // Now we know if the input is tokenised or not, warn about possible
     // problems with --strip-spaces*.
-    check_strip_spaces_use(tokenised);
+    if (tokenised &&
+        (config.strip_leading_spaces || config.strip_trailing_spaces)) {
+        warn("--strip-spaces* have no effect with pre-tokenised input");
+    }
 
     if (tokenised) {
         // Copy the data directly into the emulated machine's memory.

@@ -9,6 +9,9 @@ struct s_config {
     bool show_all_output;
     int basic_version;
     bool input_tokenised;
+    // TODO: Rename the next two options strip_spaces_{start,end} to match
+    // command-line options? (As part of that, perhaps don't use the words
+    // "leading" and "trailing" in comments/other variable names either?)
     bool strip_leading_spaces;
     bool strip_trailing_spaces;
     bool pack;

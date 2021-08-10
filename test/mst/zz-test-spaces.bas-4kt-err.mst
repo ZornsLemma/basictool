@@ -1,1 +1,1 @@
-warning: --keep-spaces-end only has an effect when BASIC 2 is used
+warning: BASIC 4 will strip spaces at ends of lines; use --basic-2 to preserve them
