@@ -381,8 +381,8 @@ static void type_basic_program(char *data, size_t length) {
             if ((config.basic_version == basic_4) &&
                 (line[find_trailing_stripped_length(line)] != '\0') && 
                 !warned_about_spaces) {
-                warn("BASIC 4 will strip spaces at ends of lines; use "
-                     "--basic-2 to preserve them");
+                warn("BASIC 4 strips spaces at ends of lines; use --basic-2 "
+                     "to preserve them");
                 warned_about_spaces = true;
             }
         }
