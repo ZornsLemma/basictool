@@ -43,20 +43,34 @@ Show all output from the hidden emulated BBC Micro.
 .BR basictool
 normally processes this output internally but does not show it to the user. This is mostly useful for debugging or to see what's going on behind the scenes.
 .TP
+\fB\-2\fR, \fB\-\-basic\-2\fR
+Use the BASIC 2 ROM. This is mainly useful to avoid BASIC 4's behaviour of always stripping spaces at the end of lines; see
+.IR \-\-strip\-spaces\-end
+below for more on this.
+.TP
+\fB\-4\fR, \fB\-\-basic\-4\fR
+Use the BASIC 4 ROM; this is the default anyway, so this option just makes that explicit.
+.TP
 \fB\-\-input-tokenised\fR
 Assume that the input file is tokenised BASIC instead of trying to auto-detect whether it is text or tokenised BASIC. This should not normally be necessary, but in rare cases (such as a tokenised BASIC program with machine code attached at the end) the auto-detection heuristics may fail. There is no way to explicitly force the input to be treated as text BASIC and it shouldn't be necessary to do this.
 .TP
-\fB\-k\fR, \fB\-\-keep\-spaces\fR
+\fB\-s\fR, \fB\-\-strip\-spaces\fR
+Shorthand for 
+.IR \-\-strip\-spaces\-start
+.IR \-\-strip\-spaces\-end .
+.TP
+\fB\-\-strip\-spaces\-start\fR
 By default
 .BR basictool
-will strip leading spaces from each line of text BASIC input; this option disables this behaviour.
-This option is only relevant when using text BASIC input and the
-.IR \-\-tokenise
-output type option.
-TODO: need to fix up keep/strip stuff. Note that's not true about only relevant when tokenising - any text input will be affected.
+will preserve spaces at the start of lines in non-tokenised input; this option causes them to be stripped.
+.TP
+\fB\-\-strip\-spaces\-end\fR
+By default
+.BR basictool
+will try preserve spaces at the end of lines in non-tokenised input; this option causes them to be stripped. BASIC 4 always strips spaces at the end of lines whether this option is specified or not; a warning will be given if this happens and this option is not specified. Use 
+.IR \-\-basic\-2
+if it is important to preserve spaces at the end of lines.
 .IP
-.RB ( basictool
-\(em to be precise, the BASIC 4 ROM it uses \(em will also strip trailing spaces from each line of text BASIC input; this cannot be disabled, since it's implemented by BASIC itself.)
 .TP
 \fB\-p\fR, \fB\-\-pack\fR
 Pack the program using the Advanced BASIC Editor's pack utility; this will reduce its size and improve its performance, at the cost of significantly reducing its readability. By default the pack options which give the largest possible size reduction are used; the following options allow individual pack options to be disabled if they are inappropriate.
