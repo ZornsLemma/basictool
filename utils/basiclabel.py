@@ -47,12 +47,13 @@ def find_label_reference(line):
 if len(sys.argv) != 2:
     die("Syntax: %s INFILE" % sys.argv[0])
 
+label_internal_line = {}
+
 # TODO: Both of these defaults should be command-line arguments
 next_auto_line_number = 0
 auto_line_number_increment = 1
 
 with open(sys.argv[1], "r") as f:
-    label_internal_line = {}
     program = []
     for i, line in enumerate(f.readlines()):
         line = line[:-1]
@@ -75,8 +76,13 @@ for i, (user_line_number, user_content) in enumerate(program):
         label_reference, start_index, end_index = find_label_reference(user_content)
         if label_reference is None:
             break
-        if label_reference in label_internal_line:
+        if label_reference == "INCREMENT":
+            label_value = auto_line_number_increment
+        elif label_reference in label_internal_line:
             label_internal_line_number = label_internal_line[label_reference]
             label_user_line_number = program[label_internal_line_number][0]
-            user_content = user_content[:start_index] + str(label_user_line_number) + user_content[end_index:]
+            label_value = label_user_line_number
+        else:
+            die("%s:%d:error: unrecognised label '%s'" % (sys.argv[1], i+1, label_reference))
+        user_content = user_content[:start_index] + str(label_value) + user_content[end_index:]
     print("%d%s" % (user_line_number, user_content))
