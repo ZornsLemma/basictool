@@ -423,6 +423,9 @@ void load_basic(const char *filename) {
     // problems with --strip-spaces*.
     if (tokenised &&
         (config.strip_leading_spaces || config.strip_trailing_spaces)) {
+        // TODO: It would be possible to remove spaces directly in the
+        // tokenised BASIC program in memory to avoid the need to warn about
+        // this.
         warn("--strip-spaces* have no effect with pre-tokenised input");
     }
 
