@@ -77,10 +77,10 @@ if cmd_args.output_file is None:
 
 auto_line_number_increment = cmd_args.increment
 if auto_line_number_increment < 1:
-    die("--increment argument must be positive")
+    die("--increment argument must be positive, silly!")
 next_auto_line_number = cmd_args.start
 if next_auto_line_number < 0:
-    die("--start argument must be non-negative")
+    die("--start argument must be non-negative, silly!")
 
 global internal_line_number
 
