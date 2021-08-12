@@ -47,13 +47,12 @@ def find_label_reference(line):
 if len(sys.argv) != 2:
     die("Syntax: %s INFILE" % sys.argv[0])
 
-label_internal_line = {}
-
 # TODO: Both of these defaults should be command-line arguments
 next_auto_line_number = 0
 auto_line_number_increment = 1
 
 with open(sys.argv[1], "r") as f:
+    label_internal_line = {}
     program = []
     for i, line in enumerate(f.readlines()):
         line = line[:-1]
