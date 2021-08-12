@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 
 from __future__ import print_function
+import argparse
 import re
 import sys
 
@@ -8,6 +9,22 @@ import sys
 def die(s):
     print(s, file=sys.stderr)
     sys.exit(1)
+
+
+def die_input(s):
+    die("%s:%d: error: %s" % (cmd_args.input_file, internal_line_number+1, s))
+
+
+def my_open(name, mode):
+    if name == "-":
+        if mode == "r":
+            return sys.stdin
+        elif mode == "w":
+            return sys.stdout
+        else:
+            assert False
+    else:
+        return open(name, mode)
 
 
 def split_user_line(line):
@@ -43,45 +60,62 @@ def find_label_reference(line):
     return (label, start_index, end_index)
 
 
+parser = argparse.ArgumentParser(description="Preprocess text BBC BASIC to allow use of labels instead of line numbers.")
+parser.add_argument("-s", "--start", metavar="N", type=int, default=None, help="start line numbering with line N")
+parser.add_argument("-i", "--increment", metavar="N", type=int, default=1, help="increment line numbers in steps of N")
+parser.add_argument("input_file", metavar="INFILE", help="text BBC BASIC file to process")
+parser.add_argument("output_file", metavar="OUTFILE", nargs="?", default=None, help="output filename")
+cmd_args = parser.parse_args()
 
-if len(sys.argv) != 2:
-    die("Syntax: %s INFILE" % sys.argv[0])
+if cmd_args.start is None:
+    cmd_args.start = cmd_args.increment
 
-# TODO: Both of these defaults should be command-line arguments
-next_auto_line_number = 0
-auto_line_number_increment = 1
+if cmd_args.input_file is None:
+    cmd_args.input_file = "-"
+if cmd_args.output_file is None:
+    cmd_args.output_file = "-"
 
-with open(sys.argv[1], "r") as f:
+auto_line_number_increment = cmd_args.increment
+if auto_line_number_increment < 1:
+    die("--increment argument must be positive")
+next_auto_line_number = cmd_args.start
+if next_auto_line_number < 0:
+    die("--start argument must be non-negative")
+
+global internal_line_number
+
+with my_open(cmd_args.input_file, "r") as f:
     label_internal_line = {}
     program = []
-    for i, line in enumerate(f.readlines()):
+    for internal_line_number, line in enumerate(f.readlines()):
         line = line[:-1]
         user_line_number, user_content = split_user_line(line)
         label_definition, user_content = find_label_definition(user_content)
         if label_definition is not None:
-            label_internal_line[label_definition] = i
+            label_internal_line[label_definition] = internal_line_number
         if user_line_number is None:
             user_line_number = next_auto_line_number
             next_auto_line_number += auto_line_number_increment
         else:
             if user_line_number < next_auto_line_number:
-                die("%s:%d:error: user-supplied line number %d is less than next automatic line number %d" % (sys.argv[1], i+1, user_line_number, next_auto_line_number))
+                die_input("user-supplied line number %d is less than next automatic line number %d" % (user_line_number, next_auto_line_number))
             next_auto_line_number = user_line_number + auto_line_number_increment
         program.append((user_line_number, user_content))
         #print (user_line_number, label_definition, user_content) # TODO TEMP
 
-for i, (user_line_number, user_content) in enumerate(program):
-    while True:
-        label_reference, start_index, end_index = find_label_reference(user_content)
-        if label_reference is None:
-            break
-        if label_reference == "INCREMENT":
-            label_value = auto_line_number_increment
-        elif label_reference in label_internal_line:
-            label_internal_line_number = label_internal_line[label_reference]
-            label_user_line_number = program[label_internal_line_number][0]
-            label_value = label_user_line_number
-        else:
-            die("%s:%d:error: unrecognised label '%s'" % (sys.argv[1], i+1, label_reference))
-        user_content = user_content[:start_index] + str(label_value) + user_content[end_index:]
-    print("%d%s" % (user_line_number, user_content))
+with my_open(cmd_args.output_file, "w") as f:
+    for internal_line_number, (user_line_number, user_content) in enumerate(program):
+        while True:
+            label_reference, start_index, end_index = find_label_reference(user_content)
+            if label_reference is None:
+                break
+            if label_reference == "INCREMENT":
+                label_value = auto_line_number_increment
+            elif label_reference in label_internal_line:
+                label_internal_line_number = label_internal_line[label_reference]
+                label_user_line_number = program[label_internal_line_number][0]
+                label_value = label_user_line_number
+            else:
+                die_input("unrecognised label '%s'" % label_reference)
+            user_content = user_content[:start_index] + str(label_value) + user_content[end_index:]
+        print("%d%s" % (user_line_number, user_content), file=f)
