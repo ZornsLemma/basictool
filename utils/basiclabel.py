@@ -60,11 +60,11 @@ def find_label_reference(line):
     return (label, start_index, end_index)
 
 
-parser = argparse.ArgumentParser(description="Preprocess text BBC BASIC to allow use of labels instead of line numbers.")
+parser = argparse.ArgumentParser(description='Preprocess text BBC BASIC to allow use of labels instead of line numbers.\n\nUse "%%LABELNAME%%:" at the start of a line to define a label and "%%LABELNAME%%" to refer to a label.')
 parser.add_argument("-s", "--start", metavar="N", type=int, default=None, help="start line numbering with line N")
 parser.add_argument("-i", "--increment", metavar="N", type=int, default=1, help="increment line numbers in steps of N")
-parser.add_argument("input_file", metavar="INFILE", help="text BBC BASIC file to process")
-parser.add_argument("output_file", metavar="OUTFILE", nargs="?", default=None, help="output filename")
+parser.add_argument("input_file", metavar="INFILE", help="text (not tokenised) BBC BASIC program to preprocess")
+parser.add_argument("output_file", metavar="OUTFILE", nargs="?", default=None, help="file to write preprocessed output to")
 cmd_args = parser.parse_args()
 
 if cmd_args.start is None:
