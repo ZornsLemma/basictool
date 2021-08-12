@@ -85,7 +85,6 @@ def break_string_at_literals(line):
 
 
 def find_label_reference(line):
-    # TODO: Needs to be smarter about literal strings in line
     reference_list = re.findall(r"%%[A-Za-z0-9_]+%%", line)
     if len(reference_list) == 0:
         return (None, None, None)
@@ -94,17 +93,6 @@ def find_label_reference(line):
     start_index = line.index(reference)
     end_index = start_index + len(reference)
     return (label, start_index, end_index)
-
-
-# TODO: DELETE
-if False:
-        print(break_string_at_literals('PRINT 5'))
-        print(break_string_at_literals('PRINT 5, "Hello", 20'))
-        print(break_string_at_literals('PRINT "Hello"'))
-        print(break_string_at_literals('PRINT "He""llo"'))
-        print(break_string_at_literals('PRINT "He""""llo"'))
-        print(break_string_at_literals('"He""""llo"'))
-        print(break_string_at_literals('PRINT "He"llo"'))
 
 
 parser = argparse.ArgumentParser(description='Preprocess text BBC BASIC to allow use of labels instead of line numbers.\n\nUse "%%LABELNAME%%:" at the start of a line to define a label and "%%LABELNAME%%" to refer to a label.')
@@ -148,7 +136,6 @@ with my_open(cmd_args.input_file, "r") as f:
                 die_input("user-supplied line number %d is less than next automatic line number %d" % (user_line_number, next_auto_line_number))
             next_auto_line_number = user_line_number + auto_line_number_increment
         program.append((user_line_number, user_content))
-        #print (user_line_number, label_definition, user_content) # TODO TEMP
 
 # We build up the final output internally so we don't generate anything if an
 # error occurs.
