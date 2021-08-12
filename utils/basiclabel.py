@@ -123,7 +123,8 @@ with my_open(cmd_args.input_file, "r") as f:
     label_internal_line = {}
     program = []
     for internal_line_number, line in enumerate(f.readlines()):
-        line = line[:-1]
+        if len(line) > 0 and line[-1] == '\n':
+            line = line[:-1]
         user_line_number, user_content = split_user_line(line)
         label_definition, user_content = find_label_definition(user_content)
         if label_definition is not None:
