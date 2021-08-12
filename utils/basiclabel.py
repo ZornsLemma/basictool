@@ -103,19 +103,24 @@ with my_open(cmd_args.input_file, "r") as f:
         program.append((user_line_number, user_content))
         #print (user_line_number, label_definition, user_content) # TODO TEMP
 
+# We build up the final output internally so we don't generate anything if an
+# error occurs.
+output = []
+for internal_line_number, (user_line_number, user_content) in enumerate(program):
+    while True:
+        label_reference, start_index, end_index = find_label_reference(user_content)
+        if label_reference is None:
+            break
+        if label_reference == "INCREMENT":
+            label_value = auto_line_number_increment
+        elif label_reference in label_internal_line:
+            label_internal_line_number = label_internal_line[label_reference]
+            label_user_line_number = program[label_internal_line_number][0]
+            label_value = label_user_line_number
+        else:
+            die_input("unrecognised label '%s'" % label_reference)
+        user_content = user_content[:start_index] + str(label_value) + user_content[end_index:]
+    output.append("%d%s" % (user_line_number, user_content))
+
 with my_open(cmd_args.output_file, "w") as f:
-    for internal_line_number, (user_line_number, user_content) in enumerate(program):
-        while True:
-            label_reference, start_index, end_index = find_label_reference(user_content)
-            if label_reference is None:
-                break
-            if label_reference == "INCREMENT":
-                label_value = auto_line_number_increment
-            elif label_reference in label_internal_line:
-                label_internal_line_number = label_internal_line[label_reference]
-                label_user_line_number = program[label_internal_line_number][0]
-                label_value = label_user_line_number
-            else:
-                die_input("unrecognised label '%s'" % label_reference)
-            user_content = user_content[:start_index] + str(label_value) + user_content[end_index:]
-        print("%d%s" % (user_line_number, user_content), file=f)
+    print("\n".join(output), file=f)
