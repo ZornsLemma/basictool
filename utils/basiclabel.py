@@ -47,10 +47,13 @@ def find_label_reference(line):
 if len(sys.argv) != 2:
     die("Syntax: %s INFILE" % sys.argv[0])
 
+# TODO: Both of these defaults should be command-line arguments
+next_auto_line_number = 0
+auto_line_number_increment = 1
+
 with open(sys.argv[1], "r") as f:
     label_internal_line = {}
     program = []
-    next_auto_line_number = 0
     for i, line in enumerate(f.readlines()):
         line = line[:-1]
         user_line_number, user_content = split_user_line(line)
@@ -59,11 +62,11 @@ with open(sys.argv[1], "r") as f:
             label_internal_line[label_definition] = i
         if user_line_number is None:
             user_line_number = next_auto_line_number
-            next_auto_line_number += 1
+            next_auto_line_number += auto_line_number_increment
         else:
             if user_line_number < next_auto_line_number:
                 die("%s:%d:error: user-supplied line number %d is less than next automatic line number %d" % (sys.argv[1], i+1, user_line_number, next_auto_line_number))
-            next_auto_line_number = user_line_number + 1
+            next_auto_line_number = user_line_number + auto_line_number_increment
         program.append((user_line_number, user_content))
         #print (user_line_number, label_definition, user_content) # TODO TEMP
 
