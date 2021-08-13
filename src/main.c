@@ -212,6 +212,13 @@ static struct cag_option options[] = {
       .access_name = "ascii",
       .description = "output ASCII text (non-tokenised) BASIC (default)" },
 
+    // TODO: Should the long name here really be "tokenised" (note final d)?
+    // basictool will always tokenise if given text input, regardless of the
+    // output format specified, and similar if given tokenised input it can
+    // still output *tokenised* BASIC but it will not *tokenise*. Then again,
+    // if we go down this path, should --unpack be --unpacked? And so on? OTOH
+    // unpack is actually an explicit operation which is only performed if
+    // --unpack is specified.
     { .identifier = oi_output_tokenised,
       .access_letters = "t",
       .access_name = "tokenise",
