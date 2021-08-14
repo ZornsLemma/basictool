@@ -250,9 +250,9 @@ If you have problems or suggestions for improvement, you can raise an issue or s
 * v0.01:
   * Initial release
 * v0.02:
-  * Fix build error on gcc 10 (thanks to scruss for reporting this!)
+  * Fix build error on gcc 10. Thanks to scruss for reporting this.
 * v0.03:
-  * Add --unpack (thanks to Dave Hitchins for the suggestion!)
+  * Add --unpack. Thanks to Dave Hitchins for the suggestion.
   * Don't open the output file until we're about to write to it; this will avoid occasionally creating a zero-length output when an error occurs.
 * v0.04:
   * No code changes, but ROMs are now included in the github repository.
@@ -262,4 +262,6 @@ If you have problems or suggestions for improvement, you can raise an issue or s
   * Warn if --pack-singles-n is used when it has no effect.
   * Add man page.
 * v0.06:
-  * TODO
+  * Add support for using either BASIC 2 or BASIC 4. Thanks to lurkio for the suggestion.
+  * Preserve spaces by default as much as possible; get rid of --keep-spaces as this is now the default and add --strip-spaces*.
+  * Allow user-specified line number 0. Thanks to TobyLobster for reporting this.
