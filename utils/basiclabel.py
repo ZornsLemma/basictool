@@ -128,6 +128,8 @@ with my_open(cmd_args.input_file, "r") as f:
         user_line_number, user_content = split_user_line(line)
         label_definition, user_content = find_label_definition(user_content)
         if label_definition is not None:
+            if label_definition in label_internal_line:
+                die_input("redefinition of label '%s'" % label_definition)
             label_internal_line[label_definition] = internal_line_number
         if user_line_number is None:
             user_line_number = next_auto_line_number
