@@ -36,11 +36,15 @@ def split_user_line(line):
 
 
 def find_label_definition(line):
-    definition_list = re.findall(r"^%%[A-Za-z0-9_]+%%:", line)
+    # TODO: Not very happy with this regular expression. We want to be as
+    # general as possible with what comes after the optional =, but we would
+    # also ideally not be greedy and parse past a colon, unless it's inside
+    # a string.
+    definition_list = re.findall(r"^(%%[A-Za-z0-9_]+(=.*)?%%:)", line)
     if len(definition_list) == 0:
         return (None, line)
-    label = definition_list[0][2:][:-3]
-    user_content = line[len(definition_list[0]):]
+    label = definition_list[0][0][2:][:-3]
+    user_content = line[len(definition_list[0][0]):]
     if user_content.strip() == "":
         # If we end up with a line that's blank, the line (and its associated
         # number) might not be present in the final tokenised BASIC.
@@ -119,8 +123,9 @@ if next_auto_line_number < 0:
 
 global internal_line_number
 
+labels = {"INCREMENT": (False, auto_line_number_increment)}
+
 with my_open(cmd_args.input_file, "r") as f:
-    label_internal_line = {}
     program = []
     for internal_line_number, line in enumerate(f.readlines()):
         if len(line) > 0 and line[-1] == '\n':
@@ -128,9 +133,16 @@ with my_open(cmd_args.input_file, "r") as f:
         user_line_number, user_content = split_user_line(line)
         label_definition, user_content = find_label_definition(user_content)
         if label_definition is not None:
-            if label_definition in label_internal_line:
-                die_input("redefinition of label '%s'" % label_definition)
-            label_internal_line[label_definition] = internal_line_number
+            i = label_definition.find("=")
+            if i == -1:
+                label_name = label_definition
+                label_value = internal_line_number
+            else:
+                label_name = label_definition[:i]
+                label_value = label_definition[i+1:]
+            if label_name in labels:
+                die_input("redefinition of label '%s'" % label_name)
+            labels[label_name] = (i == -1, label_value)
         if user_line_number is None:
             user_line_number = next_auto_line_number
             next_auto_line_number += auto_line_number_increment
@@ -152,12 +164,11 @@ for internal_line_number, (user_line_number, user_content) in enumerate(program)
             label_reference, start_index, end_index = find_label_reference(user_content_fragment)
             if label_reference is None:
                 break
-            if label_reference == "INCREMENT":
-                label_value = auto_line_number_increment
-            elif label_reference in label_internal_line:
-                label_internal_line_number = label_internal_line[label_reference]
-                label_user_line_number = program[label_internal_line_number][0]
-                label_value = label_user_line_number
+            if label_reference in labels:
+                label_is_line_number, label_value = labels[label_reference]
+                if label_is_line_number:
+                    label_user_line_number = program[label_value][0]
+                    label_value = label_user_line_number
             else:
                 die_input("unrecognised label '%s'" % label_reference)
             user_content_fragment = user_content_fragment[:start_index] + str(label_value) + user_content_fragment[end_index:]
