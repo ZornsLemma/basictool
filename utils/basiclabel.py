@@ -89,6 +89,12 @@ def break_string_at_literals(line):
 
 
 def find_label_reference(line):
+    # TODO: Should this be changed to match find_label_definition? If you do
+    # %%label=value%% (note no trailing colon) intending to define a label but
+    # miss the trailing colon off, this is *not* recognised as a label reference
+    # because it doesn't match this regular expression and so is silently left
+    # unaltered rather than generating an undefined label error as it would if it
+    # were recognised as a label reference.
     reference_list = re.findall(r"%%[A-Za-z0-9_]+%%", line)
     if len(reference_list) == 0:
         return (None, None, None)
