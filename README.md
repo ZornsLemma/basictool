@@ -6,7 +6,7 @@
 - [Other features](#other-features)
 - [Building](#building)
 - [Getting help](#getting-help)
-- [Credits](#credits-and-thanks)
+- [Credits and thanks](#credits-and-thanks)
 - [Changelog](#changelog)
 
 ## Overview
