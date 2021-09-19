@@ -560,6 +560,16 @@ int main(int argc, char *argv[]) {
     emulation_init();
     load_basic(filenames[0]);
     if (config.pack) {
+        if (config.renumber) {
+            // We renumber before packing as well as afterwards; this shouldn't
+            // ever cause problems (if the program will be broken by
+            // renumbering, the renumber afterwards alone would be enough to do
+            // it) and sometimes renumbering will fix up a pre-tokenised BASIC
+            // program and make it pack correctly. See the sub-thread starting
+            // at https://stardot.org.uk/forums/viewtopic.php?p=335039#p335039
+            // for discussion on this.
+            renumber();
+        }
         pack();
     }
     if (config.renumber) {
