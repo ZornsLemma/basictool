@@ -24,7 +24,7 @@ def run_basictool(args, input_data):
     return bytearray(stdout)
 
 
-parser = argparse.ArgumentParser(description="Tokenise out-of-order text BBC BASIC")
+parser = argparse.ArgumentParser(description="Renumber out-of-order text BBC BASIC")
 parser.add_argument("-t", "--tokenise", action="store_true", help="output tokenised BASIC")
 parser.add_argument("input_file", metavar="INFILE", help="text (not tokenised) BBC BASIC program to process")
 parser.add_argument("output_file", metavar="OUTFILE", nargs="?", default="-", help="file to write output to (defaults to standard output)")
