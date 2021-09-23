@@ -265,3 +265,5 @@ If you have problems or suggestions for improvement, you can raise an issue or s
   * Add support for using either BASIC 2 or BASIC 4. Thanks to lurkio for the suggestion.
   * Preserve spaces by default as much as possible; get rid of --keep-spaces as this is now the default and add --strip-spaces*. Thanks to lurkio for the suggestion.
   * Allow user-specified line number 0. Thanks to TobyLobster for reporting this.
+* v0.07:
+  * When using both --pack and --renumber, renumber before as well as after packing. Thanks to lurkio for discovering the need to do this sometimes.
