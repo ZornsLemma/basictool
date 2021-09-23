@@ -13,8 +13,11 @@ def die(s):
     sys.exit(1)
 
 def run_basictool(args, input_data):
-    child = subprocess.Popen(args, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-    stdout, stderr = child.communicate(input_data)
+    try:
+        child = subprocess.Popen(args, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        stdout, stderr = child.communicate(input_data)
+    except OSError:
+        die("Unable to run basictool; is it on your PATH?")
     if child.returncode != 0:
         print(stderr, file=sys.stderr)
         die("Error running basictool")
