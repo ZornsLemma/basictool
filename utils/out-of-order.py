@@ -40,8 +40,9 @@ with open(cmd_args.input_file, "r") as f:
         line = line.lstrip()
         line_body_start = re.search("^[0-9]*", line).end()
         if line_body_start == 0:
-            die("Missing line number: %s" % line)
-        line_number = int(line[:line_body_start])
+            line_number = -1
+        else:
+            line_number = int(line[:line_body_start])
         if line_number > 32767:
             die("Bad line number: %s" % line)
         line_numbers.append(line_number)
@@ -51,8 +52,9 @@ tokenised = run_basictool([basictool, "-t", "-"], bytearray("\n".join(input_with
 
 p = 1
 for line_number in line_numbers:
-    tokenised[p    ] = line_number >> 8
-    tokenised[p + 1] = line_number & 0xff
+    if line_number != -1:
+        tokenised[p    ] = line_number >> 8
+        tokenised[p + 1] = line_number & 0xff
     p += tokenised[p + 2]
     if tokenised[p] & 0x80 == 0x80:
         break
