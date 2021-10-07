@@ -88,6 +88,34 @@ def break_string_at_literals(line):
     return output
 
 
+def strip_rems(line):
+    line = line.lstrip()
+    if line.startswith("REM"):
+        # If we end up with a line that's blank, the line (and its associated
+        # number) might not be present in the final tokenised BASIC.
+        return ":"
+
+    in_literal = False
+    i = 0
+    while i < len(line):
+        c = line[i]
+        if c == '"':
+            if not in_literal:
+                in_literal = not in_literal
+            else:
+                if (i + 1) < len(line) and line [i + 1] == "'":
+                    # This is an escaped quote within the literal.
+                    i += 2
+                    continue
+                else:
+                    in_literal = not in_literal
+        elif not in_literal and c == ":":
+            if line[i + 1:].lstrip().startswith("REM"):
+                return line[:i]
+        i += 1
+    return line
+
+
 def find_label_reference(line):
     # TODO: Should this be changed to match find_label_definition? If you do
     # %%label=value%% (note no trailing colon) intending to define a label but
@@ -108,6 +136,7 @@ def find_label_reference(line):
 parser = argparse.ArgumentParser(description='Preprocess text BBC BASIC to allow use of labels instead of line numbers.\n\nUse "%%LABELNAME%%:" at the start of a line to define a label and "%%LABELNAME%%" to refer to a label.')
 parser.add_argument("-s", "--start", metavar="N", type=int, default=None, help="start line numbering with line N")
 parser.add_argument("-i", "--increment", metavar="N", type=int, default=1, help="increment line numbers in steps of N")
+parser.add_argument("-r", "--strip-rems", action="store_true", help="strip REMs (BASIC comments) from the input")
 parser.add_argument("input_file", metavar="INFILE", help="text (not tokenised) BBC BASIC program to preprocess")
 parser.add_argument("output_file", metavar="OUTFILE", nargs="?", default=None, help="file to write preprocessed output to")
 cmd_args = parser.parse_args()
@@ -137,6 +166,8 @@ with my_open(cmd_args.input_file, "r") as f:
         if len(line) > 0 and line[-1] == '\n':
             line = line[:-1]
         user_line_number, user_content = split_user_line(line)
+        if cmd_args.strip_rems:
+            user_content = strip_rems(user_content)
         label_definition, user_content = find_label_definition(user_content)
         if label_definition is not None:
             i = label_definition.find("=")
