@@ -104,7 +104,7 @@ END
 DATA clouds, sky
 1000DATA world
 DEF PROCend
-PRINT "Goodbye!
+PRINT "Goodbye!"
 ENDPROC
 $ basictool test4.bas
     1PRINT "Hello, ";
@@ -116,7 +116,7 @@ $ basictool test4.bas
     7DATA clouds, sky
  1000DATA world
  1001DEF PROCend
- 1002PRINT "Goodbye!
+ 1002PRINT "Goodbye!"
  1003ENDPROC
 ```
 This will fail if the line numbers you provide would clash with the automatically generated line numbers; I suggest using large round values in order to avoid this being a problem.
