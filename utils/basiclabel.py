@@ -88,32 +88,33 @@ def break_string_at_literals(line):
     return output
 
 
-def strip_rems(line):
-    line = line.lstrip()
-    if line.startswith("REM"):
+def strip_rems(user_line_number, user_content):
+    user_content = user_content.lstrip()
+    if user_content.startswith("REM"):
         # If we end up with a line that's blank, the line (and its associated
-        # number) might not be present in the final tokenised BASIC.
+        # number) might not be present in the final tokenised BASIC. Our caller
+        # will discard the line if it seems safe.
         return ":"
 
     in_literal = False
     i = 0
-    while i < len(line):
-        c = line[i]
+    while i < len(user_content):
+        c = user_content[i]
         if c == '"':
             if not in_literal:
                 in_literal = not in_literal
             else:
-                if (i + 1) < len(line) and line [i + 1] == "'":
+                if (i + 1) < len(user_content) and user_content[i + 1] == "'":
                     # This is an escaped quote within the literal.
                     i += 2
                     continue
                 else:
                     in_literal = not in_literal
         elif not in_literal and c == ":":
-            if line[i + 1:].lstrip().startswith("REM"):
-                return line[:i]
+            if user_content[i + 1:].lstrip().startswith("REM"):
+                return user_content[:i]
         i += 1
-    return line
+    return user_content
 
 
 def find_label_reference(line):
@@ -167,7 +168,12 @@ with my_open(cmd_args.input_file, "r") as f:
             line = line[:-1]
         user_line_number, user_content = split_user_line(line)
         if cmd_args.strip_rems:
-            user_content = strip_rems(user_content)
+            user_content = strip_rems(user_line_number, user_content)
+            if user_line_number is None and user_content == ":":
+                # strip_rems() will turn a full-line REM into a single colon
+                # so the line isn't lost. If it doesn't have a line number,
+                # it can't be referenced so we can discard it.
+                continue
         label_definition, user_content = find_label_definition(user_content)
         if label_definition is not None:
             i = label_definition.find("=")
