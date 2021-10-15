@@ -448,7 +448,9 @@ void execute_input_line(const char *line) {
     uint16_t buffer = mpu_read_u16(yx);
     check(buffer <= 0xff00,
           "internal error: OSWORD 0 buffer is too near top of memory");
-    uint8_t buffer_size = mpu_memory[yx + 2];
+    // mpu_memory[yx + 2] contains the maximum line length; the buffer provided
+    // is one byte larger to hold the CR terminator.
+    int buffer_size = mpu_memory[yx + 2] + 1;
     size_t pending_length = strlen(line);
     check(pending_length < buffer_size, "error: line too long");
     memcpy(&mpu_memory[buffer], line, pending_length);

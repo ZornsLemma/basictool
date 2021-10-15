@@ -267,3 +267,5 @@ If you have problems or suggestions for improvement, you can raise an issue or s
   * Allow user-specified line number 0. Thanks to TobyLobster for reporting this.
 * v0.07:
   * When using both --pack and --renumber, renumber before as well as after packing. Thanks to lurkio for discovering the need to do this sometimes.
+* v0.08:
+  * Fix off-by-one error causing some acceptable lines of text BASIC to incorrectly generate a "line too long" error. Thanks to lurkio for reporting this.
