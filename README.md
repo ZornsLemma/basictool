@@ -229,6 +229,13 @@ $ make
 ```
 This will create a basictool executable in the top-level project directory, i.e. the one above src. The executable is self-contained and can be copied to wherever you want to install it.
 
+The makefile contains simple support for cross-compilation, which is enough to build a Windows basictool executable using a Unix-like system:
+```
+$ sudo apt-get install gcc-mingw-w64-x86-64
+$ cd src
+$ TARGETCC=x86_64-w64-mingw32-gcc make
+```
+
 If you're not on a Unix-like system you may need to create your own build script or project file for your IDE. src/Makefile may be a good starting point; alternatively there is a simple shell script src/make.sh which will perform a build and it may be easiest for you to translate that into your platform's equivalent of a shell script. If you do this, please consider sending me the results so I can add them and make it easier for other people to build on your platform.
 
 ## Getting help
@@ -269,3 +276,5 @@ If you have problems or suggestions for improvement, you can raise an issue or s
   * When using both --pack and --renumber, renumber before as well as after packing. Thanks to lurkio for discovering the need to do this sometimes.
 * v0.08:
   * Fix off-by-one error causing some acceptable lines of text BASIC to incorrectly generate a "line too long" error. Thanks to lurkio for reporting this.
+* v0.09:
+  * Add simple cross-compilation support to the makefile. Thanks to Ken Lowe for help with this.
