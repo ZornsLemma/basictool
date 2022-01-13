@@ -33,9 +33,9 @@ zz-basic-2.c: bintoinc $(BASIC2)
 zz-basic-4.c: bintoinc $(BASIC4)
 	./bintoinc $(BASIC4) > zz-basic-4.c
 
-BINTOINCOBJS = bintoinc.o
-bintoinc: $(BINTOINCOBJS)
-	$(HOSTCC) $(LDFLAGS) -o $@ $(BINTOINCOBJS)
+BINTOINCSRCS = bintoinc.c
+bintoinc: $(BINTOINCSRCS)
+	$(HOSTCC) $(LDFLAGS) -o $@ $(BINTOINCSRCS)
 
 clean:
 	rm -f ../basictool bintoinc depend.txt *.o zz-*.c
