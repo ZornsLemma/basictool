@@ -278,3 +278,4 @@ If you have problems or suggestions for improvement, you can raise an issue or s
   * Fix off-by-one error causing some acceptable lines of text BASIC to incorrectly generate a "line too long" error. Thanks to lurkio for reporting this.
 * v0.09:
   * Add simple cross-compilation support to the makefile. Thanks to Ken Lowe for help with this.
+  * Fix build error on Ubuntu 22.04. Thanks to shifters67 for reporting this.
