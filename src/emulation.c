@@ -59,7 +59,7 @@ static void mpu_clear_carry(void) {
 }
 
 static void mpu_dump(void) {
-    char buffer[64];
+    char buffer[124];
     M6502_dump(mpu, buffer);
     fprintf(stderr, "6502 state: %s\n", buffer);
 }
