@@ -934,7 +934,7 @@ int M6502_disassemble(M6502 *mpu, word ip, char buffer[64])
 #    define _absx	sprintf(s, "%02X%02X,X",   b[2], b[1]);		    return 3;
 #    define _absy	sprintf(s, "%02X%02X,Y",   b[2], b[1]);		    return 3;
 #    define _relative	sprintf(s, "%04X",	   ip + 2 + (int8_t)b[1]);  return 2;
-#    define _zpr	sprintf(s, "%04X",	   b[1], ip + 2 + (int8_t)b[2]);  return 3;
+#    define _zpr	sprintf(s, "%02X,%04X",	   b[1], ip + 2 + (int8_t)b[2]);  return 3;
 #    define _indirect	sprintf(s, "(%02X%02X)",   b[2], b[1]);		    return 3;
 #    define _indzp	sprintf(s, "(%02X)",	   b[1]);		    return 2;
 #    define _indx	sprintf(s, "(%02X,X)",	   b[1]);		    return 2;
