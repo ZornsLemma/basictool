@@ -279,4 +279,7 @@ If you have problems or suggestions for improvement, you can raise an issue or s
 * v0.09:
   * Add simple cross-compilation support to the makefile. Thanks to Ken Lowe for help with this.
   * Fix build error on Ubuntu 22.04. Thanks to shifters67 for reporting this.
-  * Fix Z flag after ASL instruction. Thanks to dp11 for the fix.
+  * lib6502: fix Z flag after ASL instruction. Thanks to dp11 for the fix.
+  * lib6502: fix _zpr not displaying zp location. Thanks to dp11 for the fix.
+  * Fix potential buffer overflow when in mpu_dump(). Thanks to dp11 for the fix.
+
