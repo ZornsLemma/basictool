@@ -59,7 +59,6 @@ driver.o: driver.c cargs.h config.h roms.h emulation.h lib6502.h main.h \
  utils.h
 emulation.o: emulation.c emulation.h lib6502.h config.h roms.h driver.h \
  utils.h
-foo.o: foo.c cargs.h
 lib6502.o: lib6502.c lib6502.h
 main.o: main.c main.h cargs.h config.h roms.h driver.h emulation.h \
  lib6502.h utils.h
