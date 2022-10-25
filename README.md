@@ -210,7 +210,7 @@ There are a few options not described here which just provide ways to tweak basi
 ```
 $ basictool --help
 ```
-to see all the options.
+to see all the options. The [man page](man-page.pdf) provides full documentation; the link is to a pre-formatted PDF, but the original can be found in the man directory.
 
 ## Building
 
