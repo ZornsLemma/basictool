@@ -282,4 +282,4 @@ If you have problems or suggestions for improvement, you can raise an issue or s
   * lib6502: fix Z flag after ASL instruction. Thanks to dp11 for the fix.
   * lib6502: fix _zpr not displaying zp location. Thanks to dp11 for the fix.
   * Fix potential buffer overflow when in mpu_dump(). Thanks to dp11 for the fix.
-
+  * Add PDF version of man page.
