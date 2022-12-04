@@ -100,6 +100,10 @@ static struct cag_option options[] = {
       .access_name = "help",
       .description = "show this help and exit" },
 
+    // TODO: Add "--version" option, which shows the version as a single line
+    // so tools which build on basictool can maybe avoid parsing the --help
+    // output?
+
     { .identifier = oi_roms,
       .access_letters = 0,
       .access_name = "roms",
