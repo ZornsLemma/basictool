@@ -15,6 +15,10 @@
 // C-style string maintained by driver_oswrch() to reflect the current line of
 // output from the emulated machine.
 static char *pending_output = 0;
+// Number of characters (excluding final NUL) in pending_output. We track this
+// separately so that we can passs NULs embedded in a program through to the
+// output when doing --ascii output.
+static size_t pending_output_length = 0;
 
 // Simple state machine used to decide how to handle each line of output from
 // the emulated machine.
@@ -63,16 +67,16 @@ static char *make_printable(char *s) {
 // Whenever a line feed is written, complete_output_line_handler() is called
 // and pending_output is set to an empty string ready for the next line.
 void driver_oswrch(uint8_t c) {
-    // These three static variables track state related to pending_offset;
-    // since they aren't in the global namespace, we can use shorter names.
-    static size_t po_length = 0;
+    // These static variables track state related to pending_offset; since they
+    // aren't in the global namespace, we can use shorter names.
     static size_t po_cursor_x = 0;
     static size_t po_buffer_size = 0;
 
-    // We just discard NULs in the output; they aren't important for anything
-    // we are emulating here and they're not compatible with our strategy of
-    // pending_output being a C-style string.
-    if (c == '\0') {
+    // We generally just discard NULs in the output; they aren't important for
+    // anything we are emulating here and they're not compatible with our
+    // strategy of pending_output being a C-style string. We make an exception
+    // for os_output_all so --ascii output doesn't strip them.
+    if ((c == '\0') && (output_state != os_output_all)) {
         return;
     }
 
@@ -98,7 +102,7 @@ void driver_oswrch(uint8_t c) {
             free(s);
         }
         complete_output_line_handler();
-        po_length = po_cursor_x = 0;
+        pending_output_length = po_cursor_x = 0;
         pending_output[0] = '\0';
         return;
     }
@@ -113,10 +117,10 @@ void driver_oswrch(uint8_t c) {
     }
 
     pending_output[po_cursor_x] = c;
-    pending_output[max(po_cursor_x, po_length) + 1] ='\0';
+    pending_output[max(po_cursor_x, pending_output_length) + 1] = '\0';
     po_cursor_x += 1;
-    po_length = max(po_cursor_x, po_length);
-    assert(strlen(pending_output) == po_length);
+    pending_output_length = max(po_cursor_x, pending_output_length);
+    assert(strlen(pending_output) <= pending_output_length);
 }
 
 static bool is_in_pending_output(const char *s) {
@@ -143,9 +147,12 @@ static void ensure_output_file_open(const char *mode) {
 
 static void output_pending_output(void) {
     ensure_output_file_open("w");
-    check(fprintf(output_file, "%s\n", pending_output) >= 0,
-          "error: error writing to output file \"%s\"",
-          filenames[1]);
+    for (size_t i = 0; i < pending_output_length; ++i) {
+        check(putc((unsigned char) pending_output[i], output_file) != EOF,
+            "error: error writing to output file \"%s\"", filenames[1]);
+    }
+    check(putc('\n', output_file) >= 0,
+          "error: error writing to output file \"%s\"", filenames[1]);
 }
 
 static void putc_wrapper(int c, FILE *file) {
