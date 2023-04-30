@@ -200,8 +200,8 @@ static void complete_output_line_handler() {
 
         case os_list_discard_command:
             check_is_in_pending_output(">LIST");
-            // LIST output doesn't contain any blank lines (there's always at
-            // least a line number) so this won't lose anything.
+            // LIST output can contain blank lines if we started with tokenised
+            // BASIC containing embedded LF characters.
             output_state = os_output_all;
             break;
 
