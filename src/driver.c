@@ -29,6 +29,7 @@ enum {
     os_variable_xref_discard_command,
     os_variable_xref_output,
     os_output_non_blank,
+    os_output_all,
     os_pack_discard_concatenate,
     os_pack_discard_blank,
     os_pack_output
@@ -201,7 +202,7 @@ static void complete_output_line_handler() {
             check_is_in_pending_output(">LIST");
             // LIST output doesn't contain any blank lines (there's always at
             // least a line number) so this won't lose anything.
-            output_state = os_output_non_blank;
+            output_state = os_output_all;
             break;
 
         case os_format_discard_command:
@@ -263,6 +264,10 @@ static void complete_output_line_handler() {
             if (*pending_output != '\0') {
                 output_pending_output();
             }
+            break;
+
+        case os_output_all:
+            output_pending_output();
             break;
 
         case os_pack_discard_concatenate:
