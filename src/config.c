@@ -22,6 +22,7 @@ struct s_config config = {
     10,     // renumber start
     10,     // renumber step
     -1,     // LISTO
+    false,  // open output as binary
     false,  // format
     false,  // unpack
     false,  // line_ref

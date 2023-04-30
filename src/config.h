@@ -25,6 +25,7 @@ struct s_config {
     int renumber_start;
     int renumber_step;
     int listo;
+    bool open_output_binary;
     bool format;
     bool unpack;
     bool line_ref;

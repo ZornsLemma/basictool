@@ -82,6 +82,7 @@ enum option_id {
     oi_renumber_start,
     oi_renumber_step,
     oi_listo,
+    oi_open_output_binary,
     oi_output_ascii,
     oi_output_tokenised,
     oi_format,
@@ -209,7 +210,12 @@ static struct cag_option options[] = {
       .access_letters = "l",
       .access_name = "listo",
       .value_name = "N",
-      .description = "use LISTO N to indent ASCII output\n\nOutput type options (pick one only):" },
+      .description = "use LISTO N to indent ASCII output" },
+
+    { .identifier = oi_open_output_binary,
+      .access_letters = 0,
+      .access_name = "output-binary",
+      .description = "open output file in binary mode\n\nOutput type options (pick one only):" },
 
     { .identifier = oi_output_ascii,
       .access_letters = "a",
@@ -472,6 +478,10 @@ int main(int argc, char *argv[]) {
             case oi_listo:
                 config.listo = (int) parse_long_argument(
                     "--listo", cag_option_get_value(&context), 0, 7);
+                break;
+
+            case oi_open_output_binary:
+                config.open_output_binary = true;
                 break;
 
             case oi_output_ascii:

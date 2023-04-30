@@ -4,6 +4,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include "config.h"
 #include "main.h"
 
 int error_line_number = -1;
@@ -81,6 +82,7 @@ char *ourstrdup(const char *s) {
 FILE *fopen_wrapper(const char *pathname, const char *mode) {
     assert(pathname != 0);
     assert(mode != 0);
+    assert(strlen(mode) <= 2);
 
     bool read;
     switch (mode[0]) {
@@ -93,6 +95,10 @@ FILE *fopen_wrapper(const char *pathname, const char *mode) {
         default:
             die("internal error: invalid mode \"%s\" passed to fopen_wrapper()", mode);
             break;
+    }
+
+    if (config.open_output_binary && !read) {
+        mode = "wb";
     }
 
     if (strcmp(pathname, "-") == 0) {

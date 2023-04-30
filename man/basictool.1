@@ -121,6 +121,9 @@ Use BASIC's LISTO option N to control the formatting of text output.
 This option is only relevant when using the
 .IR \-\-ascii
 output type option.
+.TP
+\fB\-\-output-binary\fR
+Open the output file in binary mode even when the output option selected generates text output. This may be useful on non-Unix platforms when detokenising programs which contain embedded line feed control codes.
 .PP
 The following options control the type of output produced by
 .BR basictool .

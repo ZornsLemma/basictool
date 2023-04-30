@@ -285,4 +285,6 @@ If you have problems or suggestions for improvement, you can raise an issue or s
   * Add PDF version of man page.
 * v0.10:
   * Improve auto-detection of tokenised BASIC. Thanks to Tom Seddon for the bug report and new detection algorithm (taken from BeebLink).
+  * Improve accuracy of output with --ascii when detokenising BASIC containing embedded control codes. Thanks to Tom Seddon for reporting these problem.
+  * Add --output-binary option so users can optionally avoid embedded line feed control codes in tokenised BASIC being mangled when detokenising.
   * Add manpage target to Makefile.
