@@ -46,6 +46,14 @@ depend: zz-editor-a.c zz-editor-b.c zz-basic-2.c zz-basic-4.c
 	# keep things simple and portable, and this isn't a huge project.
 	for FILE in *.c; do gcc -MM $$FILE; done > depend.txt
 
+# This is really just a convenience for updating man-page.pdf when building a
+# release.
+manpage: ../man-page.pdf
+
+../man-page.pdf: ../man/basictool.1
+	groff -Tps -man ../man/basictool.1 | ps2pdf - > ../man-page.pdf
+
+
 .SUFFIXES: .c .o
 .c.o:
 	$(TARGETCC) $(CFLAGS) -c $<
