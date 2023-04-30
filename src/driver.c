@@ -354,6 +354,11 @@ static void type_basic_program(char *data, size_t length) {
     // (e.g. DATA statements) if desired. We don't allow control over the
     // start value and increment here because we provide facilities to renumber
     // any program before we output it, which has the same effect.
+    // TODO: That's not quite true - a program using computed line numbers can't
+    // be safely renumbered, but it could still have (for example)
+    // auto-generated line numbers going up by 10 each time, so it can be
+    // hand-edited at the BASIC prompt with a bit more freedom to insert new
+    // lines.
     int basic_line_number = 0;
     int file_line_number = 1;
     bool warned_about_spaces = false;
@@ -400,6 +405,54 @@ static void type_basic_program(char *data, size_t length) {
     error_line_number = -1;
 }
 
+bool is_tokenised_basic(const unsigned char *data, size_t length) {
+    // We walk through the program as if it were tokenised BASIC and see if we
+    // successfully hit an end of program marker. Credit goes to Tom Seddon for
+    // the algorithm, as used in beeblink (see beeblink/utils.ts, function
+    // isBASIC()), although it traces its roots back to Matt Godbolt's
+    // BBCBasicToText.py.
+
+    size_t i = 0;
+
+    while (true) {
+        if (i >= length) {
+            // Hit EOF before end of program marker.
+            return false;
+        }
+
+        if (data[i] != cr) {
+            // Invalid program structure.
+            return false;
+        }
+
+        if ((i + 1) >= length) {
+            // Line past EOF.
+            return false;
+        }
+
+        if (data[i + 1] == 0xff) {
+            // End of program marker - program is valid.
+            return true;
+        }
+
+        if ((i + 3) >= length) {
+            // Line header past EOF.
+            // (I don't think this can actually happen - we already checked for
+            // (i + 1) >= length above - but it's hardly an expensive check and
+            // it makes it obvious the following data[i + 3] use is legal.)
+            return false;
+        }
+
+        if (data[i + 3] == 0) {
+            // Invalid line length.
+            return false;
+        }
+
+        // Skip line.
+        i += data[i + 3];
+    }
+}
+
 void load_basic(const char *filename) {
     // We load the file as binary data so we can take a look at it and decide
     // whether it's tokenised or text BASIC.
@@ -409,10 +462,7 @@ void load_basic(const char *filename) {
     if (config.input_tokenised) {
         tokenised = true;
     } else {
-        // http://beebwiki.mdfs.net/Program_format says a Wilson/Acorn format
-        // tokenised BASIC program will end with <cr><ff>.
-        tokenised = ((length >= 2) && (data[length - 2] == '\x0d') && 
-                     (data[length - 1] == '\xff'));
+        tokenised = is_tokenised_basic((unsigned char *) data, length);
         if (config.verbose >= 1) {
             info("input auto-detected as %s BASIC",
                  tokenised ? "tokenised" : "ASCII text (non-tokenised)");
