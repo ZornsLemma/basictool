@@ -1,0 +1,19 @@
+   10 VDU6:
+      MODE7:
+      VDU23,1,0;0;0;0;
+   20 *FX200,3
+   30 FORI%=0TO&400STEP4:
+        I%!&7C00=I%!TOP:
+      NEXT
+   40 REPEAT 
+      UNTIL INKEY-99
+   50 FORI%=&400TO&800STEP4:
+        I%!&7800=I%!TOP:
+      NEXT
+   60 REPEAT 
+      UNTIL INKEY-99
+   70 ?&12=&B3:
+      ?&13=&2C:
+      ?&18=&22:
+      RUN:
+      REM|V|@|L|U

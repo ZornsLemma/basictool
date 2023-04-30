@@ -30,7 +30,7 @@ echo -en "A=3\n   B=4\nC=5   \n" >> zz-test-spaces.bas
 cd ..
 
 BASICTOOL="$VALGRIND ../basictool"
-TESTS="hello.bas loader.tok loader-packed.tok embedded-lf.tok tmp/zz-test-*.bas"
+TESTS="hello.bas loader.tok loader-packed.tok embedded-lf.tok embedded-nul-and-trailing-data.tok tmp/zz-test-*.bas"
 
 # TODO: We could also test stderr (especially with -vv) but let's not get too
 # complex for now.
