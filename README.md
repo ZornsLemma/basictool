@@ -283,3 +283,6 @@ If you have problems or suggestions for improvement, you can raise an issue or s
   * lib6502: fix _zpr not displaying zp location. Thanks to dp11 for the fix.
   * Fix potential buffer overflow when in mpu_dump(). Thanks to dp11 for the fix.
   * Add PDF version of man page.
+* v0.10:
+  * Improve auto-detection of tokenised BASIC. Thanks to Tom Seddon for the bug report and new detection algorithm (taken from BeebLink).
+  * Add manpage target to Makefile.

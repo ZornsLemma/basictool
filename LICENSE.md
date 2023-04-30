@@ -8,7 +8,7 @@ The remaining files in this repository are covered by the following license:
 
 MIT License
 
-Copyright (c) 2021 Steven Flintham
+Copyright (c) 2021, 2022, 2023 Steven Flintham
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
