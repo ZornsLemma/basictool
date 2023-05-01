@@ -44,6 +44,9 @@
 #include "emulation.h"
 #include "roms.h"
 #include "utils.h"
+#ifdef _MSC_VER
+#include <fcntl.h>
+#endif
 
 #define VERSION "0.10-pre"
 
@@ -570,6 +573,16 @@ int main(int argc, char *argv[]) {
     if (config.pack_variables_n && config.pack_singles_n) {
         warn("--pack-singles-n has no effect with --pack-variables-n");
     }
+
+#ifdef _MSC_VER
+    if (config.open_output_binary) {
+        // Would it be better to make stdout binary even when not
+        // redirecting?
+        if (!_isatty(fileno(stdout))) {
+            _setmode(fileno(stdout), _O_BINARY);
+        }
+    }
+#endif
 
     emulation_init();
     load_basic(filenames[0]);
