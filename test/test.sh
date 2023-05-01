@@ -29,7 +29,7 @@ echo -en "A=3\n\rB=4\n\rC=5\n\r" > zz-test-lfcr.bas
 echo -en "A=3\n   B=4\nC=5   \n" >> zz-test-spaces.bas
 cd ..
 
-BASICTOOL="$VALGRIND ../basictool"
+BASICTOOL="$VALGRIND ../basictool --output-binary"
 TESTS="hello.bas loader.tok loader-packed.tok embedded-lf.tok embedded-nul-and-trailing-data.tok tmp/zz-test-*.bas"
 
 # TODO: We could also test stderr (especially with -vv) but let's not get too
