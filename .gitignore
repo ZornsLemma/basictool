@@ -10,3 +10,4 @@ basictool
 /basictool.ilk
 /src/*.obj
 /src/bintoinc.exe
+/src/bintoinc.dSYM/
