@@ -406,7 +406,7 @@ static void type_basic_program(char *data, size_t length) {
         }
 
         // Generate the fake input for BASIC and pass it over.
-        const int buffer_size = 256;
+        enum {buffer_size = 256};
         char buffer[buffer_size];
         check(snprintf(buffer, buffer_size, "%d%s", basic_line_number, line) <
               buffer_size, "error: line too long");

@@ -5,3 +5,8 @@ src/*.o
 test/out/*.out
 test/tmp/zz-test-*.bas
 basictool
+/basictool.exe
+/basictool.pdb
+/basictool.ilk
+/src/*.obj
+/src/bintoinc.exe
