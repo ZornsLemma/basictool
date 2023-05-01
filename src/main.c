@@ -576,7 +576,7 @@ int main(int argc, char *argv[]) {
 
 #ifdef _MSC_VER
     if (config.open_output_binary) {
-        // Would it be better to make stdout binary even when not
+        // TODO: Would it be better to make stdout binary even when not
         // redirecting?
         if (!_isatty(fileno(stdout))) {
             _setmode(fileno(stdout), _O_BINARY);
