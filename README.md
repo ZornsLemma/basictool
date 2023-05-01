@@ -291,3 +291,4 @@ If you have problems or suggestions for improvement, you can raise an issue or s
   * Add --output-binary option so users can optionally avoid embedded line feed control codes in tokenised BASIC being mangled when detokenising.
   * Add manpage target to Makefile.
   * Add src/make.bat to build with Visual Studio on Windows. Thanks to Tom Seddon for this.
+  * Make test suite run correctly on Windows (using git bash). Thanks to Tom Seddon for this.
