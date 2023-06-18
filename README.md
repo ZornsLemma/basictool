@@ -292,3 +292,5 @@ If you have problems or suggestions for improvement, you can raise an issue or s
   * Add manpage target to Makefile.
   * Add src/make.bat to build with Visual Studio on Windows. Thanks to Tom Seddon for this.
   * Make test suite run correctly on Windows (using git bash). Thanks to Tom Seddon for this.
+* v0.11:
+  * Preserve the first line number even if it's >255. Thanks to lurkio for reporting this.

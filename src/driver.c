@@ -497,7 +497,9 @@ void load_basic(const char *filename) {
         check(length <= max_length, "error: input is too large");
         memcpy(&mpu_memory[page], data, length);
         // Now execute "OLD" so BASIC recognises the program.
+        uint8_t first_line_number_high_byte = mpu_memory[page + 1];
         execute_input_line("OLD");
+        mpu_memory[page + 1] = first_line_number_high_byte;
         free(data);
     } else {
         type_basic_program(data, length);
@@ -516,6 +518,7 @@ static const char *no(bool no) {
 }
 
 void pack(void) {
+    uint8_t first_line_number_high_byte = mpu_memory[page + 1];
     execute_butil();
     execute_osrdch("P"); // pack
     check_is_in_pending_output("REMs?");
@@ -539,6 +542,7 @@ void pack(void) {
     // Because *FX138 is implemented as a no-op, ABE's attempt to execute "OLD"
     // won't happen, so do it ourselves.
     execute_input_line("OLD");
+    mpu_memory[page + 1] = first_line_number_high_byte;
 }
 
 void renumber(void) {
