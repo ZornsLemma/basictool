@@ -48,7 +48,7 @@
 #include <fcntl.h>
 #endif
 
-#define VERSION "0.11-pre"
+#define VERSION "0.11-pre2"
 
 // We could just sum the bool variables, but let's play it safe in case we
 // want to support pre-C99 compilers where bool is a typedef for something
