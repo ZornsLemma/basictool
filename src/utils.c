@@ -171,7 +171,7 @@ char *get_line(char **data_ptr, size_t *length_ptr) {
 
     // If the next character is the opposite terminator, skip it. This allows
     // us to handle CR, LF, LFCR or CRLF-terminated lines.
-    const char opposite_terminator = (terminator == cr) ? lf: cr;
+    const char opposite_terminator = (terminator == cr) ? lf : cr;
     if (*p == opposite_terminator) {
         ++p; --length;
     }
