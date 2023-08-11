@@ -449,9 +449,6 @@ bool is_tokenised_basic(const unsigned char *data, size_t length) {
 
         if ((i + 3) >= length) {
             // Line header past EOF.
-            // (I don't think this can actually happen - we already checked for
-            // (i + 1) >= length above - but it's hardly an expensive check and
-            // it makes it obvious the following data[i + 3] use is legal.)
             return false;
         }
 
