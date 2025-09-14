@@ -3,7 +3,7 @@
 
 int main(int argc, char *argv[]) {
     if (argc != 2) {
-        fprintf(stderr, "Syntax: bin2toinc FILE\n");
+        fprintf(stderr, "Syntax: bintoinc FILE\n");
         exit(EXIT_FAILURE);
     }
 
