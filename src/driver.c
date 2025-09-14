@@ -51,7 +51,7 @@ static char *make_printable(char *s) {
     for (char *p = s; *p != '\0'; ++p) {
         // We could use isprint() here, but I don't really want to make any
         // assumptions about the current locale - as 's' originated within
-        // the emulated machine, we are really dealling with Acorn ASCII here
+        // the emulated machine, we are really dealing with Acorn ASCII here
         // regardless.
         int c = (unsigned char) *p; // avoid sign extension if char is signed
         if ((c < ' ') || (c > '~')) {
