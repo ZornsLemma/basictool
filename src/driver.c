@@ -381,7 +381,7 @@ static void type_basic_program(char *data, size_t length) {
         // We now have the line number to use in basic_line_number and the line
         // with no line number at 'line'.
 
-        // Strip laeding spaces if required.
+        // Strip leading spaces if required.
         if (config.strip_leading_spaces) {
             line += strspn(line, " \t");
         }
